@@ -199,6 +199,9 @@ protected:
 
     int mXi_Exposure; // Milisecond.
     xf  mXi_Gain;
+
+    // Custom auto-exposure-auto-gain (AEAG).
+    bool mCAEAG_IsEnabled;
 };
 
 }
