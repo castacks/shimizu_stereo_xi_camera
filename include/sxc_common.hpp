@@ -1,6 +1,8 @@
 #ifndef __SXC_COMMON_HPP__
 #define __SXC_COMMON_HPP__
 
+#define DB_FACTOR (10)
+
 namespace sxc
 {
     

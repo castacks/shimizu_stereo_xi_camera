@@ -20,10 +20,18 @@ StereoXiCamera::StereoXiCamera(std::string &camSN0, std::string &camSN1)
   mXi_AutoGainTopLimit(AUTO_GAIN_TOP_LIMIT_DEFAULT),
   mXi_BandwidthMargin(BANDWIDTH_MARGIN_DEFAULT),
   mSelfAdjustNumOmittedFrames(5), mSelfAdjustNumFrames(3), mIsSelfAdjusting(false),
-  mCAEAG(NULL), mCAEAG_IsEnabled(false)
+  mXi_Exposure(100), mXi_Gain(0), mXi_AWB_kr(0.0), mXi_AWB_kg(0.0), mXi_AWB_kb(0.0), 
+  mCAEAG(NULL), mCAEAG_TargetBrightnessLevel(10), mCAEAG_TargetBrightnessLevel8Bit(0), mCAEAG_IsEnabled(false)
 {
     mCamSN[CAM_IDX_0] = camSN0;
     mCamSN[CAM_IDX_1] = camSN1;
+
+    mCAEAG_TargetBrightnessLevel8Bit = (int)(mCAEAG_TargetBrightnessLevel / 100.0 * 255);
+
+    if ( mCAEAG_TargetBrightnessLevel8Bit > 255 )
+    {
+        mCAEAG_TargetBrightnessLevel8Bit = 255;
+    }
 }
 
 StereoXiCamera::~StereoXiCamera()
@@ -154,11 +162,47 @@ void StereoXiCamera::self_adjust_exposure_gain(std::vector<CameraParams_t> &cp)
      mCams[idx].SetGain( g );
  }
 
+void StereoXiCamera::set_white_balance(int idx, xf r, xf g, xf b)
+{
+    // Disable the auto white balance.
+    mCams[idx].DisableWhiteBalanceAuto();
+
+    // Set the parameters.
+    mCams[idx].SetWhiteBalanceRed(r);
+    mCams[idx].SetWhiteBalanceGreen(g);
+    mCams[idx].SetWhiteBalanceBlue(b);
+}
+
 void StereoXiCamera::self_adjust_white_balance(std::vector<CameraParams_t> &cp)
 {
     // Calculate the averaged white balance settings.
+    int n = cp.size();
+
+    xf avgR = 0.0;
+    xf avgG = 0.0;
+    xf avgB = 0.0;
+
+    std::vector<CameraParams_t>::iterator iter;
+
+    for ( iter = cp.begin(); iter != cp.end(); ++iter )
+    {
+        avgR += (*iter).AWB_kr;
+        avgG += (*iter).AWB_kg;
+        avgB += (*iter).AWB_kb;
+    }
+
+    avgR /= n;
+    avgG /= n;
+    avgB /= n;
 
     // Apply the white balance settings to the cameras.
+    LOOP_CAMERAS_BEGIN
+        set_white_balance(loopIdx, avgR, avgG, avgB);
+    LOOP_CAMERAS_END
+
+    mXi_AWB_kr = avgR;
+    mXi_AWB_kg = avgG;
+    mXi_AWB_kb = avgB;
 }
 
 void StereoXiCamera::apply_custom_AEAG(cv::Mat &img0, cv::Mat &img1, CameraParams_t &camP0, CameraParams_t &camP1)
@@ -171,10 +215,10 @@ void StereoXiCamera::apply_custom_AEAG(cv::Mat &img0, cv::Mat &img1, CameraParam
     int currentExposureMS[2] = { camP0.exposure, camP1.exposure };
     xf  currentGainDB[2]     = { camP0.gain, camP1.gain };
 
-    xf currentExposure[2];
-    xf currentGain[2];
-    xf newExposure[2];
-    xf newGain[2];
+    xf currentExposure[2] = {0.0, 0.0};
+    xf currentGain[2]     = {0.0, 0.0};
+    xf newExposure[2]     = {0.0, 0.0};
+    xf newGain[2]         = {0.0, 0.0};
 
     LOOP_CAMERAS_BEGIN
         currentExposure[loopIdx] = EXPOSURE_MILLISEC(currentExposureMS[loopIdx]);
@@ -182,15 +226,17 @@ void StereoXiCamera::apply_custom_AEAG(cv::Mat &img0, cv::Mat &img1, CameraParam
     LOOP_CAMERAS_END
 
     // The first camera.
-    mCAEAG->get_AEAG(img0, 
+    cv::cvtColor( img0, mGrayMatBuffer[CAM_IDX_0], cv::COLOR_BGR2GRAY, 1 );
+    mCAEAG->get_AEAG(mGrayMatBuffer[CAM_IDX_0], 
         currentExposure[CAM_IDX_0], currentGain[CAM_IDX_0], 
-        128, 
+        mCAEAG_TargetBrightnessLevel8Bit, 
         newExposure[CAM_IDX_0], newGain[CAM_IDX_0]);
 
     // The second camera.
-    mCAEAG->get_AEAG(img1, 
+    cv::cvtColor( img1, mGrayMatBuffer[CAM_IDX_1], cv::COLOR_BGR2GRAY, 1 );
+    mCAEAG->get_AEAG(mGrayMatBuffer[CAM_IDX_1], 
         currentExposure[CAM_IDX_1], currentGain[CAM_IDX_1], 
-        128, 
+        mCAEAG_TargetBrightnessLevel8Bit, 
         newExposure[CAM_IDX_1], newGain[CAM_IDX_1]);
 
     // Average.
@@ -202,6 +248,12 @@ void StereoXiCamera::apply_custom_AEAG(cv::Mat &img0, cv::Mat &img1, CameraParam
     LOOP_CAMERAS_BEGIN
         mCams[loopIdx].SetExposureTime(avgExposure);
         mCams[loopIdx].SetGain(avgGain);
+
+        // For test use.
+        std::cout << "Cam " << loopIdx 
+                  << ", avgExposure = " << EXPOSURE_FROM_MICROSEC(avgExposure)
+                  << ", avgGain = " << avgGain
+                  << std::endl;
     LOOP_CAMERAS_END
 }
 
@@ -248,6 +300,18 @@ void StereoXiCamera::get_images(cv::Mat &img0, cv::Mat &img1)
     {
         img0 = get_single_image(CAM_IDX_0);
         img1 = get_single_image(CAM_IDX_1);
+
+        if ( mGrayMatBuffer[CAM_IDX_0].rows != img0.rows ||
+             mGrayMatBuffer[CAM_IDX_0].cols != img0.cols )
+        {
+            mGrayMatBuffer[CAM_IDX_0] = cv::Mat::zeros(img0.rows, img0.cols, CV_8UC1);
+        }
+
+        if ( mGrayMatBuffer[CAM_IDX_1].rows != img1.rows ||
+             mGrayMatBuffer[CAM_IDX_1].cols != img1.cols )
+        {
+            mGrayMatBuffer[CAM_IDX_1] = cv::Mat::zeros(img1.rows, img1.cols, CV_8UC1);
+        }
     }
     catch ( xiAPIplus_Exception& exp )
     {
@@ -264,7 +328,7 @@ void StereoXiCamera::get_images(cv::Mat &img0, cv::Mat &img1, CameraParams_t &ca
         put_single_camera_params( mCams[CAM_IDX_0], camP0 );
         put_single_camera_params( mCams[CAM_IDX_1], camP1 );
 
-        if ( true == mCAEAG_IsEnabled )
+        if ( true == mCAEAG_IsEnabled && false == mIsSelfAdjusting )
         {
             apply_custom_AEAG(img0, img1, camP0, camP1);
         }
@@ -308,6 +372,12 @@ void StereoXiCamera::put_single_camera_params(xiAPIplusCameraOcv &cam, CameraPar
     cp.exposure = (int)( cam.GetExposureTime() / 1000.0 );
 
     cp.gain = (xf)( cam.GetGain() );
+
+    cp.AWBEnabled = ( true == cam.IsWhiteBalanceAuto() ) ? 1 : 0;
+
+    cp.AWB_kr = cam.GetWhiteBalanceRed();
+    cp.AWB_kg = cam.GetWhiteBalanceGreen();
+    cp.AWB_kb = cam.GetWhiteBalanceBlue();
 }
 
 void StereoXiCamera::stop_acquisition(int waitMS)
@@ -457,6 +527,11 @@ int StereoXiCamera::EXPOSURE_MILLISEC(int val)
     return val * EXPOSURE_MILLISEC_BASE;
 }
 
+int StereoXiCamera::EXPOSURE_FROM_MICROSEC(int val)
+{
+    return (int)( val / EXPOSURE_MILLISEC_BASE );
+}
+
 // ================== Getters and setters. =========================
 
 void StereoXiCamera::set_autogain_exposure_priority(xf val)
@@ -582,9 +657,31 @@ xf StereoXiCamera::get_gain(void)
     return mXi_Gain;
 }
 
+void StereoXiCamera::put_WB_coefficients(xf& r, xf& g, xf& b)
+{
+    r = mXi_AWB_kr;
+    g = mXi_AWB_kg;
+    b = mXi_AWB_kb;
+}
+
 void StereoXiCamera::set_custom_AEAG(AEAG* aeag)
 {
     mCAEAG = aeag;
+}
+
+void StereoXiCamera::set_custom_AEAG_target_brightness_level(int level)
+{
+    mCAEAG_TargetBrightnessLevel = level;
+    mCAEAG_TargetBrightnessLevel8Bit = level / 100.0 * 255;
+    if ( mCAEAG_TargetBrightnessLevel8Bit > 255 )
+    {
+        mCAEAG_TargetBrightnessLevel8Bit = 255;
+    }
+}
+
+int  StereoXiCamera::get_custom_AEGA_target_brightness_level(void)
+{
+    return mCAEAG_TargetBrightnessLevel;
 }
 
 void StereoXiCamera::enable_custom_AEAG(void)

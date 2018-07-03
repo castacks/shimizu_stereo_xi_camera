@@ -10,7 +10,7 @@ class MeanBrightness : public ExposurePriorAEAG
 {
 public:
     MeanBrightness();
-    ~MeanBrightness();
+    virtual ~MeanBrightness();
 
     void get_AEAG(cv::InputArray _m, xf exposure, xf gain, int mb, xf& newExposure, xf& newGain);
 };

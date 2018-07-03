@@ -116,6 +116,8 @@ catkin_package(
 ## Build ##
 ###########
 
+SET( CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -Wall -g" )
+
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 

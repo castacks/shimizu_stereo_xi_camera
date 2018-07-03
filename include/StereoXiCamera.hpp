@@ -106,6 +106,10 @@ public:
         xf  AEAGPriority;
         int exposure;     // Milliseconds.
         xf  gain;         // db.
+        int AWBEnabled;   // 1 for enabled.
+        xf  AWB_kr;       // Auto white balance, read coefficient.
+        xf  AWB_kg;       // Auto white balance, green coefficient.
+        xf  AWB_kb;       // Auto white balance, blue coefficient.
     } CameraParams_t;
 
 public:
@@ -145,8 +149,11 @@ public:
 
     int  get_exposure(void);
     xf   get_gain(void);
+    void put_WB_coefficients(xf& r, xf& g, xf& b);
 
     void set_custom_AEAG(AEAG* aeag);
+    void set_custom_AEAG_target_brightness_level(int level);
+    int  get_custom_AEGA_target_brightness_level(void);
     void enable_custom_AEAG(void);
     void disable_custom_AEAG(void);
     bool is_custom_AEAG_enabled(void);
@@ -161,11 +168,13 @@ protected:
     void put_single_camera_params(xiAPIplusCameraOcv &cam, CameraParams_t &cp);
 
     int EXPOSURE_MILLISEC(int val);
+    int EXPOSURE_FROM_MICROSEC(int val);
 
     void record_settings(int nFrames, std::vector<CameraParams_t> &cp, bool verbose = false);
     void self_adjust_exposure_gain(std::vector<CameraParams_t> &cp);
     void self_adjust_white_balance(std::vector<CameraParams_t> &cp);
     void set_exposure_gain(int idx, int e, xf g);
+    void set_white_balance(int idx, xf r, xf g, xf b);
     void apply_custom_AEAG(cv::Mat &img0, cv::Mat &img1, CameraParams_t &camP0, CameraParams_t &camP1);
     
 public:
@@ -201,6 +210,8 @@ protected:
 
     xiAPIplusCameraOcv mCams[N_XI_C];
 
+    cv::Mat mGrayMatBuffer[N_XI_C];
+
     xf  mXi_AutoGainExposurePriority;
     xf  mXi_AutoGainExposureTargetLevel;
     int mXi_AutoExposureTopLimit;     // Milisecond.
@@ -216,8 +227,14 @@ protected:
     int mXi_Exposure; // Milisecond.
     xf  mXi_Gain;
 
+    xf  mXi_AWB_kr;
+    xf  mXi_AWB_kg;
+    xf  mXi_AWB_kb;
+
     // Custom auto-exposure-auto-gain (AEAG).
     AEAG* mCAEAG;
+    int  mCAEAG_TargetBrightnessLevel;
+    int  mCAEAG_TargetBrightnessLevel8Bit;
     bool mCAEAG_IsEnabled;
 };
 

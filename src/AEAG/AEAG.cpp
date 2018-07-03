@@ -6,7 +6,7 @@
 using namespace sxc;
 
 AEAG::AEAG()
-: mExposure(0.0), mGain(0.0)
+: mExposure(0.0), mGain(0.0), mExposureTopLimit(1.0), mGainTopLimit(1.0)
 {
 
 }

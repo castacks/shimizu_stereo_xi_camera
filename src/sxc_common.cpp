@@ -11,7 +11,7 @@ namespace sxc
 
 xf dBToGain(xf dB)
 {
-    return std::pow( 10.0, dB / 10.0 );
+    return std::pow( 10.0, dB / DB_FACTOR );
 }
 
 xf GainToDB(xf G)
@@ -22,7 +22,7 @@ xf GainToDB(xf G)
         return 1.0;
     }
 
-    return 10.0 * std::log10( G );
+    return DB_FACTOR * std::log10( G );
 }
 
-}
+} // namespace sxc

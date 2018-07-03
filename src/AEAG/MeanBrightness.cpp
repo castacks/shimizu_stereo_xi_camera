@@ -22,6 +22,7 @@ static int get_mean_brightness(cv::InputArray _img)
 
     if ( dataType != CV_8U && dataType != CV_8UC1 )
     {
+        std::cout << "get_mean_brightness(): dataType = " << dataType << std::endl;
         return -1;
     }
 

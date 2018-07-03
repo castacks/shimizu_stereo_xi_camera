@@ -49,7 +49,7 @@ const std::string OUT_DIR = "/home/yyhu/ROS/p2/catkin/src/stereo_xi_camera/outpu
 std::string XI_CAMERA_SN_1 = "CUCAU1814018";
 std::string XI_CAMERA_SN_0 = "CUCAU1814020";
 
-const double DEFAULT_AUTO_GAIN_EXPOSURE_PRIORITY     = 0.8;
+const double DEFAULT_AUTO_GAIN_EXPOSURE_PRIORITY     = 0.9;
 const double DEFAULT_AUTO_GAIN_EXPOSURE_TARGET_LEVEL = 40.0;
 const int    DEFAULT_AUTO_EXPOSURE_TOP_LIMIT         = 200;  // Millisecond.
 const int    DEFAULT_AUTO_GAIN_TOP_LIMIT             = 12;   // dB.
@@ -57,9 +57,10 @@ const int    DEFAULT_TOTAL_BANDWIDTH                 = 2400;
 const int    DEFAULT_BANDWIDTH_MARGIN                = 10;
 const int    DEFAULT_LOOP_RATE                       = 3;
 
-const double DEFAULT_CUSTOM_AEAG_PRIORITY           = 0.8;
+const double DEFAULT_CUSTOM_AEAG_PRIORITY           = 0.9;
 const double DEFAULT_CUSTOM_AEAG_EXPOSURE_TOP_LIMIT = 200.0; // Millisecond.
 const double DEFAULT_CUSTOM_AEAG_GAIN_TOP_LIMIT     = 12.0;  // dB.
+const int    DEFAULT_CUSTOM_AEAG_BRIGHTNESS_LEVEL   = 30;    // %.
 
 // ============= Local macros. =====================
 
@@ -104,6 +105,7 @@ int main(int argc, char* argv[])
 	double pCustomAEAGPriority         = DEFAULT_CUSTOM_AEAG_PRIORITY;
 	double pCustomAEAGExposureTopLimit = DEFAULT_CUSTOM_AEAG_EXPOSURE_TOP_LIMIT;
 	double pCustomAEAGGainTopLimit     = DEFAULT_CUSTOM_AEAG_GAIN_TOP_LIMIT;
+	int    pCustomAEAGBrightnessLevel  = DEFAULT_CUSTOM_AEAG_BRIGHTNESS_LEVEL;
 
 	std::string pXICameraSN_0 = XI_CAMERA_SN_0;
 	std::string pXICameraSN_1 = XI_CAMERA_SN_1;
@@ -122,6 +124,7 @@ int main(int argc, char* argv[])
 	ROSLAUNCH_GET_PARAM(nodeHandle, "pCustomAEAGPriority", pCustomAEAGPriority, DEFAULT_CUSTOM_AEAG_PRIORITY);
 	ROSLAUNCH_GET_PARAM(nodeHandle, "pCustomAEAGExposureTopLimit", pCustomAEAGExposureTopLimit, DEFAULT_CUSTOM_AEAG_EXPOSURE_TOP_LIMIT);
 	ROSLAUNCH_GET_PARAM(nodeHandle, "pCustomAEAGGainTopLimit", pCustomAEAGGainTopLimit, DEFAULT_CUSTOM_AEAG_GAIN_TOP_LIMIT);
+	ROSLAUNCH_GET_PARAM(nodeHandle, "pCustomAEAGBrightnessLevel", pCustomAEAGBrightnessLevel, DEFAULT_CUSTOM_AEAG_BRIGHTNESS_LEVEL);
 
 	ROSLAUNCH_GET_PARAM(nodeHandle, "pXICameraSN_0", pXICameraSN_0, XI_CAMERA_SN_0);
 	ROSLAUNCH_GET_PARAM(nodeHandle, "pXICameraSN_1", pXICameraSN_1, XI_CAMERA_SN_1);
@@ -143,14 +146,15 @@ int main(int argc, char* argv[])
 	// The custom AEAG object.
 	sxc::MeanBrightness* mbAEAG = NULL;
 
-	if ( true == pCustomAEAGEnabled )
+	if ( 1 == pCustomAEAGEnabled )
 	{
 		mbAEAG = new sxc::MeanBrightness;
-		mbAEAG->set_exposure_top_limit(pCustomAEAGExposureTopLimit);
-		mbAEAG->set_gain_top_limit(pCustomAEAGGainTopLimit);
+		mbAEAG->set_exposure_top_limit(pCustomAEAGExposureTopLimit * 1000);
+		mbAEAG->set_gain_top_limit(sxc::dBToGain(pCustomAEAGGainTopLimit));
 		mbAEAG->set_priority(pCustomAEAGPriority);
 
 		stereoXiCamera.set_custom_AEAG(mbAEAG);
+		stereoXiCamera.set_custom_AEAG_target_brightness_level(pCustomAEAGBrightnessLevel);
 		stereoXiCamera.enable_custom_AEAG();
 	}
 
@@ -170,7 +174,7 @@ int main(int argc, char* argv[])
 
 		// Self-adjust.
 		ROS_INFO("Perform self-adjust...");
-		stereoXiCamera.self_adjust();
+		stereoXiCamera.self_adjust(true);
 		ROS_INFO("Self-adjust done.");
 
 		// Get the sensor array.
@@ -236,7 +240,7 @@ int main(int argc, char* argv[])
 					imwrite(imgFilename, cvImages[loopIdx], jpegParams);
 				}
 				
-				ROS_INFO( "Camera %d captured image (%d, %d). AEAG %d, AEAGP %.2f, exp %d, gain %.1f.", 
+				ROS_INFO( "Camera %d captured image (%d, %d). AEAG %d, AEAGP %.2f, exp %d, gain %.1f dB.", 
 				          loopIdx, cvImages[loopIdx].rows, cvImages[loopIdx].cols,
 						  cp[loopIdx].AEAGEnabled, cp[loopIdx].AEAGPriority, cp[loopIdx].exposure, cp[loopIdx].gain );
 
