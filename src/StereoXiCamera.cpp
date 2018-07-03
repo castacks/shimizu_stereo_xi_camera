@@ -1,6 +1,7 @@
 #include <iostream>
 #include <sstream>
 
+#include "sxc_common.hpp"
 #include "StereoXiCamera.hpp"
 
 using namespace sxc;
@@ -18,7 +19,8 @@ StereoXiCamera::StereoXiCamera(std::string &camSN0, std::string &camSN1)
   mXi_AutoExposureTopLimit(AUTO_EXPOSURE_TOP_LIMIT_DEFAULT),
   mXi_AutoGainTopLimit(AUTO_GAIN_TOP_LIMIT_DEFAULT),
   mXi_BandwidthMargin(BANDWIDTH_MARGIN_DEFAULT),
-  mSelfAdjustNumOmittedFrames(5), mSelfAdjustNumFrames(3)
+  mSelfAdjustNumOmittedFrames(5), mSelfAdjustNumFrames(3), mIsSelfAdjusting(false),
+  mCAEAG(NULL), mCAEAG_IsEnabled(false)
 {
     mCamSN[CAM_IDX_0] = camSN0;
     mCamSN[CAM_IDX_1] = camSN1;
@@ -44,6 +46,8 @@ void StereoXiCamera::open()
 
 void StereoXiCamera::self_adjust(bool verbose)
 {
+    mIsSelfAdjusting = true;
+
     // Take several images and record the settings.
     std::vector<CameraParams_t> camParams;
 
@@ -72,6 +76,8 @@ void StereoXiCamera::self_adjust(bool verbose)
     {
         std::cout << "Self-adjust done." << std::endl;
     }
+
+    mIsSelfAdjusting = false;
 }
 
 void StereoXiCamera::record_settings(int nFrames, std::vector<CameraParams_t> &vcp, bool verbose)
@@ -155,10 +161,61 @@ void StereoXiCamera::self_adjust_white_balance(std::vector<CameraParams_t> &cp)
     // Apply the white balance settings to the cameras.
 }
 
+void StereoXiCamera::apply_custom_AEAG(cv::Mat &img0, cv::Mat &img1, CameraParams_t &camP0, CameraParams_t &camP1)
+{
+    if ( NULL == mCAEAG )
+    {
+        EXCEPTION_ARG_NULL(mCAEAG);
+    }
+
+    int currentExposureMS[2] = { camP0.exposure, camP1.exposure };
+    xf  currentGainDB[2]     = { camP0.gain, camP1.gain };
+
+    xf currentExposure[2];
+    xf currentGain[2];
+    xf newExposure[2];
+    xf newGain[2];
+
+    LOOP_CAMERAS_BEGIN
+        currentExposure[loopIdx] = EXPOSURE_MILLISEC(currentExposureMS[loopIdx]);
+        currentGain[loopIdx]     = dBToGain(currentGainDB[loopIdx]);
+    LOOP_CAMERAS_END
+
+    // The first camera.
+    mCAEAG->get_AEAG(img0, 
+        currentExposure[CAM_IDX_0], currentGain[CAM_IDX_0], 
+        128, 
+        newExposure[CAM_IDX_0], newGain[CAM_IDX_0]);
+
+    // The second camera.
+    mCAEAG->get_AEAG(img1, 
+        currentExposure[CAM_IDX_1], currentGain[CAM_IDX_1], 
+        128, 
+        newExposure[CAM_IDX_1], newGain[CAM_IDX_1]);
+
+    // Average.
+    int avgExposure = (int)(0.5 * ( newExposure[0] + newExposure[1] ));
+    xf  avgGain     = 0.5 * ( newGain[0] + newGain[1] );
+    avgGain = GainToDB(avgGain);
+
+    // Apply exposure and gain settings.
+    LOOP_CAMERAS_BEGIN
+        mCams[loopIdx].SetExposureTime(avgExposure);
+        mCams[loopIdx].SetGain(avgGain);
+    LOOP_CAMERAS_END
+}
+
 void StereoXiCamera::start_acquisition(int waitMS)
 {
     try
     {
+        if ( true == mCAEAG_IsEnabled && false == mIsSelfAdjusting )
+        {
+            LOOP_CAMERAS_BEGIN
+                mCams[loopIdx].DisableAutoExposureAutoGain();
+            LOOP_CAMERAS_END
+        }
+
         LOOP_CAMERAS_BEGIN
             mCams[loopIdx].StartAcquisition();
         LOOP_CAMERAS_END
@@ -206,6 +263,11 @@ void StereoXiCamera::get_images(cv::Mat &img0, cv::Mat &img1, CameraParams_t &ca
     {
         put_single_camera_params( mCams[CAM_IDX_0], camP0 );
         put_single_camera_params( mCams[CAM_IDX_1], camP1 );
+
+        if ( true == mCAEAG_IsEnabled )
+        {
+            apply_custom_AEAG(img0, img1, camP0, camP1);
+        }
     }
     catch ( xiAPIplus_Exception& exp )
     {
@@ -518,4 +580,24 @@ int StereoXiCamera::get_exposure(void)
 xf StereoXiCamera::get_gain(void)
 {
     return mXi_Gain;
+}
+
+void StereoXiCamera::set_custom_AEAG(AEAG* aeag)
+{
+    mCAEAG = aeag;
+}
+
+void StereoXiCamera::enable_custom_AEAG(void)
+{
+    mCAEAG_IsEnabled = true;
+}
+
+void StereoXiCamera::disable_custom_AEAG(void)
+{
+    mCAEAG_IsEnabled = false;
+}
+
+bool StereoXiCamera::is_custom_AEAG_enabled(void)
+{
+    return mCAEAG_IsEnabled;
 }

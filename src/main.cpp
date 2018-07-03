@@ -22,6 +22,7 @@
 
 #include <stdio.h>
 
+#include "AEAG/MeanBrightness.hpp"
 #include "StereoXiCamera.hpp"
 
 // ========= Includes for ROS and OpenCV. ===================
@@ -51,10 +52,14 @@ std::string XI_CAMERA_SN_0 = "CUCAU1814020";
 const double DEFAULT_AUTO_GAIN_EXPOSURE_PRIORITY     = 0.8;
 const double DEFAULT_AUTO_GAIN_EXPOSURE_TARGET_LEVEL = 40.0;
 const int    DEFAULT_AUTO_EXPOSURE_TOP_LIMIT         = 200;  // Millisecond.
-const int    DEFAULT_AUTO_GAIN_TOP_LIMIT             = 12;   // db.
+const int    DEFAULT_AUTO_GAIN_TOP_LIMIT             = 12;   // dB.
 const int    DEFAULT_TOTAL_BANDWIDTH                 = 2400;
 const int    DEFAULT_BANDWIDTH_MARGIN                = 10;
 const int    DEFAULT_LOOP_RATE                       = 3;
+
+const double DEFAULT_CUSTOM_AEAG_PRIORITY           = 0.8;
+const double DEFAULT_CUSTOM_AEAG_EXPOSURE_TOP_LIMIT = 200.0; // Millisecond.
+const double DEFAULT_CUSTOM_AEAG_GAIN_TOP_LIMIT     = 12.0;  // dB.
 
 // ============= Local macros. =====================
 
@@ -95,6 +100,11 @@ int main(int argc, char* argv[])
 	int    pLoopRate                    = DEFAULT_LOOP_RATE;
 	std::string pOutDir                 = OUT_DIR;
 
+	int    pCustomAEAGEnabled          = 0;
+	double pCustomAEAGPriority         = DEFAULT_CUSTOM_AEAG_PRIORITY;
+	double pCustomAEAGExposureTopLimit = DEFAULT_CUSTOM_AEAG_EXPOSURE_TOP_LIMIT;
+	double pCustomAEAGGainTopLimit     = DEFAULT_CUSTOM_AEAG_GAIN_TOP_LIMIT;
+
 	std::string pXICameraSN_0 = XI_CAMERA_SN_0;
 	std::string pXICameraSN_1 = XI_CAMERA_SN_1;
 
@@ -107,6 +117,11 @@ int main(int argc, char* argv[])
 	ROSLAUNCH_GET_PARAM(nodeHandle, "pLoopRate", pLoopRate, DEFAULT_LOOP_RATE);
 	ROSLAUNCH_GET_PARAM(nodeHandle, "pFlagWriteImage", pFlagWriteImage, 0);
 	ROSLAUNCH_GET_PARAM(nodeHandle, "pOutDir", pOutDir, OUT_DIR);
+
+	ROSLAUNCH_GET_PARAM(nodeHandle, "pCustomAEAGEnabled", pCustomAEAGEnabled, 0);
+	ROSLAUNCH_GET_PARAM(nodeHandle, "pCustomAEAGPriority", pCustomAEAGPriority, DEFAULT_CUSTOM_AEAG_PRIORITY);
+	ROSLAUNCH_GET_PARAM(nodeHandle, "pCustomAEAGExposureTopLimit", pCustomAEAGExposureTopLimit, DEFAULT_CUSTOM_AEAG_EXPOSURE_TOP_LIMIT);
+	ROSLAUNCH_GET_PARAM(nodeHandle, "pCustomAEAGGainTopLimit", pCustomAEAGGainTopLimit, DEFAULT_CUSTOM_AEAG_GAIN_TOP_LIMIT);
 
 	ROSLAUNCH_GET_PARAM(nodeHandle, "pXICameraSN_0", pXICameraSN_0, XI_CAMERA_SN_0);
 	ROSLAUNCH_GET_PARAM(nodeHandle, "pXICameraSN_1", pXICameraSN_1, XI_CAMERA_SN_1);
@@ -124,6 +139,20 @@ int main(int argc, char* argv[])
 
 	// The object of stereo camera based on the XIMEA cameras.
 	sxc::StereoXiCamera stereoXiCamera = sxc::StereoXiCamera(pXICameraSN_0, pXICameraSN_1);
+
+	// The custom AEAG object.
+	sxc::MeanBrightness* mbAEAG = NULL;
+
+	if ( true == pCustomAEAGEnabled )
+	{
+		mbAEAG = new sxc::MeanBrightness;
+		mbAEAG->set_exposure_top_limit(pCustomAEAGExposureTopLimit);
+		mbAEAG->set_gain_top_limit(pCustomAEAGGainTopLimit);
+		mbAEAG->set_priority(pCustomAEAGPriority);
+
+		stereoXiCamera.set_custom_AEAG(mbAEAG);
+		stereoXiCamera.enable_custom_AEAG();
+	}
 
 	// Run the ROS node.
 	try
@@ -241,6 +270,12 @@ int main(int argc, char* argv[])
 		// Close.
 		stereoXiCamera.close();
 		ROS_INFO("Stereo camera closed.");
+
+		// Delete AEAG object.
+		if ( NULL != mbAEAG )
+		{
+			delete mbAEAG; mbAEAG = NULL;
+		}
 	}
 	catch ( boost::exception &ex )
 	{
@@ -253,6 +288,11 @@ int main(int argc, char* argv[])
 		std::string diagInfo = boost::diagnostic_information(ex, true);
 
 		ROS_ERROR("%s", diagInfo.c_str());
+
+		if ( NULL != mbAEAG )
+		{
+			delete mbAEAG; mbAEAG = NULL;
+		}
 
 		ret = -1;
 	}

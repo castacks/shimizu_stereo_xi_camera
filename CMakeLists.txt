@@ -122,7 +122,7 @@ catkin_package(
 SET( XIMEA_INCLUDES "/opt/XIMEA/includes" )
 
 include_directories(
-# include
+  # include
   ${catkin_INCLUDE_DIRS}
   "./include"
   ${XIMEA_INCLUDES}

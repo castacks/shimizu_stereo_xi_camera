@@ -23,6 +23,9 @@
 
 // ========== Application headers. ==============
 
+#include "sxc_common.hpp"
+
+#include "AEAG/AEAG.hpp"
 #include "xiApiPlusOcv.hpp"
 
 // ============ Macros. ========================
@@ -55,6 +58,14 @@
         BOOST_THROW_EXCEPTION( argument_out_of_range() << ExceptionInfoString(v##_ss.str()) );\
     }
 
+#define EXCEPTION_ARG_NULL(v) \
+    {\
+        std::stringstream v##_ss;\
+        v##_ss << "Argument " \
+               << #v << " is NULL.";\
+        BOOST_THROW_EXCEPTION( argument_null() << ExceptionInfoString(v##_ss.str()) );\
+    }
+
 #define CAMERA_EXCEPTION_DESCRIPTION_BUFFER_SIZE (1024)
 #define EXCEPTION_CAMERA_API(camEx) \
     {\
@@ -78,12 +89,10 @@
 
 namespace sxc {
 
-typedef float xf;
-
 struct exception_base        : virtual std::exception, virtual boost::exception { };
 struct bad_argument          : virtual exception_base { };
 struct argument_out_of_range : virtual bad_argument { };
-struct arguemnt_null         : virtual bad_argument { };
+struct argument_null         : virtual bad_argument { };
 struct camera_api_exception  : virtual exception_base { };
 
 typedef boost::error_info<struct tag_info_string, std::string> ExceptionInfoString;
@@ -108,7 +117,6 @@ public:
     void start_acquisition(int waitMS = 500);
 
     void software_trigger(void);
-    void get_images(cv::Mat &img0, cv::Mat &img1);
     void get_images(cv::Mat &img0, cv::Mat &img1, CameraParams_t &camP0, CameraParams_t &camP1);
 
     void stop_acquisition(int waitMS = 500);
@@ -138,11 +146,17 @@ public:
     int  get_exposure(void);
     xf   get_gain(void);
 
+    void set_custom_AEAG(AEAG* aeag);
+    void enable_custom_AEAG(void);
+    void disable_custom_AEAG(void);
+    bool is_custom_AEAG_enabled(void);
+
 protected:
     void prepare_before_opening();
     void open_and_common_settings();
     void setup_camera_common(xiAPIplusCameraOcv& cam);
 
+    void get_images(cv::Mat &img0, cv::Mat &img1);
     cv::Mat get_single_image(int idx);
     void put_single_camera_params(xiAPIplusCameraOcv &cam, CameraParams_t &cp);
 
@@ -152,6 +166,7 @@ protected:
     void self_adjust_exposure_gain(std::vector<CameraParams_t> &cp);
     void self_adjust_white_balance(std::vector<CameraParams_t> &cp);
     void set_exposure_gain(int idx, int e, xf g);
+    void apply_custom_AEAG(cv::Mat &img0, cv::Mat &img1, CameraParams_t &camP0, CameraParams_t &camP1);
     
 public:
     const xf  AUTO_GAIN_EXPOSURE_PRIORITY_MAX;
@@ -196,11 +211,13 @@ protected:
 
     int mSelfAdjustNumOmittedFrames;
     int mSelfAdjustNumFrames;
+    bool mIsSelfAdjusting;
 
     int mXi_Exposure; // Milisecond.
     xf  mXi_Gain;
 
     // Custom auto-exposure-auto-gain (AEAG).
+    AEAG* mCAEAG;
     bool mCAEAG_IsEnabled;
 };
 
