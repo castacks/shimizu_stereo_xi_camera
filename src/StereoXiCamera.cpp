@@ -9,7 +9,7 @@ using namespace sxc;
 StereoXiCamera::StereoXiCamera(std::string &camSN0, std::string &camSN1)
 : AUTO_GAIN_EXPOSURE_PRIORITY_MAX(1.0), AUTO_GAIN_EXPOSURE_PRIORITY_MIM(0.49), AUTO_GAIN_EXPOSURE_PRIORITY_DEFAULT(0.8),
   AUTO_GAIN_EXPOSURE_TARGET_LEVEL_MAX(60.0), AUTO_GAIN_EXPOSURE_TARGET_LEVEL_MIN(10.0), AUTO_GAIN_EXPOSURE_TARGET_LEVEL_DEFAULT(40.0),
-  AUTO_EXPOSURE_TOP_LIMIT_MAX(1000), AUTO_EXPOSURE_TOP_LIMIT_MIN(1), AUTO_EXPOSURE_TOP_LIMIT_DEFAULT(200),
+  AUTO_EXPOSURE_TOP_LIMIT_MAX(900000), AUTO_EXPOSURE_TOP_LIMIT_MIN(1), AUTO_EXPOSURE_TOP_LIMIT_DEFAULT(200000),
   AUTO_GAIN_TOP_LIMIT_MAX(36.0), AUTO_GAIN_TOP_LIMIT_MIN(0.0), AUTO_GAIN_TOP_LIMIT_DEFAULT(12.0),
   TOTAL_BANDWIDTH_MAX(4000), TOTAL_BANDWIDTH_MIN(2400),
   BANDWIDTH_MARGIN_MAX(50), BANDWIDTH_MARGIN_MIN(5), BANDWIDTH_MARGIN_DEFAULT(10),
@@ -158,7 +158,7 @@ void StereoXiCamera::self_adjust_exposure_gain(std::vector<CameraParams_t> &cp)
      mCams[idx].DisableAutoExposureAutoGain();
 
      // Set the parameters.
-     mCams[idx].SetExposureTime( EXPOSURE_MILLISEC(e) );
+     mCams[idx].SetExposureTime( e );
      mCams[idx].SetGain( g );
  }
 
@@ -221,7 +221,7 @@ void StereoXiCamera::apply_custom_AEAG(cv::Mat &img0, cv::Mat &img1, CameraParam
     xf newGain[2]         = {0.0, 0.0};
 
     LOOP_CAMERAS_BEGIN
-        currentExposure[loopIdx] = EXPOSURE_MILLISEC(currentExposureMS[loopIdx]);
+        currentExposure[loopIdx] = currentExposureMS[loopIdx];
         currentGain[loopIdx]     = dBToGain(currentGainDB[loopIdx]);
     LOOP_CAMERAS_END
 
@@ -242,6 +242,13 @@ void StereoXiCamera::apply_custom_AEAG(cv::Mat &img0, cv::Mat &img1, CameraParam
     // Average.
     int avgExposure = (int)(0.5 * ( newExposure[0] + newExposure[1] ));
     xf  avgGain     = 0.5 * ( newGain[0] + newGain[1] );
+    std::cout << "avgGain = " << avgGain << std::endl;
+
+    if ( true == std::isnan(avgGain) )
+    {
+        std::cout << std::endl;
+    }
+
     avgGain = GainToDB(avgGain);
 
     // Apply exposure and gain settings.
@@ -251,7 +258,7 @@ void StereoXiCamera::apply_custom_AEAG(cv::Mat &img0, cv::Mat &img1, CameraParam
 
         // For test use.
         std::cout << "Cam " << loopIdx 
-                  << ", avgExposure = " << EXPOSURE_FROM_MICROSEC(avgExposure)
+                  << ", avgExposure = " << avgExposure
                   << ", avgGain = " << avgGain
                   << std::endl;
     LOOP_CAMERAS_END
@@ -369,7 +376,7 @@ void StereoXiCamera::put_single_camera_params(xiAPIplusCameraOcv &cam, CameraPar
 
     cp.AEAGPriority = (xf)( cam.GetAutoExposureAutoGainExposurePriority());
 
-    cp.exposure = (int)( cam.GetExposureTime() / 1000.0 );
+    cp.exposure = (int)( cam.GetExposureTime() );
 
     cp.gain = (xf)( cam.GetGain() );
 
@@ -499,7 +506,7 @@ void StereoXiCamera::setup_camera_common(xiAPIplusCameraOcv& cam)
     // Set exposure time.
 	cam.SetAutoExposureAutoGainExposurePriority( mXi_AutoGainExposurePriority );
     cam.SetAutoExposureAutoGainTargetLevel(mXi_AutoGainExposureTargetLevel);
-	cam.SetAutoExposureTopLimit( EXPOSURE_MILLISEC( mXi_AutoExposureTopLimit ) );
+	cam.SetAutoExposureTopLimit( mXi_AutoExposureTopLimit );
     cam.SetAutoGainTopLimit( mXi_AutoGainTopLimit );
     cam.EnableAutoExposureAutoGain();
 

@@ -184,9 +184,9 @@ public:
     const xf  AUTO_GAIN_EXPOSURE_TARGET_LEVEL_MAX;
     const xf  AUTO_GAIN_EXPOSURE_TARGET_LEVEL_MIN;
     const xf  AUTO_GAIN_EXPOSURE_TARGET_LEVEL_DEFAULT;
-    const int AUTO_EXPOSURE_TOP_LIMIT_MAX;         // Millisecond.
-    const int AUTO_EXPOSURE_TOP_LIMIT_MIN;         // Millisecond.
-    const int AUTO_EXPOSURE_TOP_LIMIT_DEFAULT;     // Millisecond.
+    const int AUTO_EXPOSURE_TOP_LIMIT_MAX;         // Microsecond.
+    const int AUTO_EXPOSURE_TOP_LIMIT_MIN;         // Microsecond.
+    const int AUTO_EXPOSURE_TOP_LIMIT_DEFAULT;     // Microsecond.
     const xf  AUTO_GAIN_TOP_LIMIT_MAX;             // db.
     const xf  AUTO_GAIN_TOP_LIMIT_MIN;             // db.
     const xf  AUTO_GAIN_TOP_LIMIT_DEFAULT;         // db.

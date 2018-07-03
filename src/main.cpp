@@ -51,14 +51,14 @@ std::string XI_CAMERA_SN_0 = "CUCAU1814020";
 
 const double DEFAULT_AUTO_GAIN_EXPOSURE_PRIORITY     = 0.9;
 const double DEFAULT_AUTO_GAIN_EXPOSURE_TARGET_LEVEL = 40.0;
-const int    DEFAULT_AUTO_EXPOSURE_TOP_LIMIT         = 200;  // Millisecond.
+const int    DEFAULT_AUTO_EXPOSURE_TOP_LIMIT         = 200000;  // Microsecond.
 const int    DEFAULT_AUTO_GAIN_TOP_LIMIT             = 12;   // dB.
 const int    DEFAULT_TOTAL_BANDWIDTH                 = 2400;
 const int    DEFAULT_BANDWIDTH_MARGIN                = 10;
 const int    DEFAULT_LOOP_RATE                       = 3;
 
 const double DEFAULT_CUSTOM_AEAG_PRIORITY           = 0.9;
-const double DEFAULT_CUSTOM_AEAG_EXPOSURE_TOP_LIMIT = 200.0; // Millisecond.
+const double DEFAULT_CUSTOM_AEAG_EXPOSURE_TOP_LIMIT = 200000.0; // Mirosecond.
 const double DEFAULT_CUSTOM_AEAG_GAIN_TOP_LIMIT     = 12.0;  // dB.
 const int    DEFAULT_CUSTOM_AEAG_BRIGHTNESS_LEVEL   = 30;    // %.
 
