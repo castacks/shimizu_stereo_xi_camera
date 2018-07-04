@@ -258,8 +258,8 @@ void StereoXiCamera::apply_custom_AEAG(cv::Mat &img0, cv::Mat &img1, CameraParam
 
         // For test use.
         std::cout << "Cam " << loopIdx 
-                  << ", avgExposure = " << avgExposure
-                  << ", avgGain = " << avgGain
+                  << ", avgExposure (ms) = " << avgExposure / 1000.0
+                  << ", avgGain (dB) = " << avgGain
                   << std::endl;
     LOOP_CAMERAS_END
 }

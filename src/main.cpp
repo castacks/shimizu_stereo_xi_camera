@@ -93,7 +93,7 @@ int main(int argc, char* argv[])
 	// Get the parameters.
 	double pAutoGainExposurePriority    = DEFAULT_AUTO_GAIN_EXPOSURE_PRIORITY;
 	double pAutoGainExposureTargetLevel = DEFAULT_AUTO_GAIN_EXPOSURE_TARGET_LEVEL;
-	int    pAutoExposureTopLimit        = DEFAULT_AUTO_EXPOSURE_TOP_LIMIT; // Milisecond.
+	int    pAutoExposureTopLimit        = DEFAULT_AUTO_EXPOSURE_TOP_LIMIT; // Microsecond.
 	int    pAutoGainTopLimit            = DEFAULT_AUTO_GAIN_TOP_LIMIT;
 	int    pTotalBandwidth              = DEFAULT_TOTAL_BANDWIDTH;
 	int    pBandwidthMargin             = DEFAULT_BANDWIDTH_MARGIN;
@@ -240,9 +240,9 @@ int main(int argc, char* argv[])
 					imwrite(imgFilename, cvImages[loopIdx], jpegParams);
 				}
 				
-				ROS_INFO( "Camera %d captured image (%d, %d). AEAG %d, AEAGP %.2f, exp %d, gain %.1f dB.", 
+				ROS_INFO( "Camera %d captured image (%d, %d). AEAG %d, AEAGP %.2f, exp %.3f, gain %.1f dB.", 
 				          loopIdx, cvImages[loopIdx].rows, cvImages[loopIdx].cols,
-						  cp[loopIdx].AEAGEnabled, cp[loopIdx].AEAGPriority, cp[loopIdx].exposure, cp[loopIdx].gain );
+						  cp[loopIdx].AEAGEnabled, cp[loopIdx].AEAGPriority, cp[loopIdx].exposure / 1000.0, cp[loopIdx].gain );
 
 				// Publish images.
 				msgImage = cv_bridge::CvImage(std_msgs::Header(), "bgr8", cvImages[loopIdx]).toImageMsg();
