@@ -188,7 +188,7 @@ int main(int argc, char* argv[])
 
 		// Self-adjust.
 		ROS_INFO("Perform self-adjust...");
-		stereoXiCamera.self_adjust(true);
+		// stereoXiCamera.self_adjust(true);
 		ROS_INFO("Self-adjust done.");
 
 		// Get the sensor array.
@@ -238,7 +238,7 @@ int main(int argc, char* argv[])
 
 			if ( 0 != getImagesRes )
 			{
-				ROS_ERROR("Get iamges failed");
+				ROS_ERROR("Get images failed");
 			}
 			else
 			{

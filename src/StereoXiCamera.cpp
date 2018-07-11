@@ -329,6 +329,11 @@ int StereoXiCamera::get_images(cv::Mat &img0, cv::Mat &img1)
     }
     catch ( xiAPIplus_Exception& exp )
     {
+        if ( 10 == exp.GetErrorNumber() )
+        {
+            return -1;
+        }
+
         EXCEPTION_CAMERA_API(exp);
     }
 
