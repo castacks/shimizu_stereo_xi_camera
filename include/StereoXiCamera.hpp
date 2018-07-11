@@ -214,7 +214,7 @@ protected:
 
     xf  mXi_AutoGainExposurePriority;
     xf  mXi_AutoGainExposureTargetLevel;
-    int mXi_AutoExposureTopLimit;     // Milisecond.
+    int mXi_AutoExposureTopLimit;     // Microsecond.
     int mXi_AutoGainTopLimit;         // db.
     int mXi_TotalBandwidth;           // MBit/s.
     int mXi_BandwidthMargin;          // %.
@@ -224,7 +224,7 @@ protected:
     int mSelfAdjustNumFrames;
     bool mIsSelfAdjusting;
 
-    int mXi_Exposure; // Milisecond.
+    int mXi_Exposure; // Microsecond.
     xf  mXi_Gain;
 
     xf  mXi_AWB_kr;
