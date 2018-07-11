@@ -10,6 +10,9 @@
         <param name="pBandwidthMargin" type="int" value="10" />
         <param name="pLoopRate" type="int" value="2" />
 
+        <param name="pExternalTrigger" type="int" value="1">
+        <param name="pNextImageTimeout_ms" type="int" value="1000">
+
         <param name="pCustomAEAGEnabled" type="int" value="0" />
         <param name="pCustomAEAGPriority" type="double" value="1.0" />
         <param name="pCustomAEAGExposureTopLimit" type="double" value="500000" />

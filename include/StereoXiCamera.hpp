@@ -151,6 +151,11 @@ public:
     xf   get_gain(void);
     void put_WB_coefficients(xf& r, xf& g, xf& b);
 
+    void enable_external_trigger(int nextImageTimeout_ms);
+    void disable_external_trigger(void);
+    bool is_external_triger(void);
+    int  get_next_image_timeout(void);
+
     void set_custom_AEAG(AEAG* aeag);
     void set_custom_AEAG_target_brightness_level(int level);
     int  get_custom_AEGA_target_brightness_level(void);
@@ -159,8 +164,8 @@ public:
     bool is_custom_AEAG_enabled(void);
 
 protected:
-    void prepare_before_opening();
-    void open_and_common_settings();
+    void prepare_before_opening(void);
+    void open_and_common_settings(void);
     void setup_camera_common(xiAPIplusCameraOcv& cam);
 
     void get_images(cv::Mat &img0, cv::Mat &img1);
@@ -219,6 +224,9 @@ protected:
     int mXi_TotalBandwidth;           // MBit/s.
     int mXi_BandwidthMargin;          // %.
     xf  mXi_MaxFrameRate;             // fps.
+
+    bool mIsExternalTriggered;
+    int mXi_NextImageTimeout_ms;      // Millisecond.
 
     int mSelfAdjustNumOmittedFrames;
     int mSelfAdjustNumFrames;

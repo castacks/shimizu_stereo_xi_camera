@@ -57,6 +57,8 @@ const int    DEFAULT_TOTAL_BANDWIDTH                 = 2400;
 const int    DEFAULT_BANDWIDTH_MARGIN                = 10;
 const int    DEFAULT_LOOP_RATE                       = 3;
 
+const int    DEFAULT_NEXT_IMAGE_TIMEOUT_MS           = 1000;
+
 const double DEFAULT_CUSTOM_AEAG_PRIORITY           = 0.9;
 const double DEFAULT_CUSTOM_AEAG_EXPOSURE_TOP_LIMIT = 200000.0; // Mirosecond.
 const double DEFAULT_CUSTOM_AEAG_GAIN_TOP_LIMIT     = 12.0;  // dB.
@@ -101,6 +103,9 @@ int main(int argc, char* argv[])
 	int    pLoopRate                    = DEFAULT_LOOP_RATE;
 	std::string pOutDir                 = OUT_DIR;
 
+	int    pExternalTrigger             = 0;
+	int    pNextImageTimeout_ms         = DEFAULT_NEXT_IMAGE_TIMEOUT_MS;
+
 	int    pCustomAEAGEnabled          = 0;
 	double pCustomAEAGPriority         = DEFAULT_CUSTOM_AEAG_PRIORITY;
 	double pCustomAEAGExposureTopLimit = DEFAULT_CUSTOM_AEAG_EXPOSURE_TOP_LIMIT;
@@ -119,6 +124,9 @@ int main(int argc, char* argv[])
 	ROSLAUNCH_GET_PARAM(nodeHandle, "pLoopRate", pLoopRate, DEFAULT_LOOP_RATE);
 	ROSLAUNCH_GET_PARAM(nodeHandle, "pFlagWriteImage", pFlagWriteImage, 0);
 	ROSLAUNCH_GET_PARAM(nodeHandle, "pOutDir", pOutDir, OUT_DIR);
+
+	ROSLAUNCH_GET_PARAM(nodeHandle, "pExternalTrigger", pExternalTrigger, 0);
+	ROSLAUNCH_GET_PARAM(nodeHandle, "pNextImageTimeout_ms", pNextImageTimeout_ms, DEFAULT_NEXT_IMAGE_TIMEOUT_MS);
 
 	ROSLAUNCH_GET_PARAM(nodeHandle, "pCustomAEAGEnabled", pCustomAEAGEnabled, 0);
 	ROSLAUNCH_GET_PARAM(nodeHandle, "pCustomAEAGPriority", pCustomAEAGPriority, DEFAULT_CUSTOM_AEAG_PRIORITY);
@@ -142,6 +150,12 @@ int main(int argc, char* argv[])
 
 	// The object of stereo camera based on the XIMEA cameras.
 	sxc::StereoXiCamera stereoXiCamera = sxc::StereoXiCamera(pXICameraSN_0, pXICameraSN_1);
+
+	// Trigger selection.
+	if ( 1 == pExternalTrigger )
+	{
+		stereoXiCamera.enable_external_trigger(pNextImageTimeout_ms);
+	}
 
 	// The custom AEAG object.
 	sxc::MeanBrightness* mbAEAG = NULL;
@@ -213,7 +227,10 @@ int main(int argc, char* argv[])
 			ROS_INFO("nImages = %d", nImages);
 
 			// Trigger.
-			stereoXiCamera.software_trigger();
+			if ( false == stereoXiCamera.is_external_triger() )
+			{
+				stereoXiCamera.software_trigger();
+			}
 
 			// Get images.
 			stereoXiCamera.get_images( cvImages[0], cvImages[1], cp[0], cp[1] );

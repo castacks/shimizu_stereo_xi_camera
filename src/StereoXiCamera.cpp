@@ -19,6 +19,7 @@ StereoXiCamera::StereoXiCamera(std::string &camSN0, std::string &camSN1)
   mXi_AutoExposureTopLimit(AUTO_EXPOSURE_TOP_LIMIT_DEFAULT),
   mXi_AutoGainTopLimit(AUTO_GAIN_TOP_LIMIT_DEFAULT),
   mXi_BandwidthMargin(BANDWIDTH_MARGIN_DEFAULT),
+  mIsExternalTriggered(false), mXi_NextImageTimeout_ms(1000),
   mSelfAdjustNumOmittedFrames(5), mSelfAdjustNumFrames(3), mIsSelfAdjusting(false),
   mXi_Exposure(100), mXi_Gain(0), mXi_AWB_kr(0.0), mXi_AWB_kg(0.0), mXi_AWB_kb(0.0), 
   mCAEAG(NULL), mCAEAG_TargetBrightnessLevel(10), mCAEAG_TargetBrightnessLevel8Bit(0), mCAEAG_IsEnabled(false)
@@ -290,6 +291,12 @@ void StereoXiCamera::start_acquisition(int waitMS)
 
 void StereoXiCamera::software_trigger(void)
 {
+    if ( true == mIsExternalTriggered )
+    {
+        std::cout << "External trigger enabled. Software trigger is ignored." << std::endl;
+        return;
+    }
+
     try
     {
         // Trigger.
@@ -468,7 +475,7 @@ void StereoXiCamera::put_sensor_filter_array(int idx, std::string &strFilterArra
     }
 }
 
-void StereoXiCamera::prepare_before_opening()
+void StereoXiCamera::prepare_before_opening(void)
 {
     // Bandwidth.
     LOOP_CAMERAS_BEGIN
@@ -476,7 +483,7 @@ void StereoXiCamera::prepare_before_opening()
     LOOP_CAMERAS_END
 }
 
-void StereoXiCamera::open_and_common_settings()
+void StereoXiCamera::open_and_common_settings(void)
 {
     // Configure common parameters.
     LOOP_CAMERAS_BEGIN
@@ -490,15 +497,28 @@ void StereoXiCamera::open_and_common_settings()
     LOOP_CAMERAS_END
 
     // Configure synchronization.
-    // Set trigger mode on the first camera - as master.
-    mCams[CAM_IDX_0].SetTriggerSource(XI_TRG_SOFTWARE);
-    mCams[CAM_IDX_0].SetGPOSelector(XI_GPO_PORT1);
-    mCams[CAM_IDX_0].SetGPOMode(XI_GPO_EXPOSURE_ACTIVE);
+    if ( false == mIsExternalTriggered )
+    {
+        // Set trigger mode on the first camera - as trigger source.
+        mCams[CAM_IDX_0].SetTriggerSource(XI_TRG_SOFTWARE);
+        mCams[CAM_IDX_0].SetGPOSelector(XI_GPO_PORT1);
+        mCams[CAM_IDX_0].SetGPOMode(XI_GPO_EXPOSURE_ACTIVE);
 
-    // Set trigger mode on the second camera - as slave.
-    mCams[CAM_IDX_1].SetGPISelector(XI_GPI_PORT1);
-    mCams[CAM_IDX_1].SetGPIMode(XI_GPI_TRIGGER);
-    mCams[CAM_IDX_1].SetTriggerSource(XI_TRG_EDGE_RISING);
+        // Set trigger mode on the second camera - as receiver.
+        mCams[CAM_IDX_1].SetGPISelector(XI_GPI_PORT1);
+        mCams[CAM_IDX_1].SetGPIMode(XI_GPI_TRIGGER);
+        mCams[CAM_IDX_1].SetTriggerSource(XI_TRG_EDGE_RISING);
+    }
+    else
+    {
+        // Set both cameras to use external trigger.
+        LOOP_CAMERAS_BEGIN
+            mCams[loopIdx].SetGPISelector(XI_GPI_PORT1);
+            mCams[loopIdx].SetGPIMode(XI_GPI_TRIGGER);
+            mCams[loopIdx].SetTriggerSource(XI_TRG_EDGE_RISING);
+            mCams[loopIdx].SetNextImageTimeout_ms(mXi_NextImageTimeout_ms);
+        LOOP_CAMERAS_END
+    }
 }
 
 void StereoXiCamera::setup_camera_common(xiAPIplusCameraOcv& cam)
@@ -669,6 +689,27 @@ void StereoXiCamera::put_WB_coefficients(xf& r, xf& g, xf& b)
     r = mXi_AWB_kr;
     g = mXi_AWB_kg;
     b = mXi_AWB_kb;
+}
+
+void StereoXiCamera::enable_external_trigger(int nextImageTimeout_ms)
+{
+    mIsExternalTriggered = true;
+    mXi_NextImageTimeout_ms = nextImageTimeout_ms;
+}
+
+void StereoXiCamera::disable_external_trigger(void)
+{
+    mIsExternalTriggered = false;
+}
+
+bool StereoXiCamera::is_external_triger(void)
+{
+    return mIsExternalTriggered;
+}
+
+int StereoXiCamera::get_next_image_timeout(void)
+{
+    return mXi_NextImageTimeout_ms;
 }
 
 void StereoXiCamera::set_custom_AEAG(AEAG* aeag)
