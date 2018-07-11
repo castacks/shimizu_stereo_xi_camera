@@ -121,8 +121,10 @@ public:
     void start_acquisition(int waitMS = 500);
 
     void software_trigger(void);
-    void get_images(cv::Mat &img0, cv::Mat &img1, CameraParams_t &camP0, CameraParams_t &camP1);
-
+    /**
+     * @return 0 if succeed.
+     */
+    int get_images(cv::Mat &img0, cv::Mat &img1, CameraParams_t &camP0, CameraParams_t &camP1);
     void stop_acquisition(int waitMS = 500);
     void close();
 
@@ -168,7 +170,10 @@ protected:
     void open_and_common_settings(void);
     void setup_camera_common(xiAPIplusCameraOcv& cam);
 
-    void get_images(cv::Mat &img0, cv::Mat &img1);
+    /**
+     * @return 0 if no error. 
+     */
+    int get_images(cv::Mat &img0, cv::Mat &img1);
     cv::Mat get_single_image(int idx);
     void put_single_camera_params(xiAPIplusCameraOcv &cam, CameraParams_t &cp);
 

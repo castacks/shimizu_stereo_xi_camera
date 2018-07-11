@@ -211,6 +211,7 @@ int main(int argc, char* argv[])
 		jpegParams.push_back( 100 );
 
 		int nImages = 0; // Image counter.
+		int getImagesRes = 0;
 
 		// Begin running ROS node.
 		while(ros::ok())
@@ -233,44 +234,51 @@ int main(int argc, char* argv[])
 			}
 
 			// Get images.
-			stereoXiCamera.get_images( cvImages[0], cvImages[1], cp[0], cp[1] );
+			getImagesRes = stereoXiCamera.get_images( cvImages[0], cvImages[1], cp[0], cp[1] );
 
-			// Prepare the time stamp for the header.
-			rosTimeStamp = ros::Time::now();
+			if ( 0 != getImagesRes )
+			{
+				ROS_ERROR("Get iamges failed");
+			}
+			else
+			{
+				// Prepare the time stamp for the header.
+				rosTimeStamp = ros::Time::now();
 
-			// Convert the image into ROS image message.
-			LOOP_CAMERAS_BEGIN
-				// Clear the temporary sting stream.
-				ss.flush();	ss.str(""); ss.clear();
-				ss << pOutDir << "/" << nImages << "_" << loopIdx;
+				// Convert the image into ROS image message.
+				LOOP_CAMERAS_BEGIN
+					// Clear the temporary sting stream.
+					ss.flush();	ss.str(""); ss.clear();
+					ss << pOutDir << "/" << nImages << "_" << loopIdx;
 
-				ROS_INFO( "%s", ss.str().c_str() );
+					ROS_INFO( "%s", ss.str().c_str() );
 
-				// Save the captured image to file system.
-				if ( 1 == pFlagWriteImage )
-				{
-					std::string yamlFilename = ss.str() + ".yaml";
-					std::string imgFilename = ss.str() + ".bmp";
+					// Save the captured image to file system.
+					if ( 1 == pFlagWriteImage )
+					{
+						std::string yamlFilename = ss.str() + ".yaml";
+						std::string imgFilename = ss.str() + ".bmp";
 
-					// FileStorage cfFS(yamlFilename, FileStorage::WRITE);
-					// cfFS << "frame" << nImages << "image_id" << loopIdx << "raw_data" << cvImages[loopIdx];
-					imwrite(imgFilename, cvImages[loopIdx], jpegParams);
-				}
-				
-				ROS_INFO( "Camera %d captured image (%d, %d). AEAG %d, AEAGP %.2f, exp %.3f, gain %.1f dB.", 
-				          loopIdx, cvImages[loopIdx].rows, cvImages[loopIdx].cols,
-						  cp[loopIdx].AEAGEnabled, cp[loopIdx].AEAGPriority, cp[loopIdx].exposure / 1000.0, cp[loopIdx].gain );
+						// FileStorage cfFS(yamlFilename, FileStorage::WRITE);
+						// cfFS << "frame" << nImages << "image_id" << loopIdx << "raw_data" << cvImages[loopIdx];
+						imwrite(imgFilename, cvImages[loopIdx], jpegParams);
+					}
+					
+					ROS_INFO( "Camera %d captured image (%d, %d). AEAG %d, AEAGP %.2f, exp %.3f, gain %.1f dB.", 
+							loopIdx, cvImages[loopIdx].rows, cvImages[loopIdx].cols,
+							cp[loopIdx].AEAGEnabled, cp[loopIdx].AEAGPriority, cp[loopIdx].exposure / 1000.0, cp[loopIdx].gain );
 
-				// Publish images.
-				msgImage = cv_bridge::CvImage(std_msgs::Header(), "bgr8", cvImages[loopIdx]).toImageMsg();
-				// msgImage = cv_bridge::CvImage(std_msgs::Header(), "bayer_bggr8", cvImages[loopIdx]).toImageMsg();
-				msgImage->header.seq   = nImages;
-				msgImage->header.stamp = rosTimeStamp;
+					// Publish images.
+					msgImage = cv_bridge::CvImage(std_msgs::Header(), "bgr8", cvImages[loopIdx]).toImageMsg();
+					// msgImage = cv_bridge::CvImage(std_msgs::Header(), "bayer_bggr8", cvImages[loopIdx]).toImageMsg();
+					msgImage->header.seq   = nImages;
+					msgImage->header.stamp = rosTimeStamp;
 
-				publishersImage[loopIdx].publish(msgImage);
+					publishersImage[loopIdx].publish(msgImage);
 
-				ROS_INFO("%s", "Message published.");
-			LOOP_CAMERAS_END
+					ROS_INFO("%s", "Message published.");
+				LOOP_CAMERAS_END
+			}
 
 			// ROS spin.
 			ros::spinOnce();

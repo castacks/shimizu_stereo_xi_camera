@@ -308,7 +308,7 @@ void StereoXiCamera::software_trigger(void)
     }
 }
 
-void StereoXiCamera::get_images(cv::Mat &img0, cv::Mat &img1)
+int StereoXiCamera::get_images(cv::Mat &img0, cv::Mat &img1)
 {
     try
     {
@@ -331,11 +331,16 @@ void StereoXiCamera::get_images(cv::Mat &img0, cv::Mat &img1)
     {
         EXCEPTION_CAMERA_API(exp);
     }
+
+    return 0;
 }
 
-void StereoXiCamera::get_images(cv::Mat &img0, cv::Mat &img1, CameraParams_t &camP0, CameraParams_t &camP1)
+int StereoXiCamera::get_images(cv::Mat &img0, cv::Mat &img1, CameraParams_t &camP0, CameraParams_t &camP1)
 {
-    this->get_images(img0, img1);
+    if ( 0 != this->get_images(img0, img1) )
+    {
+        return -1;
+    }
 
     try
     {
@@ -351,6 +356,8 @@ void StereoXiCamera::get_images(cv::Mat &img0, cv::Mat &img1, CameraParams_t &ca
     {
         EXCEPTION_CAMERA_API(exp);
     }
+
+    return 0;
 }
 
 cv::Mat StereoXiCamera::get_single_image(int idx)
