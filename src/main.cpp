@@ -106,6 +106,8 @@ int main(int argc, char* argv[])
 	int    pExternalTrigger             = 0;
 	int    pNextImageTimeout_ms         = DEFAULT_NEXT_IMAGE_TIMEOUT_MS;
 
+	int    pSelfAdjust                  = 1;
+
 	int    pCustomAEAGEnabled          = 0;
 	double pCustomAEAGPriority         = DEFAULT_CUSTOM_AEAG_PRIORITY;
 	double pCustomAEAGExposureTopLimit = DEFAULT_CUSTOM_AEAG_EXPOSURE_TOP_LIMIT;
@@ -127,6 +129,8 @@ int main(int argc, char* argv[])
 
 	ROSLAUNCH_GET_PARAM(nodeHandle, "pExternalTrigger", pExternalTrigger, 0);
 	ROSLAUNCH_GET_PARAM(nodeHandle, "pNextImageTimeout_ms", pNextImageTimeout_ms, DEFAULT_NEXT_IMAGE_TIMEOUT_MS);
+
+	ROSLAUNCH_GET_PARAM(nodeHandle, "pSelfAdjust", pSelfAdjust, 1)
 
 	ROSLAUNCH_GET_PARAM(nodeHandle, "pCustomAEAGEnabled", pCustomAEAGEnabled, 0);
 	ROSLAUNCH_GET_PARAM(nodeHandle, "pCustomAEAGPriority", pCustomAEAGPriority, DEFAULT_CUSTOM_AEAG_PRIORITY);
@@ -187,9 +191,12 @@ int main(int argc, char* argv[])
 		stereoXiCamera.open();
 
 		// Self-adjust.
-		ROS_INFO("Perform self-adjust...");
-		// stereoXiCamera.self_adjust(true);
-		ROS_INFO("Self-adjust done.");
+		if ( 1 == pSelfAdjust )
+		{
+			ROS_INFO("Perform self-adjust...");
+			stereoXiCamera.self_adjust(true);
+			ROS_INFO("Self-adjust done.");
+		}
 
 		// Get the sensor array.
 		std::string strSensorArray;

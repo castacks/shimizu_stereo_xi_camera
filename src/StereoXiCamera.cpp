@@ -20,7 +20,8 @@ StereoXiCamera::StereoXiCamera(std::string &camSN0, std::string &camSN1)
   mXi_AutoGainTopLimit(AUTO_GAIN_TOP_LIMIT_DEFAULT),
   mXi_BandwidthMargin(BANDWIDTH_MARGIN_DEFAULT),
   mIsExternalTriggered(false), mXi_NextImageTimeout_ms(1000),
-  mSelfAdjustNumOmittedFrames(5), mSelfAdjustNumFrames(3), mIsSelfAdjusting(false),
+  mSelfAdjustNumOmittedFrames(5), mSelfAdjustNumFrames(3), 
+  mSelfAdjustNumTrialLoops((mSelfAdjustNumOmittedFrames+mSelfAdjustNumFrames)*2), mIsSelfAdjusting(false),
   mXi_Exposure(100), mXi_Gain(0), mXi_AWB_kr(0.0), mXi_AWB_kg(0.0), mXi_AWB_kb(0.0), 
   mCAEAG(NULL), mCAEAG_TargetBrightnessLevel(10), mCAEAG_TargetBrightnessLevel8Bit(0), mCAEAG_IsEnabled(false)
 {
@@ -95,34 +96,73 @@ void StereoXiCamera::record_settings(int nFrames, std::vector<CameraParams_t> &v
     cv::Mat cvImages[2];                  // OpenCV Mat array to hold the images.
     StereoXiCamera::CameraParams_t cp[2]; // Camera parameters.
 
+    // Set the trigger source.
+    set_stereo_software_trigger();
+
     // Start acquisition.
     start_acquisition();
 
-    for ( int i = 0; i < mSelfAdjustNumOmittedFrames + mSelfAdjustNumFrames; ++i )
+    int i = 0;
+    int j = 0;
+    int resGetImages = -1;
+
+    while ( i < mSelfAdjustNumOmittedFrames + mSelfAdjustNumFrames && j < mSelfAdjustNumTrialLoops )
     {
         // Software trigger.
-        software_trigger();
-
+        software_trigger(true);
+        
         // Get images.
-        get_images( cvImages[0], cvImages[1], cp[0], cp[1] );
+        resGetImages = get_images( cvImages[0], cvImages[1], cp[0], cp[1] );
 
-        if ( true == verbose )
+        if ( 0 == resGetImages )
         {
-            std::cout << "Self-adjust image No. " << i + 1 
-                      << " with " << mSelfAdjustNumOmittedFrames 
-                      << " to omit." << std::endl; 
+            // get_images() succeeds.
+            if ( true == verbose )
+            {
+                std::cout << "Self-adjust image No. " << i + 1 
+                        << " with " << mSelfAdjustNumOmittedFrames 
+                        << " to omit." << std::endl; 
+            }
+
+            if ( i >= mSelfAdjustNumOmittedFrames )
+            {
+                // Record the parameters.
+                vcp.push_back( cp[0] );
+                vcp.push_back( cp[1] );
+            }
+
+            ++i;
         }
 
-        if ( i >= mSelfAdjustNumOmittedFrames )
-        {
-            // Record the parameters.
-            vcp.push_back( cp[0] );
-            vcp.push_back( cp[1] );
-        }
+        ++j;
     }
 
     // Stop acquisition.
     stop_acquisition();
+
+    // Restore the trigger settings.
+    if ( false == mIsExternalTriggered )
+    {
+        set_stereo_master_trigger();
+    }
+    else
+    {
+        set_stereo_external_trigger();
+    }
+
+    // Check the status.
+    if ( j == mSelfAdjustNumTrialLoops )
+    {
+        if ( i == mSelfAdjustNumOmittedFrames + mSelfAdjustNumFrames )
+        {
+            // We are fine.
+        }
+        else if ( i < mSelfAdjustNumOmittedFrames + mSelfAdjustNumFrames )
+        {
+            // This is an error.
+            EXCEPTION_BAD_HARDWARE_RESPONSE("Record settings for self-adjust failed with bad hardware response.");
+        }
+    }
 }
 
 void StereoXiCamera::self_adjust_exposure_gain(std::vector<CameraParams_t> &cp)
@@ -289,7 +329,7 @@ void StereoXiCamera::start_acquisition(int waitMS)
     cvWaitKey(waitMS);
 }
 
-void StereoXiCamera::software_trigger(void)
+void StereoXiCamera::software_trigger(bool both)
 {
     if ( true == mIsExternalTriggered )
     {
@@ -301,6 +341,10 @@ void StereoXiCamera::software_trigger(void)
     {
         // Trigger.
         mCams[CAM_IDX_0].SetTriggerSoftware(TRIGGER_SOFTWARE);
+        if ( true == both )
+        {
+            mCams[CAM_IDX_1].SetTriggerSoftware(TRIGGER_SOFTWARE);
+        }
     }
     catch ( xiAPIplus_Exception& exp )
     {
@@ -511,25 +555,11 @@ void StereoXiCamera::open_and_common_settings(void)
     // Configure synchronization.
     if ( false == mIsExternalTriggered )
     {
-        // Set trigger mode on the first camera - as trigger source.
-        mCams[CAM_IDX_0].SetTriggerSource(XI_TRG_SOFTWARE);
-        mCams[CAM_IDX_0].SetGPOSelector(XI_GPO_PORT1);
-        mCams[CAM_IDX_0].SetGPOMode(XI_GPO_EXPOSURE_ACTIVE);
-
-        // Set trigger mode on the second camera - as receiver.
-        mCams[CAM_IDX_1].SetGPISelector(XI_GPI_PORT1);
-        mCams[CAM_IDX_1].SetGPIMode(XI_GPI_TRIGGER);
-        mCams[CAM_IDX_1].SetTriggerSource(XI_TRG_EDGE_RISING);
+        set_stereo_master_trigger();
     }
     else
     {
-        // Set both cameras to use external trigger.
-        LOOP_CAMERAS_BEGIN
-            mCams[loopIdx].SetGPISelector(XI_GPI_PORT1);
-            mCams[loopIdx].SetGPIMode(XI_GPI_TRIGGER);
-            mCams[loopIdx].SetTriggerSource(XI_TRG_EDGE_RISING);
-            mCams[loopIdx].SetNextImageTimeout_ms(mXi_NextImageTimeout_ms);
-        LOOP_CAMERAS_END
+        set_stereo_external_trigger();
     }
 }
 
@@ -559,6 +589,38 @@ void StereoXiCamera::setup_camera_common(xiAPIplusCameraOcv& cam)
 	int cameraDataRate = (int)( mXi_TotalBandwidth / 2.0 * ( 100.0 - mXi_BandwidthMargin ) / 100 );
     mXi_MaxFrameRate = mXi_TotalBandwidth / 2.0 / cameraDataRate;
 	cam.SetBandwidthLimit( cameraDataRate );
+}
+
+void StereoXiCamera::set_stereo_external_trigger(void)
+{
+    // Set both cameras to use external trigger.
+    LOOP_CAMERAS_BEGIN
+        mCams[loopIdx].SetGPISelector(XI_GPI_PORT1);
+        mCams[loopIdx].SetGPIMode(XI_GPI_TRIGGER);
+        mCams[loopIdx].SetTriggerSource(XI_TRG_EDGE_RISING);
+        mCams[loopIdx].SetNextImageTimeout_ms(mXi_NextImageTimeout_ms);
+    LOOP_CAMERAS_END
+}
+
+void StereoXiCamera::set_stereo_master_trigger(void)
+{
+    // Set trigger mode on the first camera - as trigger source.
+    mCams[CAM_IDX_0].SetTriggerSource(XI_TRG_SOFTWARE);
+    mCams[CAM_IDX_0].SetGPOSelector(XI_GPO_PORT1);
+    mCams[CAM_IDX_0].SetGPOMode(XI_GPO_EXPOSURE_ACTIVE);
+
+    // Set trigger mode on the second camera - as receiver.
+    mCams[CAM_IDX_1].SetGPISelector(XI_GPI_PORT1);
+    mCams[CAM_IDX_1].SetGPIMode(XI_GPI_TRIGGER);
+    mCams[CAM_IDX_1].SetTriggerSource(XI_TRG_EDGE_RISING);
+}
+
+void StereoXiCamera::set_stereo_software_trigger(void)
+{
+    // Set both camera as software tiggered.
+    LOOP_CAMERAS_BEGIN
+        mCams[loopIdx].SetTriggerSource(XI_TRG_SOFTWARE);
+    LOOP_CAMERAS_END
 }
 
 int StereoXiCamera::EXPOSURE_MILLISEC(int val)
@@ -722,6 +784,16 @@ bool StereoXiCamera::is_external_triger(void)
 int StereoXiCamera::get_next_image_timeout(void)
 {
     return mXi_NextImageTimeout_ms;
+}
+
+void StereoXiCamera::set_self_adjust_trail_loops(int t)
+{
+    mSelfAdjustNumTrialLoops = t;
+}
+
+int StereoXiCamera::get_self_adjust_trail_loops(void)
+{
+    return mSelfAdjustNumTrialLoops;
 }
 
 void StereoXiCamera::set_custom_AEAG(AEAG* aeag)

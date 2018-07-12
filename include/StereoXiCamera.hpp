@@ -81,6 +81,14 @@
         BOOST_THROW_EXCEPTION( camera_api_exception() << ExceptionInfoString(camEx##_ss.str()) );\
     }
 
+#define EXCEPTION_BAD_HARDWARE_RESPONSE(s) \
+    {\
+        std::stringstream badHwRsp_ss;\
+        badHwRsp_ss << "Bad hardware response" << s;\
+        \
+        BOOST_THROW_EXCEPTION( bad_hardware_response() << ExceptionInfoString(badHwRsp_ss.str()) );\
+    }
+
 // ============ File-wise or global variables. ===========
 
 /* No variables declared or initialized. */
@@ -93,7 +101,9 @@ struct exception_base        : virtual std::exception, virtual boost::exception 
 struct bad_argument          : virtual exception_base { };
 struct argument_out_of_range : virtual bad_argument { };
 struct argument_null         : virtual bad_argument { };
-struct camera_api_exception  : virtual exception_base { };
+struct hardware_exception    : virtual exception_base { };
+struct camera_api_exception  : virtual hardware_exception { };
+struct bad_hardware_response : virtual hardware_exception { };
 
 typedef boost::error_info<struct tag_info_string, std::string> ExceptionInfoString;
 
@@ -120,7 +130,7 @@ public:
     void self_adjust(bool verbose = false);
     void start_acquisition(int waitMS = 500);
 
-    void software_trigger(void);
+    void software_trigger(bool both = false);
     /**
      * @return 0 if succeed.
      */
@@ -158,6 +168,9 @@ public:
     bool is_external_triger(void);
     int  get_next_image_timeout(void);
 
+    void set_self_adjust_trail_loops(int t);
+    int  get_self_adjust_trail_loops(void);
+
     void set_custom_AEAG(AEAG* aeag);
     void set_custom_AEAG_target_brightness_level(int level);
     int  get_custom_AEGA_target_brightness_level(void);
@@ -169,6 +182,9 @@ protected:
     void prepare_before_opening(void);
     void open_and_common_settings(void);
     void setup_camera_common(xiAPIplusCameraOcv& cam);
+    void set_stereo_external_trigger(void);
+    void set_stereo_master_trigger(void);
+    void set_stereo_software_trigger(void);
 
     /**
      * @return 0 if no error. 
@@ -235,6 +251,7 @@ protected:
 
     int mSelfAdjustNumOmittedFrames;
     int mSelfAdjustNumFrames;
+    int mSelfAdjustNumTrialLoops;     // The maximum number of trial loops for the recording process of self-adjust operation.
     bool mIsSelfAdjusting;
 
     int mXi_Exposure; // Microsecond.
