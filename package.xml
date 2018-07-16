@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>stereo_xi_camera</name>
+  <name>ros_stereo_xi_camera</name>
   <version>0.0.1</version>
   <description>The stereo_xi_camera package. A package provides stereo camera functionalities based on XIMEA xiC cameras.</description>
 

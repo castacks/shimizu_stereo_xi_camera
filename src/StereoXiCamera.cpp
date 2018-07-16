@@ -331,7 +331,8 @@ void StereoXiCamera::start_acquisition(int waitMS)
 
 void StereoXiCamera::software_trigger(bool both)
 {
-    if ( true == mIsExternalTriggered )
+    if ( true == mIsExternalTriggered && 
+         false == mIsSelfAdjusting )
     {
         std::cout << "External trigger enabled. Software trigger is ignored." << std::endl;
         return;

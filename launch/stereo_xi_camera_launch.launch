@@ -1,5 +1,5 @@
 <launch>
-    <node name="xic_stereo" pkg="stereo_xi_camera" type="stereo_xi_camera_node" output="screen">
+    <node name="xic_stereo" pkg="ros_stereo_xi_camera" type="ros_stereo_xi_camera_node" output="screen">
         <param name="pXICameraSN_0" type="str" value="CUCAU1814018" />
         <param name="pXICameraSN_1" type="str" value="CUCAU1814020" />
         <param name="pAutoGainExposurePriority" type="double" value="1.0" />

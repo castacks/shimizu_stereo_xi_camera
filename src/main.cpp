@@ -66,32 +66,13 @@ const double DEFAULT_CUSTOM_AEAG_EXPOSURE_TOP_LIMIT = 200000.0; // Mirosecond.
 const double DEFAULT_CUSTOM_AEAG_GAIN_TOP_LIMIT     = 12.0;  // dB.
 const int    DEFAULT_CUSTOM_AEAG_BRIGHTNESS_LEVEL   = 30;    // %.
 
-// ============= Local macros. =====================
-
-#define ROSLAUNCH_GET_PARAM(nh, name, var, d) \
-	{\
-		std::stringstream var##_ss;\
-		\
-		if ( false == nh.getParam(name, var) ) \
-		{\
-			var = d;\
-			var##_ss << d;\
-			ROS_INFO("Parameter %s is not present. Use default value %s.", name, var##_ss.str().c_str());\
-		}\
-		else\
-		{\
-			var##_ss << var;\
-			ROS_INFO("Parameter %s = %s.", name, var##_ss.str().c_str());\
-		}\
-	}
-
 // =============== main(). =========================
 
 int main(int argc, char* argv[])
 {
 	int ret = 0;
 
-	SRN::SXCSync sxcSync;
+	SRN::SXCSync sxcSync(NODE_NAME);
 
 	ros::init(argc, argv, NODE_NAME);
 	ros::NodeHandle nodeHandle("~");
