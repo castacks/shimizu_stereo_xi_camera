@@ -27,6 +27,8 @@
 
 // ========= Includes for ROS and OpenCV. ===================
 
+#include "ROSNode/SXCSync.hpp"
+
 #include "ros/ros.h"
 #include "std_msgs/String.h"
 #include <image_transport/image_transport.h>
@@ -89,10 +91,12 @@ int main(int argc, char* argv[])
 {
 	int ret = 0;
 
+	SRN::SXCSync sxcSync;
+
 	ros::init(argc, argv, NODE_NAME);
 	ros::NodeHandle nodeHandle("~");
 
-	// Get the parameters.
+	// ============ Get the parameters from the launch file. ============== 
 	double pAutoGainExposurePriority    = DEFAULT_AUTO_GAIN_EXPOSURE_PRIORITY;
 	double pAutoGainExposureTargetLevel = DEFAULT_AUTO_GAIN_EXPOSURE_TARGET_LEVEL;
 	int    pAutoExposureTopLimit        = DEFAULT_AUTO_EXPOSURE_TOP_LIMIT; // Microsecond.
@@ -141,15 +145,17 @@ int main(int argc, char* argv[])
 	ROSLAUNCH_GET_PARAM(nodeHandle, "pXICameraSN_0", pXICameraSN_0, XI_CAMERA_SN_0);
 	ROSLAUNCH_GET_PARAM(nodeHandle, "pXICameraSN_1", pXICameraSN_1, XI_CAMERA_SN_1);
 
+	// =================== Image publishers. ===================
 	image_transport::ImageTransport imageTransport(nodeHandle);
 
 	image_transport::Publisher publishersImage[2] = { 
 		imageTransport.advertise(TOPIC_NAME_LEFT_IMAGE, 1), 
 		imageTransport.advertise(TOPIC_NAME_RIGHT_IMAGE, 1) };
 
+	// Running rate.
   	ros::Rate loop_rate(pLoopRate);
 
-	// The ROS message to be published.
+	// The image message to be published.
 	sensor_msgs::ImagePtr msgImage;
 
 	// The object of stereo camera based on the XIMEA cameras.
@@ -176,7 +182,6 @@ int main(int argc, char* argv[])
 		stereoXiCamera.enable_custom_AEAG();
 	}
 
-	// Run the ROS node.
 	try
 	{
 		// Configure the stereo camera.
@@ -202,6 +207,8 @@ int main(int argc, char* argv[])
 		std::string strSensorArray;
 		stereoXiCamera.put_sensor_filter_array(0, strSensorArray);
 		ROS_INFO("The sensor array string is %s.", strSensorArray.c_str());
+
+		// ========= ROS node run. =============
 
 		// Start acquisition.
 		ROS_INFO("%s", "Start acquisition.");
