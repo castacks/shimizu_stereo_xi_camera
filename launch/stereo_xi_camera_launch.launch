@@ -4,7 +4,7 @@
         <param name="pXICameraSN_1" type="str" value="CUCAU1814020" />
         <param name="pAutoGainExposurePriority" type="double" value="1.0" />
         <param name="pAutoGainExposureTargetLevel" type="double" value="30" />
-        <param name="pAutoExposureTopLimit" type="int" value="500000" />
+        <param name="pAutoExposureTopLimit" type="int" value="200000" />
         <param name="pAutoGainTopLimit" type="int" value="12" />
         <param name="pTotalBandwidth" type="int" value="2400" />
         <param name="pBandwidthMargin" type="int" value="10" />
@@ -17,12 +17,12 @@
 
         <param name="pCustomAEAGEnabled" type="int" value="0" />
         <param name="pCustomAEAGPriority" type="double" value="1.0" />
-        <param name="pCustomAEAGExposureTopLimit" type="double" value="500000" />
+        <param name="pCustomAEAGExposureTopLimit" type="double" value="200000" />
         <param name="pCustomAEAGGainTopLimit" type="double" value="12" />
         <param name="pCustomAEAGBrightnessLevel" type="int" value="35" />
 
         <!-- Warning: Setting the following flag as 1 will enable continous images writing to the file system. -->
-        <param name="pFlagWriteImage" type="int" value="1" />
+        <param name="pFlagWriteImage" type="int" value="0" />
         <param name="pOutDir" type="str" value="/home/yaoyu/Documents/CMU/AirLab/Shimizu/Stereo/CapturedImages" />
     </node>
 </launch>
