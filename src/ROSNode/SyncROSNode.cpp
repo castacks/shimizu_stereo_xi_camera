@@ -39,6 +39,11 @@ int SyncROSNode::init(int& argc, char** argv, std::string& name, uint32_t option
     }
 }
 
+int SyncROSNode::parse_launch_parameters(void)
+{
+    return 0;
+}
+
 int SyncROSNode::prepare(void)
 {
     return 0;

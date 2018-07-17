@@ -24,6 +24,7 @@ public:
     SXCSync(const std::string& name);
     virtual ~SXCSync();
 
+    int parse_launch_parameters(void);
     int prepare(void);
     int synchronize(void);
     int pause(void);
@@ -37,9 +38,6 @@ public:
 
     void set_out_dir(const std::string& outDir);
     const std::string& get_out_dir(void);
-
-protected:
-    void parse_launch_parameters(void);
 
 public:
     static const double DEFAULT_AUTO_GAIN_EXPOSURE_PRIORITY     = 0.9;
@@ -65,6 +63,27 @@ protected:
     std::string mOutDir;
 
     std::string mXiCameraSN[2];
+
+private:
+    double mAutoGainExposurePriority;
+	double mAutoGainExposureTargetLevel;
+	int    mAutoExposureTopLimit; // Microsecond.
+	int    mAutoGainTopLimit;
+	int    mTotalBandwidth;
+	int    mBandwidthMargin;
+	int    mFlagWriteImage;
+	int    mLoopRate;
+
+	int    mExternalTrigger;
+	int    mNextImageTimeout_ms;
+
+	int    mSelfAdjust;
+
+	int    mCustomAEAGEnabled;
+	double mCustomAEAGPriority;
+	double mCustomAEAGExposureTopLimit;
+	double mCustomAEAGGainTopLimit;
+	int    mCustomAEAGBrightnessLevel;
 };
 
 }
