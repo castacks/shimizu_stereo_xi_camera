@@ -69,6 +69,12 @@ int SXCSync::parse_launch_parameters(void)
 
 int SXCSync::prepare(void)
 {
+    // =================== Image publishers. ===================
+	image_transport::ImageTransport imageTransport(nodeHandle);
+
+	image_transport::Publisher publishersImage[2] = { 
+    imageTransport.advertise(TOPIC_NAME_LEFT_IMAGE, 1), 
+    imageTransport.advertise(TOPIC_NAME_RIGHT_IMAGE, 1) };
     return 0;
 }
 
