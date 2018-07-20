@@ -38,7 +38,8 @@ int main(int argc, char* argv[])
 {
 	// Return value.
 	int ret = 0;
-	SRN::Res_t nodeRes = SRN::RES_OK;
+	SRN::Res_t nodeRes    = SRN::RES_OK;
+	SRN::ProcessType_t pt = SRN::PROCESS_CONTINUE;
 
 	// Create SyncROSNode object.
 	SRN::SXCSync sxcSync(NODE_NAME);
@@ -52,17 +53,33 @@ int main(int argc, char* argv[])
 	// Synchronization preparation.
 	nodeRes = sxcSync.prepare(); CHECK_RES(nodeRes);
 
-	// Resume.
-	nodeRes = sxcSync.resume(); CHECK_RES(nodeRes);
-
-	// Begin synchronizing ROS node.
-	while(ros::ok())
+	while ( ros::ok() && true == sxcSync.is_looping() )
 	{
-		nodeRes = sxcSync.synchronize(); CHECK_RES(nodeRes);
+		// Resume.
+		pt = SRN::PROCESS_CONTINUE;
+		while ( ros::ok() && SRN::PROCESS_CONTINUE == pt )
+		{
+			nodeRes = sxcSync.resume(pt); CHECK_RES(nodeRes);
+		}
+
+		// Begin synchronizing ROS node.
+		pt = SRN::PROCESS_CONTINUE;
+		while( ros::ok() && SRN::PROCESS_CONTINUE == pt )
+		{
+			nodeRes = sxcSync.synchronize(pt); CHECK_RES(nodeRes);
+		}
+
+		// Pause.
+		pt = SRN::PROCESS_CONTINUE;
+		while ( ros::ok() && SRN::PROCESS_CONTINUE == pt )
+		{
+			nodeRes = sxcSync.pause(pt); CHECK_RES(nodeRes);
+		}
 	}
 
 	// Stop.
-	nodeRes = sxcSync.pause(); CHECK_RES(nodeRes);
+	nodeRes = sxcSync.stop(); CHECK_RES(nodeRes);
+	
 	cvWaitKey(500);
 
 	// Destroy.

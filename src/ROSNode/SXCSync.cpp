@@ -8,6 +8,8 @@ SXCSync::SXCSync(const std::string& name)
   CAM_0_IDX(0), CAM_1_IDX(1),
   mTopicNameLeftImage("left/image_raw"), mTopicNameRightImage("right/image_raw"), 
   mOutDir("./"),
+  mLastStatus(LAST_STA_UNDEFINED),
+  mLoopTarget(LOOP_SYNC),
   mPrepared(false),
   mImageTransport(NULL), mPublishersImage(NULL), 
   mStereoXiCamera(NULL),
@@ -72,6 +74,8 @@ Res_t SXCSync::parse_launch_parameters(void)
 
     mXiCameraSN[CAM_0_IDX] = pXICameraSN_0;
     mXiCameraSN[CAM_1_IDX] = pXICameraSN_1;
+
+    mLastStatus = LAST_STA_PARSE_PARAM;
 
     return RES_OK;
 }
@@ -166,25 +170,44 @@ Res_t SXCSync::prepare(void)
             res = RES_ERROR;
         }
 
+        mLastStatus = LAST_STA_PREPARE;
+
         return res;
     }
     else
     {
         std::cout << "Error: Already prepared." << std::endl;
+
+        mLastStatus = LAST_STA_PREPARE;
+
         return RES_ERROR;
     }
 }
 
-Res_t SXCSync::resume(void)
+Res_t SXCSync::resume(ProcessType_t& pt)
 {
-    // Start acquisition.
-    ROS_INFO("%s", "Start acquisition.");
-    mStereoXiCamera->start_acquisition();
+    if ( LAST_STA_PREPARE == mLastStatus || 
+         LAST_STA_PAUSE   == mLastStatus )
+    {
+        // Start acquisition.
+        ROS_INFO("%s", "Start acquisition.");
+        mStereoXiCamera->start_acquisition();
+    }
+
+    // ROS spin.
+    ros::spinOnce();
+
+    // Sleep.
+    mROSLoopRate->sleep();
+
+    mLastStatus = LAST_STA_RESUME;
+
+    pt = (LOOP_RESUME == mLoopTarget) ? PROCESS_CONTINUE : PROCESS_ONCE;
 
     return RES_OK;
 }
 
-Res_t SXCSync::synchronize(void)
+Res_t SXCSync::synchronize(ProcessType_t& pt)
 {
     Res_t res = RES_OK;
 
@@ -277,29 +300,80 @@ Res_t SXCSync::synchronize(void)
         res = RES_ERROR;
     }
 
+    mLastStatus = LAST_STA_SYNC;
+
+    pt = (mLoopTarget == LOOP_SYNC) ? PROCESS_CONTINUE : PROCESS_ONCE;
+
     return res;
 }
 
-Res_t SXCSync::pause(void)
+Res_t SXCSync::pause(ProcessType_t& pt)
 {
-    // Stop acquisition.
-    ROS_INFO("Stop acquisition.");
-    mStereoXiCamera->stop_acquisition();
+    if ( LAST_STA_SYNC   == mLastStatus ||
+         LAST_STA_RESUME == mLastStatus )
+    {
+        // Stop acquisition.
+        ROS_INFO("Stop acquisition.");
+        mStereoXiCamera->stop_acquisition();
+    }
+    
+    // ROS spin.
+    ros::spinOnce();
+
+    // Sleep.
+    mROSLoopRate->sleep();
+
+    mLastStatus = LAST_STA_PAUSE;
+
+    pt = (mLoopTarget == LOOP_PAUSE) ? PROCESS_CONTINUE : PROCESS_ONCE;
+
+    return RES_OK;
+}
+
+Res_t SXCSync::stop(void)
+{
+    if ( LAST_STA_PAUSE  == mLastStatus ||
+         LAST_STA_SYNC   == mLastStatus ||
+         LAST_STA_RESUME == mLastStatus )
+    {
+        if ( LAST_STA_PAUSE != mLastStatus )
+        {
+            // Stop acquisition.
+            ROS_INFO("Stop acquisition.");
+            mStereoXiCamera->stop_acquisition();
+        }
+    }
+
+    mLastStatus = LAST_STA_STOP;
 
     return RES_OK;
 }
 
 Res_t SXCSync::destroy(void)
 {
-    // Close.
-    mStereoXiCamera->close();
-    ROS_INFO("Stereo camera closed.");
+    Res_t ret = RES_OK;
 
-    destroy_members();
+    if ( LAST_STA_STOP == mLastStatus ||
+         LAST_STA_INIT == mLastStatus )
+    {
+        // Close.
+        mStereoXiCamera->close();
+        ROS_INFO("Stereo camera closed.");
 
-    mPrepared = false;
+        destroy_members();
 
-    return RES_OK;
+        mPrepared = false;
+    }
+    else
+    {
+        ROS_ERROR("Try to destroy more than onec.");
+
+        ret = RES_ERROR;
+    }
+
+    mLastStatus = LAST_STA_DESTROY;
+
+    return ret;
 }
 
 void SXCSync::destroy_members(void)

@@ -8,7 +8,7 @@ using namespace SRN;
 int SyncROSNode::NODE_COUNT = 0;
 
 SyncROSNode::SyncROSNode(const std::string& name)
-: mpROSNode(NULL), mNodeName(name)
+: mpROSNode(NULL), mNodeName(name), mIsLooping(true)
 {
 
 }
@@ -49,17 +49,25 @@ Res_t SyncROSNode::prepare(void)
     return RES_OK;
 }
 
-Res_t SyncROSNode::resume(void)
+Res_t SyncROSNode::resume(ProcessType_t& pt)
 {
+    pt = PROCESS_ONCE;
     return RES_OK;
 }
 
-Res_t SyncROSNode::synchronize(void)
+Res_t SyncROSNode::synchronize(ProcessType_t& pt)
 {
+    pt = PROCESS_ONCE;
     return RES_OK;
 }
 
-Res_t SyncROSNode::pause(void)
+Res_t SyncROSNode::pause(ProcessType_t& pt)
+{
+    pt = PROCESS_ONCE;
+    return RES_OK;
+}
+
+Res_t SyncROSNode::stop(void)
 {
     return RES_OK;
 }
@@ -67,4 +75,19 @@ Res_t SyncROSNode::pause(void)
 Res_t SyncROSNode::destroy(void)
 {
     return RES_OK;
+}
+
+bool SyncROSNode::is_looping(void)
+{
+    return mIsLooping;
+}
+
+void SyncROSNode::continue_looping(void)
+{
+    mIsLooping = true;
+}
+
+void SyncROSNode::stop_looping(void)
+{
+    mIsLooping = false;
 }

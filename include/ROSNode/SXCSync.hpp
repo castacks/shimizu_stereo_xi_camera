@@ -21,14 +21,40 @@ namespace SRN
 class SXCSync : public SyncROSNode
 {
 public:
+    typedef enum
+    {
+        LAST_STA_UNDEFINED = 0,
+        LAST_STA_INIT,
+        LAST_STA_PARSE_PARAM,
+        LAST_STA_PREPARE,
+        LAST_STA_RESUME,
+        LAST_STA_SYNC,
+        LAST_STA_PAUSE,
+        LAST_STA_STOP,
+        LAST_STA_DESTROY
+    } LastSta_t;
+
+    typedef enum
+    {
+        LOOP_PARSE_PARAM = 0,
+        LOOP_PRPARE,
+        LOOP_RESUME,
+        LOOP_SYNC,
+        LOOP_PAUSE,
+        LOOP_STOP,
+        LOOP_DESTROY
+    } LoopTarget_t;
+
+public:
     SXCSync(const std::string& name);
     virtual ~SXCSync();
 
     Res_t parse_launch_parameters(void);
     Res_t prepare(void);
-    Res_t resume(void);
-    Res_t synchronize(void);
-    Res_t pause(void);
+    Res_t resume(ProcessType_t& pt);
+    Res_t synchronize(ProcessType_t& pt);
+    Res_t pause(ProcessType_t& pt);
+    Res_t stop(void);
     Res_t destroy(void);
 
     void set_topic_name_left_image(const std::string& name);
@@ -68,6 +94,9 @@ protected:
     std::string mOutDir;
 
     std::string mXiCameraSN[2];
+
+    LastSta_t mLastStatus;
+    LoopTarget_t mLoopTarget;
 
     bool mPrepared;
 

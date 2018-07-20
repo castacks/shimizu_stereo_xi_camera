@@ -50,6 +50,12 @@ typedef enum
 	RES_ERROR
 } Res_t;
 
+typedef enum
+{
+	PROCESS_CONTINUE = 0,
+	PROCESS_ONCE
+} ProcessType_t;
+
 class SyncROSNode
 {
 public:
@@ -59,14 +65,22 @@ public:
     Res_t init(int& argc, char** argv, const std::string& name, uint32_t options = 0);
 	virtual Res_t parse_launch_parameters(void);
     virtual Res_t prepare(void);
-	virtual Res_t resume(void);
-    virtual Res_t synchronize(void);
-    virtual Res_t pause(void);
+	virtual Res_t resume(ProcessType_t& pt);
+    virtual Res_t synchronize(ProcessType_t& pt);
+    virtual Res_t pause(ProcessType_t& pt);
+	virtual Res_t stop(void);
     virtual Res_t destroy(void);
+
+	bool is_looping(void);
+
+protected:
+	void continue_looping(void);
+	void stop_looping(void);
 
 protected:
     ros::NodeHandle* mpROSNode;
     std::string mNodeName;
+	bool mIsLooping;
 
 private:
     static int NODE_COUNT;
