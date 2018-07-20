@@ -15,6 +15,7 @@ SXCSync::SXCSync(const std::string& name)
   mCvImages(NULL),
   mCP(NULL),
   mNImages(0),
+  mROSLoopRate(NULL),
   mAutoGainExposurePriority(DEFAULT_AUTO_GAIN_EXPOSURE_PRIORITY),
   mAutoGainExposureTargetLevel(DEFAULT_AUTO_GAIN_EXPOSURE_TARGET_LEVEL),
   mAutoExposureTopLimit(DEFAULT_AUTO_EXPOSURE_TOP_LIMIT),
@@ -41,7 +42,7 @@ SXCSync::~SXCSync()
     destroy_members();
 }
 
-int SXCSync::parse_launch_parameters(void)
+Res_t SXCSync::parse_launch_parameters(void)
 {
     // ============ Get the parameters from the launch file. ============== 
 	
@@ -71,12 +72,12 @@ int SXCSync::parse_launch_parameters(void)
     mXiCameraSN[CAM_0_IDX] = pXICameraSN_0;
     mXiCameraSN[CAM_1_IDX] = pXICameraSN_1;
 
-    return 0;
+    return RES_OK;
 }
 
-int SXCSync::prepare(void)
+Res_t SXCSync::prepare(void)
 {
-    int res = 0;
+    Res_t res = RES_OK;
 
     if ( false == mPrepared )
     {
@@ -84,10 +85,11 @@ int SXCSync::prepare(void)
         mImageTransport = new image_transport::ImageTransport((*mpROSNode));
 
         mPublishersImage = new image_transport::Publisher[2];
-        mPublishersImage[0] = mImageTransport->advertise(mTopicNameLeftImage,  1);
-        mPublishersImage[1] = mImageTransport->advertise(mTopicNameRightImage, 1);
+        mPublishersImage[CAM_0_IDX] = mImageTransport->advertise(mTopicNameLeftImage,  1);
+        mPublishersImage[CAM_1_IDX] = mImageTransport->advertise(mTopicNameRightImage, 1);
 
-        mStereoXiCamera = new sxc::StereoXiCamera(mXiCameraSN[0], mXiCameraSN[1]);
+        // Stereo camera object.
+        mStereoXiCamera = new sxc::StereoXiCamera(mXiCameraSN[CAM_0_IDX], mXiCameraSN[CAM_1_IDX]);
 
         // Trigger selection.
         if ( 1 == mExternalTrigger )
@@ -95,10 +97,11 @@ int SXCSync::prepare(void)
             mStereoXiCamera->enable_external_trigger(mNextImageTimeout_ms);
         }
 
+        // Custom AEAG.
         if ( 1 == mCustomAEAGEnabled )
         {
             mMbAEAG = new sxc::MeanBrightness;
-            mMbAEAG->set_exposure_top_limit(mCustomAEAGExposureTopLimit * 1000);
+            mMbAEAG->set_exposure_top_limit(mCustomAEAGExposureTopLimit);
             mMbAEAG->set_gain_top_limit(sxc::dBToGain(mCustomAEAGGainTopLimit));
             mMbAEAG->set_priority(mCustomAEAGPriority);
 
@@ -107,6 +110,7 @@ int SXCSync::prepare(void)
             mStereoXiCamera->enable_custom_AEAG();
         }
 
+        // Prepare with the camera API.
         try
         {
             // Configure the stereo camera.
@@ -133,6 +137,17 @@ int SXCSync::prepare(void)
             mStereoXiCamera->put_sensor_filter_array(0, strSensorArray);
             ROS_INFO("The sensor array string is %s.", strSensorArray.c_str());
 
+            mCvImages = new Mat[2];
+            mCP = new sxc::StereoXiCamera::CameraParams_t[2];
+
+            mJpegParams.push_back( CV_IMWRITE_JPEG_QUALITY );
+            mJpegParams.push_back( 100 );
+
+            mNImages = 0;
+
+            // Running rate.
+            mROSLoopRate = new ros::Rate(mLoopRate);
+
             mPrepared = true;
         }
         catch  ( boost::exception &ex )
@@ -147,38 +162,30 @@ int SXCSync::prepare(void)
 
             ROS_ERROR("%s", diagInfo.c_str());
 
-            res = -1;
+            res = RES_ERROR;
         }
-
-        mCvImages = new Mat[2];
-        mCP = new sxc::StereoXiCamera::CameraParams_t[2];
-
-        mJpegParams.push_back( CV_IMWRITE_JPEG_QUALITY );
-		mJpegParams.push_back( 100 );
-
-        mNImages = 0;
 
         return res;
     }
     else
     {
         std::cout << "Error: Already prepared." << std::endl;
-        return -1;
+        return RES_ERROR;
     }
 }
 
-int SXCSync::resume(void)
+Res_t SXCSync::resume(void)
 {
     // Start acquisition.
     ROS_INFO("%s", "Start acquisition.");
     mStereoXiCamera->start_acquisition();
 
-    return 0;
+    return RES_OK;
 }
 
-int SXCSync::synchronize(void)
+Res_t SXCSync::synchronize(void)
 {
-    int res = 0;
+    Res_t res = RES_OK;
 
     int getImagesRes = 0;
     std::stringstream ss;   // String stream for outputing info.
@@ -216,7 +223,7 @@ int SXCSync::synchronize(void)
                 // Save the captured image to file system.
                 if ( 1 == mFlagWriteImage )
                 {
-                    std::string yamlFilename = ss.str() + ".yaml";
+                    // std::string yamlFilename = ss.str() + ".yaml";
                     std::string imgFilename = ss.str() + ".bmp";
 
                     // FileStorage cfFS(yamlFilename, FileStorage::WRITE);
@@ -224,7 +231,7 @@ int SXCSync::synchronize(void)
                     imwrite(imgFilename, mCvImages[loopIdx], mJpegParams);
                 }
                 
-                ROS_INFO( "Camera %d captured image (%d, %d). AEAG %d, AEAGP %.2f, exp %.3f, gain %.1f dB.", 
+                ROS_INFO( "Camera %d captured image (%d, %d). AEAG %d, AEAGP %.2f, exp %.3f ms, gain %.1f dB.", 
                         loopIdx, mCvImages[loopIdx].rows, mCvImages[loopIdx].cols,
                         mCP[loopIdx].AEAGEnabled, mCP[loopIdx].AEAGPriority, mCP[loopIdx].exposure / 1000.0, mCP[loopIdx].gain );
 
@@ -243,6 +250,9 @@ int SXCSync::synchronize(void)
         // ROS spin.
         ros::spinOnce();
 
+        // Sleep.
+        mROSLoopRate->sleep();
+
         mNImages++;
     }
     catch ( boost::exception &ex )
@@ -257,22 +267,22 @@ int SXCSync::synchronize(void)
 
         ROS_ERROR("%s", diagInfo.c_str());
 
-        res = -1;
+        res = RES_ERROR;
     }
 
     return res;
 }
 
-int SXCSync::pause(void)
+Res_t SXCSync::pause(void)
 {
     // Stop acquisition.
     ROS_INFO("Stop acquisition.");
     mStereoXiCamera->stop_acquisition();
 
-    return 0;
+    return RES_OK;
 }
 
-int SXCSync::destroy(void)
+Res_t SXCSync::destroy(void)
 {
     // Close.
     mStereoXiCamera->close();
@@ -280,11 +290,18 @@ int SXCSync::destroy(void)
 
     destroy_members();
 
-    return 0;
+    mPrepared = false;
+
+    return RES_OK;
 }
 
 void SXCSync::destroy_members(void)
 {
+    if ( NULL != mROSLoopRate )
+    {
+        delete mROSLoopRate; mROSLoopRate = NULL;
+    }
+
     if ( NULL != mCP )
     {
         delete [] mCP; mCP = NULL;

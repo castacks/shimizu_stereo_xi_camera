@@ -1,11 +1,23 @@
 #ifndef __SYNC_ROS_NODE_HPP__
 #define __SYNC_ROS_NODE_HPP__
 
+#include <sstream>
 #include <string>
+
+#include <boost/exception/all.hpp>
+#include <boost/shared_ptr.hpp>
 
 #include "ros/ros.h"
 
 // ============= Local macros. =====================
+
+#define CHECK_RES(res) \
+    if ( SRN::RES_OK != res )\
+	{\
+        std::stringstream res##_ss;\
+    	res##_ss << "Node returns non-OK value.";\
+        BOOST_THROW_EXCEPTION( SRN::res_error() << SRN::ExceptionInfoString(res##_ss.str()) );\
+    }
 
 #define ROSLAUNCH_GET_PARAM(nh, name, var, d) \
 	{\
@@ -27,19 +39,30 @@
 namespace SRN
 {
 
+struct exception_base : virtual std::exception, virtual boost::exception { };
+struct res_error      : virtual exception_base { };
+
+typedef boost::error_info<struct tag_info_string, std::string> ExceptionInfoString;
+
+typedef enum
+{
+	RES_OK = 0,
+	RES_ERROR
+} Res_t;
+
 class SyncROSNode
 {
 public:
     SyncROSNode(const std::string& name);
     virtual ~SyncROSNode();
 
-    int init(int& argc, char** argv, std::string& name, uint32_t options = 0);
-	virtual int parse_launch_parameters(void);
-    virtual int prepare(void);
-	virtual int resume(void);
-    virtual int synchronize(void);
-    virtual int pause(void);
-    virtual int destroy(void);
+    Res_t init(int& argc, char** argv, const std::string& name, uint32_t options = 0);
+	virtual Res_t parse_launch_parameters(void);
+    virtual Res_t prepare(void);
+	virtual Res_t resume(void);
+    virtual Res_t synchronize(void);
+    virtual Res_t pause(void);
+    virtual Res_t destroy(void);
 
 protected:
     ros::NodeHandle* mpROSNode;

@@ -24,12 +24,12 @@ public:
     SXCSync(const std::string& name);
     virtual ~SXCSync();
 
-    int parse_launch_parameters(void);
-    int prepare(void);
-    int resume(void);
-    int synchronize(void);
-    int pause(void);
-    int destroy(void);
+    Res_t parse_launch_parameters(void);
+    Res_t prepare(void);
+    Res_t resume(void);
+    Res_t synchronize(void);
+    Res_t pause(void);
+    Res_t destroy(void);
 
     void set_topic_name_left_image(const std::string& name);
     const std::string& get_topi_name_left_image(void);
@@ -50,7 +50,7 @@ public:
     static const int    DEFAULT_AUTO_GAIN_TOP_LIMIT             = 12;   // dB.
     static const int    DEFAULT_TOTAL_BANDWIDTH                 = 2400;
     static const int    DEFAULT_BANDWIDTH_MARGIN                = 10;
-    static const int    DEFAULT_LOOP_RATE                       = 3;
+    static const double DEFAULT_LOOP_RATE                       = 3.0;
     static const int    DEFAULT_NEXT_IMAGE_TIMEOUT_MS           = 1000;
     static const double DEFAULT_CUSTOM_AEAG_PRIORITY            = 0.9;
     static const double DEFAULT_CUSTOM_AEAG_EXPOSURE_TOP_LIMIT  = 200000.0; // Mirosecond.
@@ -91,6 +91,9 @@ protected:
 
     int mNImages;
 
+    // Running rate.
+  	ros::Rate* mROSLoopRate;
+
 private:
     double mAutoGainExposurePriority;
 	double mAutoGainExposureTargetLevel;
@@ -99,7 +102,7 @@ private:
 	int    mTotalBandwidth;
 	int    mBandwidthMargin;
 	int    mFlagWriteImage;
-	int    mLoopRate;
+	double mLoopRate;
 
 	int    mExternalTrigger;
 	int    mNextImageTimeout_ms;

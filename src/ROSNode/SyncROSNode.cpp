@@ -21,7 +21,7 @@ SyncROSNode::~SyncROSNode()
     }
 }
 
-int SyncROSNode::init(int& argc, char** argv, std::string& name, uint32_t options)
+Res_t SyncROSNode::init(int& argc, char** argv, const std::string& name, uint32_t options)
 {
     if ( 0 == NODE_COUNT )
     {
@@ -30,41 +30,41 @@ int SyncROSNode::init(int& argc, char** argv, std::string& name, uint32_t option
 
         NODE_COUNT++;
 
-        return 0;
+        return RES_OK;
     }
     else
     {
         std::cout << "Error: Only one init() is allowed." << std::endl;
-        return -1;
+        return RES_ERROR;
     }
 }
 
-int SyncROSNode::parse_launch_parameters(void)
+Res_t SyncROSNode::parse_launch_parameters(void)
 {
-    return 0;
+    return RES_OK;
 }
 
-int SyncROSNode::prepare(void)
+Res_t SyncROSNode::prepare(void)
 {
-    return 0;
+    return RES_OK;
 }
 
-int SyncROSNode::resume(void)
+Res_t SyncROSNode::resume(void)
 {
-    return 0;
+    return RES_OK;
 }
 
-int SyncROSNode::synchronize(void)
+Res_t SyncROSNode::synchronize(void)
 {
-    return 0;
+    return RES_OK;
 }
 
-int SyncROSNode::pause(void)
+Res_t SyncROSNode::pause(void)
 {
-    return 0;
+    return RES_OK;
 }
 
-int SyncROSNode::destroy(void)
+Res_t SyncROSNode::destroy(void)
 {
-    return 0;
+    return RES_OK;
 }
