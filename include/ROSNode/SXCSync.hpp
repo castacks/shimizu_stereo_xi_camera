@@ -26,6 +26,7 @@ public:
 
     int parse_launch_parameters(void);
     int prepare(void);
+    int resume(void);
     int synchronize(void);
     int pause(void);
     int destroy(void);
@@ -38,6 +39,9 @@ public:
 
     void set_out_dir(const std::string& outDir);
     const std::string& get_out_dir(void);
+
+protected:
+    void destroy_members(void);
 
 public:
     static const double DEFAULT_AUTO_GAIN_EXPOSURE_PRIORITY     = 0.9;
@@ -63,6 +67,29 @@ protected:
     std::string mOutDir;
 
     std::string mXiCameraSN[2];
+
+    bool mPrepared;
+
+    image_transport::ImageTransport* mImageTransport;
+    image_transport::Publisher* mPublishersImage;
+
+    // The image message to be published.
+	sensor_msgs::ImagePtr mMsgImage;
+
+    // The object of stereo camera based on the XIMEA cameras.
+    sxc::StereoXiCamera* mStereoXiCamera;
+
+    // The custom AEAG object.
+	sxc::MeanBrightness* mMbAEAG;
+
+    // Temporary variables.
+    cv::Mat* mCvImages;        // OpenCV Mat array to hold the images.
+    sxc::StereoXiCamera::CameraParams_t* mCP; // Camera parameters.
+    ros::Time mRosTimeStamp; // ROS time stamp for the header of published ROS image messages.
+
+    std::vector<int> mJpegParams;
+
+    int mNImages;
 
 private:
     double mAutoGainExposurePriority;

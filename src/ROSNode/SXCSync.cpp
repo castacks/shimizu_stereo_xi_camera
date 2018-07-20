@@ -8,6 +8,13 @@ SXCSync::SXCSync(const std::string& name)
   CAM_0_IDX(0), CAM_1_IDX(1),
   mTopicNameLeftImage("left/image_raw"), mTopicNameRightImage("right/image_raw"), 
   mOutDir("./"),
+  mPrepared(false),
+  mImageTransport(NULL), mPublishersImage(NULL), 
+  mStereoXiCamera(NULL),
+  mMbAEAG(NULL),
+  mCvImages(NULL),
+  mCP(NULL),
+  mNImages(0),
   mAutoGainExposurePriority(DEFAULT_AUTO_GAIN_EXPOSURE_PRIORITY),
   mAutoGainExposureTargetLevel(DEFAULT_AUTO_GAIN_EXPOSURE_TARGET_LEVEL),
   mAutoExposureTopLimit(DEFAULT_AUTO_EXPOSURE_TOP_LIMIT),
@@ -31,7 +38,7 @@ SXCSync::SXCSync(const std::string& name)
 
 SXCSync::~SXCSync()
 {
-
+    destroy_members();
 }
 
 int SXCSync::parse_launch_parameters(void)
@@ -69,28 +76,244 @@ int SXCSync::parse_launch_parameters(void)
 
 int SXCSync::prepare(void)
 {
-    // =================== Image publishers. ===================
-	image_transport::ImageTransport imageTransport(nodeHandle);
+    int res = 0;
 
-	image_transport::Publisher publishersImage[2] = { 
-    imageTransport.advertise(TOPIC_NAME_LEFT_IMAGE, 1), 
-    imageTransport.advertise(TOPIC_NAME_RIGHT_IMAGE, 1) };
+    if ( false == mPrepared )
+    {
+        // =================== Image publishers. ===================
+        mImageTransport = new image_transport::ImageTransport((*mpROSNode));
+
+        mPublishersImage = new image_transport::Publisher[2];
+        mPublishersImage[0] = mImageTransport->advertise(mTopicNameLeftImage,  1);
+        mPublishersImage[1] = mImageTransport->advertise(mTopicNameRightImage, 1);
+
+        mStereoXiCamera = new sxc::StereoXiCamera(mXiCameraSN[0], mXiCameraSN[1]);
+
+        // Trigger selection.
+        if ( 1 == mExternalTrigger )
+        {
+            mStereoXiCamera->enable_external_trigger(mNextImageTimeout_ms);
+        }
+
+        if ( 1 == mCustomAEAGEnabled )
+        {
+            mMbAEAG = new sxc::MeanBrightness;
+            mMbAEAG->set_exposure_top_limit(mCustomAEAGExposureTopLimit * 1000);
+            mMbAEAG->set_gain_top_limit(sxc::dBToGain(mCustomAEAGGainTopLimit));
+            mMbAEAG->set_priority(mCustomAEAGPriority);
+
+            mStereoXiCamera->set_custom_AEAG(mMbAEAG);
+            mStereoXiCamera->set_custom_AEAG_target_brightness_level(mCustomAEAGBrightnessLevel);
+            mStereoXiCamera->enable_custom_AEAG();
+        }
+
+        try
+        {
+            // Configure the stereo camera.
+            mStereoXiCamera->set_autogain_exposure_priority(mAutoGainExposurePriority);
+            mStereoXiCamera->set_autogain_exposure_target_level(mAutoGainExposureTargetLevel);
+            mStereoXiCamera->set_autoexposure_top_limit(mAutoExposureTopLimit);
+            mStereoXiCamera->set_autogain_top_limit(mAutoGainTopLimit);
+            mStereoXiCamera->set_total_bandwidth(mTotalBandwidth);
+            mStereoXiCamera->set_bandwidth_margin(mBandwidthMargin);
+
+            // Pre-open, open and configure the stereo camera.
+            mStereoXiCamera->open();
+
+            // Self-adjust.
+            if ( 1 == mSelfAdjust )
+            {
+                ROS_INFO("Perform self-adjust...");
+                mStereoXiCamera->self_adjust(true);
+                ROS_INFO("Self-adjust done.");
+            }
+
+            // Get the sensor array.
+            std::string strSensorArray;
+            mStereoXiCamera->put_sensor_filter_array(0, strSensorArray);
+            ROS_INFO("The sensor array string is %s.", strSensorArray.c_str());
+
+            mPrepared = true;
+        }
+        catch  ( boost::exception &ex )
+        {
+            ROS_ERROR("Exception catched.");
+            if ( std::string const * expInfoString = boost::get_error_info<sxc::ExceptionInfoString>(ex) )
+            {
+                ROS_ERROR("%s", expInfoString->c_str());
+            }
+
+            std::string diagInfo = boost::diagnostic_information(ex, true);
+
+            ROS_ERROR("%s", diagInfo.c_str());
+
+            res = -1;
+        }
+
+        mCvImages = new Mat[2];
+        mCP = new sxc::StereoXiCamera::CameraParams_t[2];
+
+        mJpegParams.push_back( CV_IMWRITE_JPEG_QUALITY );
+		mJpegParams.push_back( 100 );
+
+        mNImages = 0;
+
+        return res;
+    }
+    else
+    {
+        std::cout << "Error: Already prepared." << std::endl;
+        return -1;
+    }
+}
+
+int SXCSync::resume(void)
+{
+    // Start acquisition.
+    ROS_INFO("%s", "Start acquisition.");
+    mStereoXiCamera->start_acquisition();
+
     return 0;
 }
 
 int SXCSync::synchronize(void)
 {
-    return 0;
+    int res = 0;
+
+    int getImagesRes = 0;
+    std::stringstream ss;   // String stream for outputing info.
+
+    try
+    {
+        ROS_INFO("nImages = %d", mNImages);
+
+        // Trigger.
+        if ( false == mStereoXiCamera->is_external_triger() )
+        {
+            mStereoXiCamera->software_trigger();
+        }
+
+        // Get images.
+        getImagesRes = mStereoXiCamera->get_images( mCvImages[0], mCvImages[1], mCP[0], mCP[1] );
+
+        if ( 0 != getImagesRes )
+        {
+            ROS_ERROR("Get images failed");
+        }
+        else
+        {
+            // Prepare the time stamp for the header.
+            mRosTimeStamp = ros::Time::now();
+
+            // Convert the image into ROS image message.
+            LOOP_CAMERAS_BEGIN
+                // Clear the temporary sting stream.
+                ss.flush();	ss.str(""); ss.clear();
+                ss << mOutDir << "/" << mNImages << "_" << loopIdx;
+
+                ROS_INFO( "%s", ss.str().c_str() );
+
+                // Save the captured image to file system.
+                if ( 1 == mFlagWriteImage )
+                {
+                    std::string yamlFilename = ss.str() + ".yaml";
+                    std::string imgFilename = ss.str() + ".bmp";
+
+                    // FileStorage cfFS(yamlFilename, FileStorage::WRITE);
+                    // cfFS << "frame" << nImages << "image_id" << loopIdx << "raw_data" << cvImages[loopIdx];
+                    imwrite(imgFilename, mCvImages[loopIdx], mJpegParams);
+                }
+                
+                ROS_INFO( "Camera %d captured image (%d, %d). AEAG %d, AEAGP %.2f, exp %.3f, gain %.1f dB.", 
+                        loopIdx, mCvImages[loopIdx].rows, mCvImages[loopIdx].cols,
+                        mCP[loopIdx].AEAGEnabled, mCP[loopIdx].AEAGPriority, mCP[loopIdx].exposure / 1000.0, mCP[loopIdx].gain );
+
+                // Publish images.
+                mMsgImage = cv_bridge::CvImage(std_msgs::Header(), "bgr8", mCvImages[loopIdx]).toImageMsg();
+
+                mMsgImage->header.seq   = mNImages;
+                mMsgImage->header.stamp = mRosTimeStamp;
+
+                mPublishersImage[loopIdx].publish(mMsgImage);
+
+                ROS_INFO("%s", "Message published.");
+            LOOP_CAMERAS_END
+        }
+
+        // ROS spin.
+        ros::spinOnce();
+
+        mNImages++;
+    }
+    catch ( boost::exception &ex )
+    {
+        ROS_ERROR("Exception catched.");
+        if ( std::string const * expInfoString = boost::get_error_info<sxc::ExceptionInfoString>(ex) )
+        {
+            ROS_ERROR("%s", expInfoString->c_str());
+        }
+
+        std::string diagInfo = boost::diagnostic_information(ex, true);
+
+        ROS_ERROR("%s", diagInfo.c_str());
+
+        res = -1;
+    }
+
+    return res;
 }
 
 int SXCSync::pause(void)
 {
+    // Stop acquisition.
+    ROS_INFO("Stop acquisition.");
+    mStereoXiCamera->stop_acquisition();
+
     return 0;
 }
 
 int SXCSync::destroy(void)
 {
+    // Close.
+    mStereoXiCamera->close();
+    ROS_INFO("Stereo camera closed.");
+
+    destroy_members();
+
     return 0;
+}
+
+void SXCSync::destroy_members(void)
+{
+    if ( NULL != mCP )
+    {
+        delete [] mCP; mCP = NULL;
+    }
+
+    if ( NULL != mCvImages )
+    {
+        delete [] mCvImages; mCvImages = NULL;
+    }
+
+    if ( NULL != mMbAEAG )
+    {
+        delete mMbAEAG; mMbAEAG = NULL;
+    }
+
+    if ( NULL != mStereoXiCamera )
+    {
+        delete mStereoXiCamera; mStereoXiCamera = NULL;
+    }
+
+    if ( NULL != mPublishersImage )
+    {
+        delete [] mPublishersImage; mPublishersImage = NULL;
+    }
+
+    if ( NULL != mImageTransport )
+    {
+        delete mImageTransport; mImageTransport = NULL;
+    }
 }
 
 void SXCSync::set_topic_name_left_image(const std::string& name)

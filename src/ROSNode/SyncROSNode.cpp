@@ -49,6 +49,11 @@ int SyncROSNode::prepare(void)
     return 0;
 }
 
+int SyncROSNode::resume(void)
+{
+    return 0;
+}
+
 int SyncROSNode::synchronize(void)
 {
     return 0;

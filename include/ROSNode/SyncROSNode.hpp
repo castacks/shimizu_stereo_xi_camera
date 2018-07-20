@@ -36,6 +36,7 @@ public:
     int init(int& argc, char** argv, std::string& name, uint32_t options = 0);
 	virtual int parse_launch_parameters(void);
     virtual int prepare(void);
+	virtual int resume(void);
     virtual int synchronize(void);
     virtual int pause(void);
     virtual int destroy(void);
