@@ -56,6 +56,7 @@ public:
     static const double DEFAULT_CUSTOM_AEAG_EXPOSURE_TOP_LIMIT  = 200000.0; // Mirosecond.
     static const double DEFAULT_CUSTOM_AEAG_GAIN_TOP_LIMIT      = 12.0;  // dB.
     static const int    DEFAULT_CUSTOM_AEAG_BRIGHTNESS_LEVEL    = 30;    // %.
+    static const int    DEFAULT_VERBOSE                         = 0;
 
 protected:
     const int CAM_0_IDX;
@@ -114,6 +115,7 @@ private:
 	double mCustomAEAGExposureTopLimit;
 	double mCustomAEAGGainTopLimit;
 	int    mCustomAEAGBrightnessLevel;
+    int    mVerbose;
 };
 
 }

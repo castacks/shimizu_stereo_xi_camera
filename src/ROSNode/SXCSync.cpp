@@ -31,7 +31,8 @@ SXCSync::SXCSync(const std::string& name)
   mCustomAEAGPriority(DEFAULT_CUSTOM_AEAG_PRIORITY),
   mCustomAEAGExposureTopLimit(DEFAULT_CUSTOM_AEAG_EXPOSURE_TOP_LIMIT),
   mCustomAEAGGainTopLimit(DEFAULT_CUSTOM_AEAG_GAIN_TOP_LIMIT),
-  mCustomAEAGBrightnessLevel(DEFAULT_CUSTOM_AEAG_BRIGHTNESS_LEVEL)
+  mCustomAEAGBrightnessLevel(DEFAULT_CUSTOM_AEAG_BRIGHTNESS_LEVEL),
+  mVerbose(DEFAULT_VERBOSE)
 {
     mXiCameraSN[CAM_0_IDX] = "CUCAU1814018";
     mXiCameraSN[CAM_1_IDX] = "CUCAU1814020";
@@ -218,7 +219,10 @@ Res_t SXCSync::synchronize(void)
                 ss.flush();	ss.str(""); ss.clear();
                 ss << mOutDir << "/" << mNImages << "_" << loopIdx;
 
-                ROS_INFO( "%s", ss.str().c_str() );
+                if ( true == mVerbose )
+                {
+                    ROS_INFO( "%s", ss.str().c_str() );
+                }
 
                 // Save the captured image to file system.
                 if ( 1 == mFlagWriteImage )
@@ -243,7 +247,10 @@ Res_t SXCSync::synchronize(void)
 
                 mPublishersImage[loopIdx].publish(mMsgImage);
 
-                ROS_INFO("%s", "Message published.");
+                if ( true == mVerbose )
+                {
+                    ROS_INFO("%s", "Message published.");
+                }
             LOOP_CAMERAS_END
         }
 

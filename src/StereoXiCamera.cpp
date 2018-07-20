@@ -417,8 +417,10 @@ cv::Mat StereoXiCamera::get_single_image(int idx)
     cv::Mat cv_mat_image;
 
     format = mCams[idx].GetImageDataFormat();
+    // std::cout << "format = " << format << std::endl;
+    
     cv_mat_image = mCams[idx].GetNextImageOcvMat();
-    std::cout << "format = " << format << std::endl;
+    
     if (format == XI_RAW16 || format == XI_MONO16)
     {
         normalize(cv_mat_image, cv_mat_image, 0, 65536, cv::NORM_MINMAX, -1, cv::Mat()); // 0 - 65536, 16 bit unsigned integer range
