@@ -15,6 +15,10 @@
 
 #include "ROSNode/SyncROSNode.hpp"
 
+// ========== ROS generated headers. ===============
+
+#include "ros_stereo_xi_camera/change_status.h"
+
 namespace SRN
 {
 
@@ -49,6 +53,7 @@ public:
     SXCSync(const std::string& name);
     virtual ~SXCSync();
 
+    Res_t init(int& argc, char** argv, const std::string& name, uint32_t options = 0);
     Res_t parse_launch_parameters(void);
     Res_t prepare(void);
     Res_t resume(ProcessType_t& pt);
@@ -65,6 +70,12 @@ public:
 
     void set_out_dir(const std::string& outDir);
     const std::string& get_out_dir(void);
+
+    // ROS services.
+public:
+    bool srv_change_status(
+        ros_stereo_xi_camera::change_status::Request &req,
+        ros_stereo_xi_camera::change_status::Response &res);
 
 protected:
     void destroy_members(void);
@@ -84,9 +95,16 @@ public:
     static const int    DEFAULT_CUSTOM_AEAG_BRIGHTNESS_LEVEL    = 30;    // %.
     static const int    DEFAULT_VERBOSE                         = 0;
 
+    static const int    SERVICE_REQUEST_CODE_UNDEFINED          = 0;
+    static const int    SERVICE_REQUEST_CODE_START              = 1;
+    static const int    SERVICE_REQUEST_CODE_PAUSE              = 2;
+    static const int    SERVICE_REQUEST_CODE_STOP               = 3;
+
 protected:
     const int CAM_0_IDX;
     const int CAM_1_IDX;
+
+    ros::ServiceServer mROSService;
 
     std::string mTopicNameLeftImage;
     std::string mTopicNameRightImage;
@@ -97,6 +115,8 @@ protected:
 
     LastSta_t mLastStatus;
     LoopTarget_t mLoopTarget;
+
+    int mServiceRequestCode;
 
     bool mPrepared;
 

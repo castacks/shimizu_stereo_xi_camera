@@ -10,6 +10,7 @@ SXCSync::SXCSync(const std::string& name)
   mOutDir("./"),
   mLastStatus(LAST_STA_UNDEFINED),
   mLoopTarget(LOOP_SYNC),
+  mServiceRequestCode(SERVICE_REQUEST_CODE_START),
   mPrepared(false),
   mImageTransport(NULL), mPublishersImage(NULL), 
   mStereoXiCamera(NULL),
@@ -43,6 +44,42 @@ SXCSync::SXCSync(const std::string& name)
 SXCSync::~SXCSync()
 {
     destroy_members();
+
+    if ( NULL != mPublishersImage )
+    {
+        delete [] mPublishersImage; mPublishersImage = NULL;
+    }
+
+    if ( NULL != mImageTransport )
+    {
+        delete mImageTransport; mImageTransport = NULL;
+    }
+}
+
+Res_t SXCSync::init(int& argc, char** argv, const std::string& name, uint32_t options)
+{
+    Res_t ret = RES_OK;
+
+    // Must call parent's init();
+    ret = ((SyncROSNode*)this)->init(argc, argv, name, options);
+
+    if ( RES_OK != ret )
+    {
+        return ret;
+    }
+
+    // Topics.
+    // =================== Image publishers. ===================
+    mImageTransport = new image_transport::ImageTransport((*mpROSNode));
+
+    mPublishersImage = new image_transport::Publisher[2];
+    mPublishersImage[CAM_0_IDX] = mImageTransport->advertise(mTopicNameLeftImage,  1);
+    mPublishersImage[CAM_1_IDX] = mImageTransport->advertise(mTopicNameRightImage, 1);
+
+    // Services.
+    mROSService = mpROSNode->advertiseService("change_status", &SXCSync::srv_change_status, this);
+
+    return ret;
 }
 
 Res_t SXCSync::parse_launch_parameters(void)
@@ -86,13 +123,6 @@ Res_t SXCSync::prepare(void)
 
     if ( false == mPrepared )
     {
-        // =================== Image publishers. ===================
-        mImageTransport = new image_transport::ImageTransport((*mpROSNode));
-
-        mPublishersImage = new image_transport::Publisher[2];
-        mPublishersImage[CAM_0_IDX] = mImageTransport->advertise(mTopicNameLeftImage,  1);
-        mPublishersImage[CAM_1_IDX] = mImageTransport->advertise(mTopicNameRightImage, 1);
-
         // Stereo camera object.
         mStereoXiCamera = new sxc::StereoXiCamera(mXiCameraSN[CAM_0_IDX], mXiCameraSN[CAM_1_IDX]);
 
@@ -193,6 +223,9 @@ Res_t SXCSync::resume(ProcessType_t& pt)
         ROS_INFO("%s", "Start acquisition.");
         mStereoXiCamera->start_acquisition();
     }
+
+    // Show status information.
+    ROS_INFO("Loop resumed.");
 
     // ROS spin.
     ros::spinOnce();
@@ -317,6 +350,9 @@ Res_t SXCSync::pause(ProcessType_t& pt)
         mStereoXiCamera->stop_acquisition();
     }
     
+    // Show pasue status.
+    ROS_INFO("Loop paused.");
+
     // ROS spin.
     ros::spinOnce();
 
@@ -402,16 +438,53 @@ void SXCSync::destroy_members(void)
     {
         delete mStereoXiCamera; mStereoXiCamera = NULL;
     }
+}
 
-    if ( NULL != mPublishersImage )
+bool SXCSync::srv_change_status(
+        ros_stereo_xi_camera::change_status::Request &req,
+        ros_stereo_xi_camera::change_status::Response &res)
+{
+    bool ret = true;
+    int s = (int)( req.s );
+
+    switch ( s )
     {
-        delete [] mPublishersImage; mPublishersImage = NULL;
+        case SERVICE_REQUEST_CODE_START:
+        {
+            mServiceRequestCode = SERVICE_REQUEST_CODE_START;
+            mLoopTarget = LOOP_SYNC;
+            mIsLooping = true;
+            ROS_INFO("Service request START received.");
+            break;
+        }
+        case SERVICE_REQUEST_CODE_PAUSE:
+        {
+            mServiceRequestCode = SERVICE_REQUEST_CODE_STOP;
+            mLoopTarget = LOOP_PAUSE;
+            mIsLooping = true;
+            break;
+        }
+        case SERVICE_REQUEST_CODE_STOP:
+        {
+            mServiceRequestCode = SERVICE_REQUEST_CODE_STOP;
+            mLoopTarget = LOOP_STOP;
+            mIsLooping = false;
+            ROS_INFO("Service request STOP received.");
+            break;
+        }
+        default:
+        {
+            mServiceRequestCode = SERVICE_REQUEST_CODE_UNDEFINED;
+            ROS_ERROR("Wrong service request code %d.", s);
+            ret = false;
+            break;
+        }
     }
 
-    if ( NULL != mImageTransport )
-    {
-        delete mImageTransport; mImageTransport = NULL;
-    }
+    // Copy the request code to response code.
+    res.r = req.s;
+
+    return ret;
 }
 
 void SXCSync::set_topic_name_left_image(const std::string& name)

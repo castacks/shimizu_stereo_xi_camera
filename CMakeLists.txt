@@ -11,6 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
   std_msgs
+  message_generation
   cv_bridge
   sensor_msgs
   image_transport
@@ -56,12 +57,11 @@ find_package(catkin REQUIRED COMPONENTS
 #   Message2.msg
 # )
 
-## Generate services in the 'srv' folder
-# add_service_files(
-#   FILES
-#   Service1.srv
-#   Service2.srv
-# )
+# Generate services in the 'srv' folder
+add_service_files(
+  FILES 
+  change_status.srv
+)
 
 ## Generate actions in the 'action' folder
 # add_action_files(
@@ -70,11 +70,11 @@ find_package(catkin REQUIRED COMPONENTS
 #   Action2.action
 # )
 
-## Generate added messages and services with any dependencies listed here
-# generate_messages(
-#   DEPENDENCIES
-#   std_msgs
-# )
+# Generate added messages and services with any dependencies listed here
+generate_messages(
+  DEPENDENCIES
+  std_msgs
+)
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -109,7 +109,7 @@ catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES stereo_xi_camera
 #  CATKIN_DEPENDS roscpp rospy std_msgs
-#  DEPENDS system_lib
+  DEPENDS message_runtime
 )
 
 ###########
@@ -162,9 +162,9 @@ add_executable(${PROJECT_NAME}_node ${SRC_LIST})
 ## e.g. "rosrun someones_pkg node" instead of "rosrun someones_pkg someones_pkg_node"
 # set_target_properties(${PROJECT_NAME}_node PROPERTIES OUTPUT_NAME node PREFIX "")
 
-## Add cmake target dependencies of the executable
-## same as for the library above
-# add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+# Add cmake target dependencies of the executable
+# same as for the library above
+add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS} ros_stereo_xi_camera_gencpp)
 
 FIND_LIBRARY( LIB_OPENCV_CORE NAMES opencv_core )
 FIND_LIBRARY( LIB_OPENCV_HIGHGUI NAMES opencv_highgui )
