@@ -8,7 +8,7 @@
         <param name="pAutoGainTopLimit" type="int" value="12" />
         <param name="pTotalBandwidth" type="int" value="2400" />
         <param name="pBandwidthMargin" type="int" value="10" />
-        <param name="pLoopRate" type="double" value="0.5" />
+        <param name="pLoopRate" type="double" value="1" />
 
         <param name="pExternalTrigger" type="int" value="1" />
         <param name="pNextImageTimeout_ms" type="int" value="1000" />
