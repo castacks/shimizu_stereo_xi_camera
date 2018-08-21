@@ -125,6 +125,7 @@ protected:
 
     image_transport::ImageTransport* mImageTransport;
     image_transport::Publisher* mPublishersImage;
+    ros::Publisher mTestMsgPublisher;
 
     // The image message to be published.
 	sensor_msgs::ImagePtr mMsgImage;
