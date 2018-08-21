@@ -78,6 +78,8 @@ Res_t SXCSync::init(int& argc, char** argv, const std::string& name, uint32_t op
     mPublishersImage[CAM_0_IDX] = mImageTransport->advertise(mTopicNameLeftImage,  1);
     mPublishersImage[CAM_1_IDX] = mImageTransport->advertise(mTopicNameRightImage, 1);
 
+    mTestMsgPublisher = mpROSNode->advertise<std_msgs::String>("sxc_test_msg", 1000);
+
     // Services.
     mROSService = mpROSNode->advertiseService("change_status", &SXCSync::srv_change_status, this);
 
@@ -278,6 +280,8 @@ Res_t SXCSync::synchronize(ProcessType_t& pt)
 
     int getImagesRes = 0;
     std::stringstream ss;   // String stream for outputing info.
+    std::stringstream testMsgSS;
+    std_msgs::String testMsg;
 
     try
     {
@@ -333,13 +337,17 @@ Res_t SXCSync::synchronize(ProcessType_t& pt)
                 mMsgImage->header.seq   = mNImages;
                 mMsgImage->header.stamp = mRosTimeStamp;
 
-                mPublishersImage[loopIdx].publish(mMsgImage);
+                // mPublishersImage[loopIdx].publish(mMsgImage);
 
                 if ( true == mVerbose )
                 {
                     ROS_INFO("%s", "Message published.");
                 }
             LOOP_CAMERAS_END
+
+            testMsgSS << "nImages = " << mNImages;
+            testMsg.data = testMsgSS.str();
+            mTestMsgPublisher.publish(testMsg);
         }
 
         // ROS spin.
