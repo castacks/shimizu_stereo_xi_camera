@@ -110,6 +110,13 @@ typedef boost::error_info<struct tag_info_string, std::string> ExceptionInfoStri
 class StereoXiCamera 
 {
 public:
+    typedef enum
+    {
+        TF_COLOR = 0,
+        TF_MONO,
+        TF_RAW
+    } TransferFormat_t;
+
     typedef struct CameraParams
     {
         int AEAGEnabled;  // 1 for enabled.
@@ -159,6 +166,9 @@ public:
     int  get_bandwidth_margin(void);
     xf   get_max_frame_rate(void);
 
+    void set_transfer_format(TransferFormat_t tf);
+    TransferFormat_t get_transfer_format(void);
+
     int  get_exposure(void);
     xf   get_gain(void);
     void put_WB_coefficients(xf& r, xf& g, xf& b);
@@ -181,6 +191,7 @@ public:
 protected:
     void prepare_before_opening(void);
     void open_and_common_settings(void);
+    void set_transfer_format_single_camera(xiAPIplusCameraOcv& cam, TransferFormat_t tf);
     void setup_camera_common(xiAPIplusCameraOcv& cam);
     void set_stereo_external_trigger(void);
     void set_stereo_master_trigger(void);
@@ -245,6 +256,8 @@ protected:
     int mXi_TotalBandwidth;           // MBit/s.
     int mXi_BandwidthMargin;          // %.
     xf  mXi_MaxFrameRate;             // fps.
+
+    TransferFormat_t mTransferFormat;
 
     bool mIsExternalTriggered;
     int mXi_NextImageTimeout_ms;      // Millisecond.

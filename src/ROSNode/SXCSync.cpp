@@ -5,6 +5,7 @@ using namespace SRN;
 
 SXCSync::SXCSync(const std::string& name)
 : SyncROSNode(name),
+  DEFAULT_TRANSFER_FORMAT("color"),
   CAM_0_IDX(0), CAM_1_IDX(1),
   mTopicNameLeftImage("left/image_raw"), mTopicNameRightImage("right/image_raw"), 
   mOutDir("./"),
@@ -27,6 +28,7 @@ SXCSync::SXCSync(const std::string& name)
   mBandwidthMargin(DEFAULT_BANDWIDTH_MARGIN),
   mFlagWriteImage(0),
   mLoopRate(DEFAULT_LOOP_RATE),
+  mTransferFormat(DEFAULT_TRANSFER_FORMAT), mEncoding("bgr8"),
   mExternalTrigger(0),
   mNextImageTimeout_ms(DEFAULT_NEXT_IMAGE_TIMEOUT_MS),
   mSelfAdjust(1),
@@ -96,6 +98,7 @@ Res_t SXCSync::parse_launch_parameters(void)
 	ROSLAUNCH_GET_PARAM((*mpROSNode), "pTotalBandwidth", mTotalBandwidth, DEFAULT_TOTAL_BANDWIDTH);
 	ROSLAUNCH_GET_PARAM((*mpROSNode), "pBandwidthMargin", mBandwidthMargin, DEFAULT_BANDWIDTH_MARGIN);
 	ROSLAUNCH_GET_PARAM((*mpROSNode), "pLoopRate", mLoopRate, DEFAULT_LOOP_RATE);
+	ROSLAUNCH_GET_PARAM((*mpROSNode), "pTransferFormat", mTransferFormat, DEFAULT_TRANSFER_FORMAT);
 	ROSLAUNCH_GET_PARAM((*mpROSNode), "pFlagWriteImage", mFlagWriteImage, 0);
 	ROSLAUNCH_GET_PARAM((*mpROSNode), "pOutDir", mOutDir, "./");
 	ROSLAUNCH_GET_PARAM((*mpROSNode), "pExternalTrigger", mExternalTrigger, 0);
@@ -115,6 +118,32 @@ Res_t SXCSync::parse_launch_parameters(void)
     mLastStatus = LAST_STA_PARSE_PARAM;
 
     return RES_OK;
+}
+
+void SXCSync::set_transfer_format(sxc::StereoXiCamera* sxCam, const std::string& tf, std::string& encoding)
+{
+    if ( 0 == tf.compare( "color" ) )
+    {
+        sxCam->set_transfer_format( sxc::StereoXiCamera::TF_COLOR );
+        encoding = "bgr8";
+    }
+    else if ( 0 == tf.compare( "mono" ) )
+    {
+        sxCam->set_transfer_format( sxc::StereoXiCamera::TF_MONO );
+        encoding = "mono8";
+    }
+    else if ( 0 == tf.compare( "raw" ) )
+    {
+        sxCam->set_transfer_format( sxc::StereoXiCamera::TF_RAW );
+        encoding = "bayer_bggr8";
+    }
+    else
+    {
+        ROS_ERROR("SXCSync::set_transfer_format: Unexpected tranfser format (%s). Setting default (%s) instead.", 
+           tf.c_str(), DEFAULT_TRANSFER_FORMAT.c_str() );
+
+        sxCam->set_transfer_format( sxc::StereoXiCamera::TF_COLOR );
+    }
 }
 
 Res_t SXCSync::prepare(void)
@@ -155,6 +184,9 @@ Res_t SXCSync::prepare(void)
             mStereoXiCamera->set_autogain_top_limit(mAutoGainTopLimit);
             mStereoXiCamera->set_total_bandwidth(mTotalBandwidth);
             mStereoXiCamera->set_bandwidth_margin(mBandwidthMargin);
+
+            // Transfer format.
+            set_transfer_format(mStereoXiCamera, mTransferFormat, mEncoding);
 
             // Pre-open, open and configure the stereo camera.
             mStereoXiCamera->open();
@@ -291,12 +323,12 @@ Res_t SXCSync::synchronize(ProcessType_t& pt)
                     imwrite(imgFilename, mCvImages[loopIdx], mJpegParams);
                 }
                 
-                ROS_INFO( "Camera %d captured image (%d, %d). AEAG %d, AEAGP %.2f, exp %.3f ms, gain %.1f dB.", 
-                        loopIdx, mCvImages[loopIdx].rows, mCvImages[loopIdx].cols,
+                ROS_INFO( "Camera %d captured image (%d, %d, type = %d). AEAG %d, AEAGP %.2f, exp %.3f ms, gain %.1f dB.", 
+                        loopIdx, mCvImages[loopIdx].rows, mCvImages[loopIdx].cols, mCvImages[loopIdx].type(),
                         mCP[loopIdx].AEAGEnabled, mCP[loopIdx].AEAGPriority, mCP[loopIdx].exposure / 1000.0, mCP[loopIdx].gain );
 
                 // Publish images.
-                mMsgImage = cv_bridge::CvImage(std_msgs::Header(), "bgr8", mCvImages[loopIdx]).toImageMsg();
+                mMsgImage = cv_bridge::CvImage(std_msgs::Header(), mEncoding, mCvImages[loopIdx]).toImageMsg();
 
                 mMsgImage->header.seq   = mNImages;
                 mMsgImage->header.stamp = mRosTimeStamp;

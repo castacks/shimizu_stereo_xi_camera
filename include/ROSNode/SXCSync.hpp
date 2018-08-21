@@ -79,6 +79,7 @@ public:
 
 protected:
     void destroy_members(void);
+    void set_transfer_format(sxc::StereoXiCamera*, const std::string& tf, std::string& encoding);
 
 public:
     static const double DEFAULT_AUTO_GAIN_EXPOSURE_PRIORITY     = 0.9;
@@ -99,6 +100,8 @@ public:
     static const int    SERVICE_REQUEST_CODE_START              = 1;
     static const int    SERVICE_REQUEST_CODE_PAUSE              = 2;
     static const int    SERVICE_REQUEST_CODE_STOP               = 3;
+
+    const std::string   DEFAULT_TRANSFER_FORMAT;
 
 protected:
     const int CAM_0_IDX;
@@ -153,6 +156,8 @@ private:
 	int    mBandwidthMargin;
 	int    mFlagWriteImage;
 	double mLoopRate;
+    std::string mTransferFormat;
+    std::string mEncoding;
 
 	int    mExternalTrigger;
 	int    mNextImageTimeout_ms;

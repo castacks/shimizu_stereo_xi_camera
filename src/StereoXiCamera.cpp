@@ -19,6 +19,7 @@ StereoXiCamera::StereoXiCamera(std::string &camSN0, std::string &camSN1)
   mXi_AutoExposureTopLimit(AUTO_EXPOSURE_TOP_LIMIT_DEFAULT),
   mXi_AutoGainTopLimit(AUTO_GAIN_TOP_LIMIT_DEFAULT),
   mXi_BandwidthMargin(BANDWIDTH_MARGIN_DEFAULT),
+  mTransferFormat(TF_COLOR),
   mIsExternalTriggered(false), mXi_NextImageTimeout_ms(1000),
   mSelfAdjustNumOmittedFrames(5), mSelfAdjustNumFrames(3), 
   mSelfAdjustNumTrialLoops((mSelfAdjustNumOmittedFrames+mSelfAdjustNumFrames)*2), mIsSelfAdjusting(false),
@@ -566,6 +567,33 @@ void StereoXiCamera::open_and_common_settings(void)
     }
 }
 
+void StereoXiCamera::set_transfer_format_single_camera(xiAPIplusCameraOcv& cam, TransferFormat_t tf)
+{
+    switch ( tf )
+    {
+        case TF_COLOR:
+        {
+            cam.SetImageDataFormat(XI_RGB24);
+            break;
+        }
+        case TF_MONO:
+        {
+            cam.SetImageDataFormat(XI_MONO8);
+            break;
+        }
+        case TF_RAW:
+        {
+            cam.SetImageDataFormat(XI_RAW8);
+            break;
+        }
+        default:
+        {
+            // Should never reach here!
+            std::cout << "Unexpected transfer format = " << tf << std::endl;
+        }
+    }
+}
+
 void StereoXiCamera::setup_camera_common(xiAPIplusCameraOcv& cam)
 {
     // Set exposure time.
@@ -579,8 +607,8 @@ void StereoXiCamera::setup_camera_common(xiAPIplusCameraOcv& cam)
 	cam.EnableWhiteBalanceAuto();
 
 	// Image format.
-	cam.SetImageDataFormat(XI_RGB24);
-	// cam.SetImageDataFormat(XI_RAW8);
+	// cam.SetImageDataFormat(XI_RGB24);
+    set_transfer_format_single_camera(cam, mTransferFormat);
 
 	// Sensor defects selector.
 	cam.SetSensorDefectsCorrectionListSelector(XI_SENS_DEFFECTS_CORR_LIST_SEL_USER0);
@@ -749,6 +777,16 @@ int StereoXiCamera::get_bandwidth_margin(void)
 xf StereoXiCamera::get_max_frame_rate(void)
 {
     return mXi_MaxFrameRate;
+}
+
+void StereoXiCamera::set_transfer_format(TransferFormat_t tf)
+{
+    mTransferFormat = tf;
+}
+
+StereoXiCamera::TransferFormat_t StereoXiCamera::get_transfer_format(void)
+{
+    return mTransferFormat;
 }
 
 int StereoXiCamera::get_exposure(void)
