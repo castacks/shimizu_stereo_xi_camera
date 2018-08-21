@@ -1,5 +1,7 @@
 #include "ROSNode/SXCSync.hpp"
 
+#include "Profiler/Profiler.hpp"
+
 using namespace cv;
 using namespace SRN;
 
@@ -276,6 +278,8 @@ Res_t SXCSync::resume(ProcessType_t& pt)
 
 Res_t SXCSync::synchronize(ProcessType_t& pt)
 {
+    PROFILER_IN(__PRETTY_FUNCTION__);
+
     Res_t res = RES_OK;
 
     int getImagesRes = 0;
@@ -376,6 +380,8 @@ Res_t SXCSync::synchronize(ProcessType_t& pt)
     mLastStatus = LAST_STA_SYNC;
 
     pt = (mLoopTarget == LOOP_SYNC) ? PROCESS_CONTINUE : PROCESS_ONCE;
+
+    PROFILER_OUT(__PRETTY_FUNCTION__);
 
     return res;
 }

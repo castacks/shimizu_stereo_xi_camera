@@ -26,6 +26,8 @@
 
 #include "ros/ros.h"
 
+#include "Profiler/Profiler.hpp"
+
 using namespace cv;
 
 // ============ Static global variables. ==========
@@ -84,6 +86,8 @@ int main(int argc, char* argv[])
 
 	// Destroy.
 	nodeRes = sxcSync.destroy(); CHECK_RES(nodeRes);
+
+	PROFILER_SAVE("Profiler.txt", gProfilers);
 
 	return ret;
 }

@@ -1,6 +1,8 @@
 #include <iostream>
 #include <sstream>
 
+#include "Profiler/Profiler.hpp"
+
 #include "sxc_common.hpp"
 #include "StereoXiCamera.hpp"
 
