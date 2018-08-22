@@ -358,6 +358,8 @@ void StereoXiCamera::software_trigger(bool both)
 
 int StereoXiCamera::get_images(cv::Mat &img0, cv::Mat &img1)
 {
+    PROFILER_IN(__PRETTY_FUNCTION__);
+
     try
     {
         img0 = get_single_image(CAM_IDX_0);
@@ -384,6 +386,8 @@ int StereoXiCamera::get_images(cv::Mat &img0, cv::Mat &img1)
 
         EXCEPTION_CAMERA_API(exp);
     }
+
+    PROFILER_OUT(__PRETTY_FUNCTION__);
 
     return 0;
 }
@@ -434,6 +438,8 @@ cv::Mat StereoXiCamera::get_single_image(int idx)
 
 void StereoXiCamera::put_single_camera_params(xiAPIplusCameraOcv &cam, CameraParams_t &cp)
 {
+    PROFILER_IN(__PRETTY_FUNCTION__);
+
     if ( true == cam.IsAutoExposureAutoGain() )
     {
         cp.AEAGEnabled = 1;
@@ -454,6 +460,8 @@ void StereoXiCamera::put_single_camera_params(xiAPIplusCameraOcv &cam, CameraPar
     cp.AWB_kr = cam.GetWhiteBalanceRed();
     cp.AWB_kg = cam.GetWhiteBalanceGreen();
     cp.AWB_kb = cam.GetWhiteBalanceBlue();
+
+    PROFILER_OUT(__PRETTY_FUNCTION__);
 }
 
 void StereoXiCamera::stop_acquisition(int waitMS)

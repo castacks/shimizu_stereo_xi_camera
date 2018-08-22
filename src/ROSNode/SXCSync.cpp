@@ -336,12 +336,16 @@ Res_t SXCSync::synchronize(ProcessType_t& pt)
                         mCP[loopIdx].AEAGEnabled, mCP[loopIdx].AEAGPriority, mCP[loopIdx].exposure / 1000.0, mCP[loopIdx].gain );
 
                 // Publish images.
+                PROFILER_IN("cv_bridge::CvImage");
                 mMsgImage = cv_bridge::CvImage(std_msgs::Header(), mEncoding, mCvImages[loopIdx]).toImageMsg();
+                PROFILER_OUT("cv_bridge::CvImage");
 
                 mMsgImage->header.seq   = mNImages;
                 mMsgImage->header.stamp = mRosTimeStamp;
 
+                PROFILER_IN("ImagePublishing");
                 mPublishersImage[loopIdx].publish(mMsgImage);
+                PROFILER_OUT("ImagePublishing");
 
                 if ( true == mVerbose )
                 {
@@ -358,7 +362,9 @@ Res_t SXCSync::synchronize(ProcessType_t& pt)
         ros::spinOnce();
 
         // Sleep.
+        PROFILER_IN("ROSSleep");
         mROSLoopRate->sleep();
+        PROFILER_OUT("ROSSleep");
 
         mNImages++;
     }
