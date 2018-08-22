@@ -15,7 +15,8 @@ void save_profile_info(const std::string& fn, std::map<const char*, Profiler>& m
     {
         ofs << iter->second.get_name() << ", " 
             << iter->second.get_count() << ", " 
-            << iter->second.get_total_time() << std::endl;
+            << iter->second.get_total_time() / 1000 << ", " 
+            << iter->second.get_total_time() / 1000.0 / iter->second.get_count() << std::endl;
     }
 
     ofs.close();
