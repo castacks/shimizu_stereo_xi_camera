@@ -341,7 +341,7 @@ Res_t SXCSync::synchronize(ProcessType_t& pt)
                 mMsgImage->header.seq   = mNImages;
                 mMsgImage->header.stamp = mRosTimeStamp;
 
-                // mPublishersImage[loopIdx].publish(mMsgImage);
+                mPublishersImage[loopIdx].publish(mMsgImage);
 
                 if ( true == mVerbose )
                 {
