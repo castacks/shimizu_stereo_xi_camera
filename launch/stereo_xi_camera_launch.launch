@@ -3,8 +3,8 @@
         <param name="pXICameraSN_0" type="str" value="CUCAU1814018" />
         <param name="pXICameraSN_1" type="str" value="CUCAU1814020" />
         <param name="pAutoGainExposurePriority" type="double" value="0.7" />
-        <param name="pAutoGainExposureTargetLevel" type="double" value="30" />
-        <param name="pAutoExposureTopLimit" type="int" value="200000" />
+        <param name="pAutoGainExposureTargetLevel" type="double" value="20" />
+        <param name="pAutoExposureTopLimit" type="int" value="50000" />
         <param name="pAutoGainTopLimit" type="int" value="12" />
         <param name="pTotalBandwidth" type="int" value="2400" />
         <param name="pBandwidthMargin" type="int" value="10" />

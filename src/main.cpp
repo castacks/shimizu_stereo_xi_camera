@@ -87,7 +87,7 @@ int main(int argc, char* argv[])
 	// Destroy.
 	nodeRes = sxcSync.destroy(); CHECK_RES(nodeRes);
 
-	PROFILER_SAVE("Profiler.txt", gProfilers);
+	PROFILER_SAVE("Profiler.csv", gProfilers);
 
 	return ret;
 }

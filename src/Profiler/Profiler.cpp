@@ -11,11 +11,18 @@ void save_profile_info(const std::string& fn, std::map<const char*, Profiler>& m
 
     std::map<const char*, Profiler>::iterator iter;
 
+    // Column headers.
+    ofs << "Function name; "
+        << "count;"
+        << "total time (ms); "
+        << "average time (ms);"
+        << std::endl;
+
     for ( iter = m.begin(); iter != m.end(); ++iter )
     {
-        ofs << iter->second.get_name() << ", " 
-            << iter->second.get_count() << ", " 
-            << iter->second.get_total_time() / 1000 << ", " 
+        ofs << iter->second.get_name() << "; " 
+            << iter->second.get_count() << "; " 
+            << iter->second.get_total_time() / 1000.0 << "; " 
             << iter->second.get_total_time() / 1000.0 / iter->second.get_count() << std::endl;
     }
 
