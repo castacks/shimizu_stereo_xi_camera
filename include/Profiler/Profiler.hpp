@@ -46,7 +46,7 @@ extern std::map<const char*, Profiler> gProfilers;
 
 void save_profile_info(const std::string& fn, std::map<const char*, Profiler>& m);
 
-#define USE_PROFILER
+// #define USE_PROFILER
 
 #ifdef USE_PROFILER
 

@@ -63,7 +63,8 @@ void MeanBrightness::get_AEAG(cv::InputArray _m, xf exposure, xf gain, int mb, x
     }
 
     // Optimum Exposure-gain.
-    xf optEG = 1.0 * mb / mmb * exposure * gain;
+    // xf optEG = 1.0 * mb / mmb * exposure * gain;
+    xf optEG = exposure * gain + 2000.0 * (mb - mmb);
 
     // Actual exposure-gain.
     split_exposure_gain(optEG, mPriority, mExposureTopLimit, mGainTopLimit, mExposure, mGain);
