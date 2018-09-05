@@ -94,6 +94,9 @@ public:
     static const double DEFAULT_CUSTOM_AEAG_EXPOSURE_TOP_LIMIT  = 200000.0; // Mirosecond.
     static const double DEFAULT_CUSTOM_AEAG_GAIN_TOP_LIMIT      = 12.0;  // dB.
     static const int    DEFAULT_CUSTOM_AEAG_BRIGHTNESS_LEVEL    = 30;    // %.
+    static const double DEFAULT_CUSTOM_AEAG_CP                  = 2000.0;
+    static const double DEFAULT_CUSTOM_AEAG_CD                  = 500.0;
+    static const int    DEFAULT_CUSTOM_AEAG_CT                  = 10000; // Mirosecond.
     static const int    DEFAULT_VERBOSE                         = 0;
 
     static const int    SERVICE_REQUEST_CODE_UNDEFINED          = 0;
@@ -170,6 +173,9 @@ private:
 	double mCustomAEAGExposureTopLimit;
 	double mCustomAEAGGainTopLimit;
 	int    mCustomAEAGBrightnessLevel;
+    double mCustomAEAG_CP;
+    double mCustomAEAG_CD;
+    double mCustomAEAG_CT;
     int    mVerbose;
 };
 
