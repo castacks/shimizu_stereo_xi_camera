@@ -1,3 +1,6 @@
+
+#include <pthread.h>
+
 #include <iostream>
 #include <sstream>
 
@@ -356,6 +359,166 @@ void StereoXiCamera::software_trigger(bool both)
     }
 }
 
+cv::Mat StereoXiCamera::get_single_image(int idx)
+{
+    // Obtain the images.
+    XI_IMG_FORMAT format;
+    cv::Mat cv_mat_image;
+
+    format = mCams[idx].GetImageDataFormat();
+    // std::cout << "format = " << format << std::endl;
+    
+    cv_mat_image = mCams[idx].GetNextImageOcvMat();
+    
+    if (format == XI_RAW16 || format == XI_MONO16)
+    {
+        normalize(cv_mat_image, cv_mat_image, 0, 65536, cv::NORM_MINMAX, -1, cv::Mat()); // 0 - 65536, 16 bit unsigned integer range
+    }
+
+    return cv_mat_image;
+}
+
+// Data structures for the multi-threaded version of get_single_iamge.
+typedef struct TArg_get_single_image
+{
+    std::string name;
+    xiAPIplusCameraOcv* cam;
+    int flag;
+    cv::Mat image;
+    cv::Mat* grayBuffer;
+} TArg_get_single_image_t;
+
+/** A multi-thread version of get_single_image
+ * 
+ * This function will catch the timeout exception from Ximea API.
+ * If timeout, flag = 2. If other exception, flag = 3.
+ * 
+ * If an image is obtained successfully, flag will be 1. The obtained 
+ * image could be found in image member variable.
+ * 
+ */
+static void *
+thd_get_single_image(void* arg)
+{
+    // Cast the input argument.
+    TArg_get_single_image_t* a = (TArg_get_single_image_t*)arg;
+
+    // Obtain the images.
+    XI_IMG_FORMAT format;
+    cv::Mat cv_mat_image;
+
+    try
+    {
+        format = a->cam->GetImageDataFormat();
+        // std::cout << "format = " << format << std::endl;
+        
+        cv_mat_image = a->cam->GetNextImageOcvMat();
+        
+        if (format == XI_RAW16 || format == XI_MONO16)
+        {
+            normalize(cv_mat_image, cv_mat_image, 0, 65536, cv::NORM_MINMAX, -1, cv::Mat()); // 0 - 65536, 16 bit unsigned integer range
+        }
+
+        a->image = cv_mat_image;
+
+        if ( a->grayBuffer->rows != a->image.rows ||
+             a->grayBuffer->cols != a->image.cols )
+        {
+            *(a->grayBuffer) = cv::Mat::zeros(a->image.rows, a->image.cols, CV_8UC1);
+        }
+
+        a->flag  = 1;
+    }
+    catch ( xiAPIplus_Exception& exp )
+    {
+        if ( 10 == exp.GetErrorNumber() )
+        {
+            // Timeout exception.
+            a->flag = 2;
+        }
+        else
+        {
+            std::cout << ">>> " << a->name 
+                      << ": Exception: Ximea API throws exception with error number "
+                      << exp.GetErrorNumber() 
+                      << ". Thread ends immediately."
+                      << std::endl;
+            a->flag = 3;
+        }
+    }
+
+    return (void*)( a->flag );
+}
+
+int StereoXiCamera::get_images_mt(cv::Mat &img0, cv::Mat &img1)
+{
+    PROFILER_IN(__PRETTY_FUNCTION__);
+
+    int ret = 0;
+
+    // Create the argument for thd_get_single_image().
+    TArg_get_single_image_t args[2];
+    std::stringstream ss;
+
+    LOOP_CAMERAS_BEGIN
+        ss.str(""); ss.clear(); ss << "thd_get_single_image_" << loopIdx;
+        args[loopIdx].name  = ss.str();
+        args[loopIdx].cam   = &(mCams[loopIdx]);
+        args[loopIdx].flag  = 0;
+        args[loopIdx].image = cv::Mat();
+        args[loopIdx].grayBuffer = &(mGrayMatBuffer[loopIdx]);
+    LOOP_CAMERAS_END
+
+    pthread_t thds[2];
+    int* thdRes[2];
+    int s;
+
+    LOOP_CAMERAS_BEGIN
+        s = pthread_create(
+            thds + loopIdx, NULL, thd_get_single_image, (void*)( args + loopIdx ) );
+        
+        if ( 0 != s )
+        {
+            std::cout << "Thread " << args[loopIdx].name << " fails to start." << std::endl;
+        }
+    LOOP_CAMERAS_END
+
+    LOOP_CAMERAS_BEGIN
+        s = pthread_join( thds[loopIdx], (void**)( thdRes + loopIdx ) );
+
+        if ( 0 != s )
+        {
+            std::cout << "Thread " << args[loopIdx].name << " fails to join." << std::endl;
+        }
+        else
+        {
+            std::cout << "Thread " << args[loopIdx].name << " joined." << std::endl;
+        }
+    LOOP_CAMERAS_END
+
+    if ( 1 == *(thdRes[0]) )
+    {
+        img0 = args[CAM_IDX_0].image;
+    }
+    else
+    {
+        ret = -1;
+    }
+    
+    if ( 1 == *(thdRes[1]) )
+    {
+        img1 = args[CAM_IDX_1].image;
+    }
+    else
+    {
+        ret = -1;
+    }
+    
+    PROFILER_OUT(__PRETTY_FUNCTION__);
+
+    return ret;
+}
+
 int StereoXiCamera::get_images(cv::Mat &img0, cv::Mat &img1)
 {
     PROFILER_IN(__PRETTY_FUNCTION__);
@@ -381,6 +544,7 @@ int StereoXiCamera::get_images(cv::Mat &img0, cv::Mat &img1)
     {
         if ( 10 == exp.GetErrorNumber() )
         {
+            // Timeout exception, return.
             return -1;
         }
 
@@ -394,7 +558,12 @@ int StereoXiCamera::get_images(cv::Mat &img0, cv::Mat &img1)
 
 int StereoXiCamera::get_images(cv::Mat &img0, cv::Mat &img1, CameraParams_t &camP0, CameraParams_t &camP1)
 {
-    if ( 0 != this->get_images(img0, img1) )
+    // if ( 0 != this->get_images(img0, img1) )
+    // {
+    //     return -1;
+    // }
+
+    if ( 0 != this->get_images_mt(img0, img1) )
     {
         return -1;
     }
@@ -415,25 +584,6 @@ int StereoXiCamera::get_images(cv::Mat &img0, cv::Mat &img1, CameraParams_t &cam
     }
 
     return 0;
-}
-
-cv::Mat StereoXiCamera::get_single_image(int idx)
-{
-    // Obtain the images.
-    XI_IMG_FORMAT format;
-    cv::Mat cv_mat_image;
-
-    format = mCams[idx].GetImageDataFormat();
-    // std::cout << "format = " << format << std::endl;
-    
-    cv_mat_image = mCams[idx].GetNextImageOcvMat();
-    
-    if (format == XI_RAW16 || format == XI_MONO16)
-    {
-        normalize(cv_mat_image, cv_mat_image, 0, 65536, cv::NORM_MINMAX, -1, cv::Mat()); // 0 - 65536, 16 bit unsigned integer range
-    }
-
-    return cv_mat_image;
 }
 
 void StereoXiCamera::put_single_camera_params(xiAPIplusCameraOcv &cam, CameraParams_t &cp)

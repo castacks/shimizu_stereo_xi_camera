@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.1.0)
 project(ros_stereo_xi_camera)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
@@ -20,6 +20,10 @@ find_package(catkin REQUIRED COMPONENTS
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 
+# pthread support with cmake is found at
+# https://stackoverflow.com/questions/1620918/cmake-and-libpthread
+set(THREADS_PREFER_PTHREAD_FLAG ON)
+find_package(Threads REQUIRED)
 
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
@@ -177,6 +181,7 @@ target_link_libraries(${PROJECT_NAME}_node
   ${catkin_LIBRARIES}
   ${LIB_XIMEA} ${LIB_OPENCV_CORE} ${LIB_OPENCV_HIGHGUI} ${LIB_OPENCV_IMGPROC}
   ${LIB_BOOST_EXCEPTION}
+  Threads::Threads
 )
 
 #############

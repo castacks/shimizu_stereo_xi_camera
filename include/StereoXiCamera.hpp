@@ -197,11 +197,17 @@ protected:
     void set_stereo_master_trigger(void);
     void set_stereo_software_trigger(void);
 
+    cv::Mat get_single_image(int idx);
     /**
      * @return 0 if no error. 
      */
     int get_images(cv::Mat &img0, cv::Mat &img1);
-    cv::Mat get_single_image(int idx);
+
+    /** Call the multi-thread version of the get_single_image.
+     * 
+     */
+    int get_images_mt(cv::Mat &img0, cv::Mat &img1);
+
     void put_single_camera_params(xiAPIplusCameraOcv &cam, CameraParams_t &cp);
 
     int EXPOSURE_MILLISEC(int val);
