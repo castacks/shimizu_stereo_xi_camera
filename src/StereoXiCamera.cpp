@@ -447,7 +447,7 @@ thd_get_single_image(void* arg)
         }
     }
 
-    return (void*)( a->flag );
+    return (void*)( &(a->flag) );
 }
 
 int StereoXiCamera::get_images_mt(cv::Mat &img0, cv::Mat &img1)
@@ -470,7 +470,7 @@ int StereoXiCamera::get_images_mt(cv::Mat &img0, cv::Mat &img1)
     LOOP_CAMERAS_END
 
     pthread_t thds[2];
-    int* thdRes[2];
+    void* thdRes[2];
     int s;
 
     LOOP_CAMERAS_BEGIN
@@ -492,11 +492,15 @@ int StereoXiCamera::get_images_mt(cv::Mat &img0, cv::Mat &img1)
         }
         else
         {
-            std::cout << "Thread " << args[loopIdx].name << " joined." << std::endl;
+            // Test use.
+            // std::cout << "Thread " << args[loopIdx].name << " joined." << std::endl;
         }
     LOOP_CAMERAS_END
 
-    if ( 1 == *(thdRes[0]) )
+    // // Test use.
+    // std::cout << ">>> All threads end. <<<" << std::endl;
+
+    if ( 1 == *( (int*)(thdRes[0]) ) )
     {
         img0 = args[CAM_IDX_0].image;
     }
@@ -505,7 +509,7 @@ int StereoXiCamera::get_images_mt(cv::Mat &img0, cv::Mat &img1)
         ret = -1;
     }
     
-    if ( 1 == *(thdRes[1]) )
+    if ( 1 == *( (int*)(thdRes[1]) ) )
     {
         img1 = args[CAM_IDX_1].image;
     }
@@ -514,6 +518,9 @@ int StereoXiCamera::get_images_mt(cv::Mat &img0, cv::Mat &img1)
         ret = -1;
     }
     
+    // Test use.
+    // ret = -1;
+
     PROFILER_OUT(__PRETTY_FUNCTION__);
 
     return ret;

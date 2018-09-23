@@ -19,9 +19,9 @@
         <param name="pSelfAdjust" type="int" value="1" />
 
         <param name="pCustomAEAGEnabled" type="int" value="1" />
-        <param name="pCustomAEAGPriority" type="double" value="1.0" />
-        <param name="pCustomAEAGExposureTopLimit" type="double" value="200000" />
-        <param name="pCustomAEAGGainTopLimit" type="double" value="12" />
+        <param name="pCustomAEAGPriority" type="double" value="0.7" />
+        <param name="pCustomAEAGExposureTopLimit" type="double" value="20000" />
+        <param name="pCustomAEAGGainTopLimit" type="double" value="20" />
         <param name="pCustomAEAGBrightnessLevel" type="int" value="30" />
 
         <param name="pCustomAEAG_CP" type="double" value="3000.0" />
