@@ -329,16 +329,23 @@ Res_t SXCSync::synchronize(ProcessType_t& pt)
                 if ( 1 == mFlagWriteImage )
                 {
                     // std::string yamlFilename = ss.str() + ".yaml";
-                    std::string imgFilename = ss.str() + ".bmp";
+                    std::string imgFilename = ss.str() + ".jpg";
 
                     // FileStorage cfFS(yamlFilename, FileStorage::WRITE);
                     // cfFS << "frame" << nImages << "image_id" << loopIdx << "raw_data" << cvImages[loopIdx];
                     imwrite(imgFilename, mCvImages[loopIdx], mJpegParams);
                 }
                 
-                ROS_INFO( "Camera %d captured image (%d, %d, type = %d). AEAG %d, AEAGP %.2f, exp %.3f ms, gain %.1f dB.", 
+                if ( true == mVerbose )
+                {
+                    ROS_INFO( "Camera %d captured image (%d, %d, type = %d). AEAG %d, AEAGP %.2f, exp %.3f ms, gain %.1f dB.", 
                         loopIdx, mCvImages[loopIdx].rows, mCvImages[loopIdx].cols, mCvImages[loopIdx].type(),
                         mCP[loopIdx].AEAGEnabled, mCP[loopIdx].AEAGPriority, mCP[loopIdx].exposure / 1000.0, mCP[loopIdx].gain );
+                }
+                else
+                {
+                    ROS_INFO( "Cam %d, E %.3f ms, G %.1f dB.", loopIdx, mCP[loopIdx].exposure / 1000.0, mCP[loopIdx].gain );
+                }
 
                 // Publish images.
                 PROFILER_IN("cv_bridge::CvImage");
@@ -358,7 +365,19 @@ Res_t SXCSync::synchronize(ProcessType_t& pt)
                 }
             LOOP_CAMERAS_END
 
-            testMsgSS << "nImages = " << mNImages;
+            testMsgSS << "{" << std::endl
+                      << "\t\"seq\": " << mNImages << "," << std::endl
+                      << "\t\"cams\": [" << std::endl
+                      << "\t\t{ \"idx\": 0," << std::endl
+                      << "\t\t\"exp\": " << mCP[CAM_0_IDX].exposure / 1000.0 << "," << std::endl
+                      << "\t\t\"gain\": " << mCP[CAM_0_IDX].gain / 1000.0 << "" << std::endl
+                      << "\t\t\"mb\": " << mStereoXiCamera->mMeanBrightness[CAM_0_IDX] << "" << std::endl
+                      << "\t}," << std::endl
+                      << "\t\t{ \"idx\": 1," << std::endl
+                      << "\t\t\"exp\": " << mCP[CAM_1_IDX].exposure / 1000.0 << "," << std::endl
+                      << "\t\t\"gain\": " << mCP[CAM_1_IDX].gain / 1000.0 << "" << std::endl
+                      << "\t} ]" << std::endl
+                      << "}" << std::endl;
             testMsg.data = testMsgSS.str();
             mTestMsgPublisher.publish(testMsg);
         }

@@ -19,7 +19,8 @@ public:
      * /param mb Target mean brightness, 0 - 255. 
      */
     virtual void get_AEAG(cv::InputArray _m,
-        xf exposure, xf gain, int mb, xf& newExposure, xf& newGain);
+        xf exposure, xf gain, int mb, xf& newExposure, xf& newGain,
+        int* pLMB = NULL);
 
     xf get_exposure(void);
     xf get_gain(void);

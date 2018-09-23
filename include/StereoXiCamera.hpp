@@ -188,6 +188,9 @@ public:
     void disable_custom_AEAG(void);
     bool is_custom_AEAG_enabled(void);
 
+    void enable_debug(void);
+    void disable_debug(void);
+
 protected:
     void prepare_before_opening(void);
     void open_and_common_settings(void);
@@ -285,6 +288,10 @@ protected:
     int  mCAEAG_TargetBrightnessLevel;
     int  mCAEAG_TargetBrightnessLevel8Bit;
     bool mCAEAG_IsEnabled;
+    int  mMeanBrightness[2];
+
+    // Debug flag.
+    bool mFlagDebug;
 };
 
 }

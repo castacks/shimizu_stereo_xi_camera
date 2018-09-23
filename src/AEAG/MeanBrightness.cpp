@@ -70,7 +70,7 @@ xf MeanBrightness::get_d(void)
     return mCD;
 }
 
-void MeanBrightness::get_AEAG(cv::InputArray _m, xf exposure, xf gain, int mb, xf& newExposure, xf& newGain)
+void MeanBrightness::get_AEAG(cv::InputArray _m, xf exposure, xf gain, int mb, xf& newExposure, xf& newGain, int* pLMB)
 {
     // Get the Mat object.
     cv::Mat m = _m.getMat();
@@ -105,4 +105,9 @@ void MeanBrightness::get_AEAG(cv::InputArray _m, xf exposure, xf gain, int mb, x
     newGain     = mGain;
 
     mLastBDiff = currentBDiff;
+
+    if ( NULL != pLMB )
+    {
+        *pLMB = mmb;
+    }
 }

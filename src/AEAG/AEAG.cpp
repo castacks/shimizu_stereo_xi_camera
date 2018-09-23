@@ -16,7 +16,7 @@ AEAG::~AEAG()
 
 }
 
-void AEAG::get_AEAG(cv::InputArray _m, xf exposure, xf gain, int mb, xf& newExposure, xf& newGain)
+void AEAG::get_AEAG(cv::InputArray _m, xf exposure, xf gain, int mb, xf& newExposure, xf& newGain, int* pLMB)
 {
     
 }

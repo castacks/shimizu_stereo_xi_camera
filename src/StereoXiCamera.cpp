@@ -29,7 +29,8 @@ StereoXiCamera::StereoXiCamera(std::string &camSN0, std::string &camSN1)
   mSelfAdjustNumOmittedFrames(5), mSelfAdjustNumFrames(3), 
   mSelfAdjustNumTrialLoops((mSelfAdjustNumOmittedFrames+mSelfAdjustNumFrames)*2), mIsSelfAdjusting(false),
   mXi_Exposure(100), mXi_Gain(0), mXi_AWB_kr(0.0), mXi_AWB_kg(0.0), mXi_AWB_kb(0.0), 
-  mCAEAG(NULL), mCAEAG_TargetBrightnessLevel(10), mCAEAG_TargetBrightnessLevel8Bit(0), mCAEAG_IsEnabled(false)
+  mCAEAG(NULL), mCAEAG_TargetBrightnessLevel(10), mCAEAG_TargetBrightnessLevel8Bit(0), mCAEAG_IsEnabled(false),
+  mFlagDebug(false)
 {
     mCamSN[CAM_IDX_0] = camSN0;
     mCamSN[CAM_IDX_1] = camSN1;
@@ -277,19 +278,24 @@ void StereoXiCamera::apply_custom_AEAG(cv::Mat &img0, cv::Mat &img1, CameraParam
     mCAEAG->get_AEAG(mGrayMatBuffer[CAM_IDX_0], 
         currentExposure[CAM_IDX_0], currentGain[CAM_IDX_0], 
         mCAEAG_TargetBrightnessLevel8Bit, 
-        newExposure[CAM_IDX_0], newGain[CAM_IDX_0]);
+        newExposure[CAM_IDX_0], newGain[CAM_IDX_0],
+        mMeanBrightness + CAM_IDX_0);
 
     // The second camera.
     cv::cvtColor( img1, mGrayMatBuffer[CAM_IDX_1], cv::COLOR_BGR2GRAY, 1 );
     mCAEAG->get_AEAG(mGrayMatBuffer[CAM_IDX_1], 
         currentExposure[CAM_IDX_1], currentGain[CAM_IDX_1], 
         mCAEAG_TargetBrightnessLevel8Bit, 
-        newExposure[CAM_IDX_1], newGain[CAM_IDX_1]);
+        newExposure[CAM_IDX_1], newGain[CAM_IDX_1],
+        mMeanBrightness + CAM_IDX_1);
 
     // Average.
     int avgExposure = (int)(0.5 * ( newExposure[0] + newExposure[1] ));
     xf  avgGain     = 0.5 * ( newGain[0] + newGain[1] );
-    std::cout << "avgGain = " << avgGain << std::endl;
+    if ( true == mFlagDebug )
+    {
+        std::cout << "avgGain = " << avgGain << std::endl;
+    }
 
     if ( true == std::isnan(avgGain) )
     {
@@ -304,10 +310,13 @@ void StereoXiCamera::apply_custom_AEAG(cv::Mat &img0, cv::Mat &img1, CameraParam
         mCams[loopIdx].SetGain(avgGain);
 
         // For test use.
-        std::cout << "Cam " << loopIdx 
+        if ( true == mFlagDebug )
+        {
+            std::cout << "Cam " << loopIdx 
                   << ", avgExposure (ms) = " << avgExposure / 1000.0
                   << ", avgGain (dB) = " << avgGain
                   << std::endl;
+        }
     LOOP_CAMERAS_END
 }
 
@@ -1037,4 +1046,14 @@ void StereoXiCamera::disable_custom_AEAG(void)
 bool StereoXiCamera::is_custom_AEAG_enabled(void)
 {
     return mCAEAG_IsEnabled;
+}
+
+void StereoXiCamera::enable_debug(void)
+{
+    mFlagDebug = true;
+}
+
+void StereoXiCamera::disable_debug(void)
+{
+    mFlagDebug = false;
 }

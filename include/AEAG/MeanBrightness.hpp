@@ -19,7 +19,7 @@ public:
     xf get_p(void);
     xf get_d(void);
 
-    void get_AEAG(cv::InputArray _m, xf exposure, xf gain, int mb, xf& newExposure, xf& newGain);
+    void get_AEAG(cv::InputArray _m, xf exposure, xf gain, int mb, xf& newExposure, xf& newGain, int* pLMB = NULL);
 
 protected:
     xf mCP; // The p coefficient of PD control.
