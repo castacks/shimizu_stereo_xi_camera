@@ -365,17 +365,21 @@ Res_t SXCSync::synchronize(ProcessType_t& pt)
                 }
             LOOP_CAMERAS_END
 
+            int mb[2];
+            mStereoXiCamera->put_mean_brightness(mb);
+
             testMsgSS << "{" << std::endl
                       << "\t\"seq\": " << mNImages << "," << std::endl
                       << "\t\"cams\": [" << std::endl
                       << "\t\t{ \"idx\": 0," << std::endl
                       << "\t\t\"exp\": " << mCP[CAM_0_IDX].exposure / 1000.0 << "," << std::endl
                       << "\t\t\"gain\": " << mCP[CAM_0_IDX].gain / 1000.0 << "" << std::endl
-                      << "\t\t\"mb\": " << mStereoXiCamera->mMeanBrightness[CAM_0_IDX] << "" << std::endl
+                      << "\t\t\"mb\": " << mb[CAM_0_IDX] << "" << std::endl
                       << "\t}," << std::endl
                       << "\t\t{ \"idx\": 1," << std::endl
                       << "\t\t\"exp\": " << mCP[CAM_1_IDX].exposure / 1000.0 << "," << std::endl
                       << "\t\t\"gain\": " << mCP[CAM_1_IDX].gain / 1000.0 << "" << std::endl
+                      << "\t\t\"mb\": " << mb[CAM_1_IDX] << "" << std::endl
                       << "\t} ]" << std::endl
                       << "}" << std::endl;
             testMsg.data = testMsgSS.str();

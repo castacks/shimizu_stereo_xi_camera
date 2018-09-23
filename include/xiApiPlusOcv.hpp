@@ -259,6 +259,11 @@ public:
 	virtual void CopyTo(xiAPIplus_Image* image_copy);
 	bool IsCopy() {return is_copy;}
 	void SetCopy(bool en) {is_copy=en;}
+
+	// Added by Yaoyu Hu on 20180923. yaoyuh@andrew.cmu.edu.
+	// Access to the timestamps.
+	void PutImageTimestamps(DWORD* tsArray);
+
 private:
 XI_IMG image;
 bool is_copy; // =1 if image bitmap is allocated, 0= if it is area in memory, that is not allocated in API
@@ -2063,7 +2068,7 @@ public:
 	* Reads an image from the camera using XiAPI, stores the image in OpenCV Mat format.
 	* @return OpenCV Mat image. 
 	*/
-	cv::Mat			GetNextImageOcvMat(); //Reads and image and converts it to OpenCV Mat
+	cv::Mat			GetNextImageOcvMat(DWORD* ts = NULL); //Reads and image and converts it to OpenCV Mat
 	/**
 	* Converts a XiAPI image (xiAPIplus_Image*) to OpenCV IplImage *.
 	* @param input_image[in] Input xiAPIplus_Image* to be converted.

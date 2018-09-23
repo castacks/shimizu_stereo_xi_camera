@@ -395,6 +395,7 @@ typedef struct TArg_get_single_image
     int flag;
     cv::Mat image;
     cv::Mat* grayBuffer;
+    DWORD ts[2];
 } TArg_get_single_image_t;
 
 /** A multi-thread version of get_single_image
@@ -411,6 +412,8 @@ thd_get_single_image(void* arg)
 {
     // Cast the input argument.
     TArg_get_single_image_t* a = (TArg_get_single_image_t*)arg;
+    a->ts[0] = 0;
+    a->ts[1] = 0;
 
     // Obtain the images.
     XI_IMG_FORMAT format;
@@ -421,7 +424,7 @@ thd_get_single_image(void* arg)
         format = a->cam->GetImageDataFormat();
         // std::cout << "format = " << format << std::endl;
         
-        cv_mat_image = a->cam->GetNextImageOcvMat();
+        cv_mat_image = a->cam->GetNextImageOcvMat( a->ts );
         
         if (format == XI_RAW16 || format == XI_MONO16)
         {
@@ -459,7 +462,7 @@ thd_get_single_image(void* arg)
     return (void*)( &(a->flag) );
 }
 
-int StereoXiCamera::get_images_mt(cv::Mat &img0, cv::Mat &img1)
+int StereoXiCamera::get_images_mt(cv::Mat &img0, cv::Mat &img1, CameraParams_t &cp0, CameraParams_t &cp1)
 {
     PROFILER_IN(__PRETTY_FUNCTION__);
 
@@ -476,6 +479,8 @@ int StereoXiCamera::get_images_mt(cv::Mat &img0, cv::Mat &img1)
         args[loopIdx].flag  = 0;
         args[loopIdx].image = cv::Mat();
         args[loopIdx].grayBuffer = &(mGrayMatBuffer[loopIdx]);
+        args[loopIdx].ts[0] = 0;
+        args[loopIdx].ts[1] = 0;
     LOOP_CAMERAS_END
 
     pthread_t thds[2];
@@ -512,6 +517,8 @@ int StereoXiCamera::get_images_mt(cv::Mat &img0, cv::Mat &img1)
     if ( 1 == *( (int*)(thdRes[0]) ) )
     {
         img0 = args[CAM_IDX_0].image;
+        cp0.tsSec  = args[CAM_IDX_0].ts[0];
+        cp0.tsUSec = args[CAM_IDX_0].ts[1];
     }
     else
     {
@@ -521,6 +528,8 @@ int StereoXiCamera::get_images_mt(cv::Mat &img0, cv::Mat &img1)
     if ( 1 == *( (int*)(thdRes[1]) ) )
     {
         img1 = args[CAM_IDX_1].image;
+        cp1.tsSec  = args[CAM_IDX_1].ts[0];
+        cp1.tsUSec = args[CAM_IDX_1].ts[1];
     }
     else
     {
@@ -579,7 +588,7 @@ int StereoXiCamera::get_images(cv::Mat &img0, cv::Mat &img1, CameraParams_t &cam
     //     return -1;
     // }
 
-    if ( 0 != this->get_images_mt(img0, img1) )
+    if ( 0 != this->get_images_mt(img0, img1, camP0, camP1) )
     {
         return -1;
     }
@@ -1046,6 +1055,12 @@ void StereoXiCamera::disable_custom_AEAG(void)
 bool StereoXiCamera::is_custom_AEAG_enabled(void)
 {
     return mCAEAG_IsEnabled;
+}
+
+void StereoXiCamera::put_mean_brightness(int* mb)
+{
+    mb[CAM_IDX_0] = mMeanBrightness[CAM_IDX_0];
+    mb[CAM_IDX_1] = mMeanBrightness[CAM_IDX_1];
 }
 
 void StereoXiCamera::enable_debug(void)

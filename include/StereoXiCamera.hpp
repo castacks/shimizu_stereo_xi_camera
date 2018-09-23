@@ -127,6 +127,9 @@ public:
         xf  AWB_kr;       // Auto white balance, read coefficient.
         xf  AWB_kg;       // Auto white balance, green coefficient.
         xf  AWB_kb;       // Auto white balance, blue coefficient.
+
+        DWORD tsSec;
+        DWORD tsUSec;
     } CameraParams_t;
 
 public:
@@ -188,6 +191,11 @@ public:
     void disable_custom_AEAG(void);
     bool is_custom_AEAG_enabled(void);
 
+    /** Save the mean brightness into the array referred by mb.
+     * 
+     */
+    void put_mean_brightness(int* mb);
+
     void enable_debug(void);
     void disable_debug(void);
 
@@ -209,7 +217,7 @@ protected:
     /** Call the multi-thread version of the get_single_image.
      * 
      */
-    int get_images_mt(cv::Mat &img0, cv::Mat &img1);
+    int get_images_mt(cv::Mat &img0, cv::Mat &img1, CameraParams_t &cp0, CameraParams_t &cp1);
 
     void put_single_camera_params(xiAPIplusCameraOcv &cam, CameraParams_t &cp);
 

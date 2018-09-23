@@ -9726,6 +9726,15 @@ int xiAPIplus_Image::GetBitCount()
 	return vals;
 }
 
+void xiAPIplus_Image::PutImageTimestamps(DWORD* tsArray)
+{
+	if ( NULL != tsArray )
+	{
+		tsArray[0] = image.tsSec;
+		tsArray[1] = image.tsUSec;
+	}
+}
+
 // ---------------------------------------------------------------------
 // Image Clone
 // make new copy of existing image
@@ -9873,8 +9882,17 @@ IplImage*  xiAPIplusCameraOcv::GetNextImageOcvIpl(){
 * Reads an image from the camera using XiAPI, stores the image in OpenCV Mat format.
 * @return OpenCV Mat image. 
 */
-cv::Mat xiAPIplusCameraOcv::GetNextImageOcvMat(){
+cv::Mat xiAPIplusCameraOcv::GetNextImageOcvMat(DWORD* ts){
 	cv_mat_image_ = cv::cvarrToMat(GetNextImageOcvIpl());
+
+	// Added by Yaoyu Hu on 20180923. yaoyuh@andrew.cmu.edu.
+	// A valid image data should be stored in next_image_.
+	if ( NULL != ts )
+	{
+		// Get the timestamps.
+		next_image_->PutImageTimestamps(ts);
+	}
+
 	return cv_mat_image_;
 }
 
