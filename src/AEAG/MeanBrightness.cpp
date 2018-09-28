@@ -42,11 +42,18 @@ static void split_exposure_gain(xf optimumEG, xf expPriority, xf topE, xf topG, 
         exposure = topE;
     }
 
-    gain = optimumEG / exposure;
-
-    if ( gain > topG )
+    if ( 1.0 == expPriority )
     {
-        gain = topG;
+        gain = 1.0;
+    }
+    else
+    {
+        gain = optimumEG / exposure;
+
+        if ( gain > topG )
+        {
+            gain = topG;
+        }
     }
 }
 
@@ -89,7 +96,13 @@ void MeanBrightness::get_AEAG(cv::InputArray _m, xf exposure, xf gain, int mb, x
     xf currentBDiff = mb - mmb;
     xf optEG = exposure * gain + mCP * currentBDiff + mCD * ( currentBDiff - mLastBDiff );
 
-    if ( fabs(optEG - exposure * gain) > mCT )
+    if ( optEG <= 0 )
+    {
+        std::cout << "Negative EG: " << optEG << std::endl;
+        mExposure = exposure;
+        mGain     = gain;
+    }
+    else if ( fabs(optEG - exposure * gain) > mCT )
     {
         // Actual exposure-gain.
         split_exposure_gain(optEG, mPriority, mExposureTopLimit, mGainTopLimit, mExposure, mGain);
