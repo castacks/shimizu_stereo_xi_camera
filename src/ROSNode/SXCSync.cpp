@@ -81,7 +81,7 @@ Res_t SXCSync::init(int& argc, char** argv, const std::string& name, uint32_t op
     mPublishersImage[CAM_1_IDX] = mImageTransport->advertise(mTopicNameRightImage, 1);
 
     mTestMsgPublisher = mpROSNode->advertise<std_msgs::String>("sxc_test_msg", 1000);
-    mDiagPublisher    = mpROSNode->advertise<diagnostic_msgs::DiagnosticArray>("diagnostics", 10);
+    mDiagPublisher    = mpROSNode->advertise<diagnostic_msgs::DiagnosticArray>("/diagnostics", 10);
 
     // Services.
     mROSService = mpROSNode->advertiseService("change_status", &SXCSync::srv_change_status, this);
