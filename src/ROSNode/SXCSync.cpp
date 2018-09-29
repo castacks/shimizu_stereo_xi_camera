@@ -81,6 +81,7 @@ Res_t SXCSync::init(int& argc, char** argv, const std::string& name, uint32_t op
     mPublishersImage[CAM_1_IDX] = mImageTransport->advertise(mTopicNameRightImage, 1);
 
     mTestMsgPublisher = mpROSNode->advertise<std_msgs::String>("sxc_test_msg", 1000);
+    mDiagPublisher    = mpROSNode->advertise<diagnostic_msgs::DiagnosticArray>("diagnostics", 10);
 
     // Services.
     mROSService = mpROSNode->advertiseService("change_status", &SXCSync::srv_change_status, this);
@@ -389,6 +390,28 @@ Res_t SXCSync::synchronize(ProcessType_t& pt)
             testMsg.data = testMsgSS.str();
             mTestMsgPublisher.publish(testMsg);
         }
+
+        // Diagnostics.
+        diagnostic_msgs::DiagnosticArray da;
+        diagnostic_msgs::DiagnosticStatus ds;
+        std::stringstream ssDiag;
+
+        ssDiag << mNImages;
+
+        ds.level = diagnostic_msgs::DiagnosticStatus::OK;
+        ds.name = "stereo ximea camera";
+        ds.message = "Diagnostic message.";
+        ds.hardware_id = "sxc";
+        diagnostic_msgs::KeyValue kv;
+        kv.key = "seq";
+        kv.value = ssDiag.str();
+        ds.values.push_back(kv);
+        da.status.push_back(ds);
+
+        da.header.seq   = mNImages;
+        da.header.stamp = mRosTimeStamp;
+
+        mDiagPublisher.publish(da);
 
         // ROS spin.
         ros::spinOnce();

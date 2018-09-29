@@ -5,6 +5,10 @@
 
 #include "ros/ros.h"
 #include "std_msgs/String.h"
+
+#include <diagnostic_msgs/DiagnosticStatus.h>
+#include <diagnostic_msgs/DiagnosticArray.h>
+
 #include <image_transport/image_transport.h>
 #include <opencv2/opencv.hpp>
 #include <opencv2/highgui/highgui.hpp>
@@ -129,6 +133,7 @@ protected:
     image_transport::ImageTransport* mImageTransport;
     image_transport::Publisher* mPublishersImage;
     ros::Publisher mTestMsgPublisher;
+    ros::Publisher mDiagPublisher;
 
     // The image message to be published.
 	sensor_msgs::ImagePtr mMsgImage;
