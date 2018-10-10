@@ -18,6 +18,7 @@ SXCSync::SXCSync(const std::string& name)
   mImageTransport(NULL), mPublishersImage(NULL), 
   mStereoXiCamera(NULL),
   mMbAEAG(NULL),
+  mIPE(NULL),
   mCvImages(NULL),
   mCP(NULL),
   mNImages(0),
@@ -183,6 +184,11 @@ Res_t SXCSync::prepare(void)
             mStereoXiCamera->set_custom_AEAG_target_brightness_level(mCustomAEAGBrightnessLevel);
             mStereoXiCamera->enable_custom_AEAG();
         }
+        else
+        {
+            mIPE = new sxc::MeanBrightness;
+            mStereoXiCamera->set_image_parameter_evaluator(mIPE);
+        }
 
         // Prepare with the camera API.
         try
@@ -306,6 +312,8 @@ Res_t SXCSync::synchronize(ProcessType_t& pt)
         // Get images.
         getImagesRes = mStereoXiCamera->get_images( mCvImages[0], mCvImages[1], mCP[0], mCP[1] );
 
+        int mb[2];
+
         if ( 0 != getImagesRes )
         {
             ROS_ERROR("Get images failed");
@@ -366,7 +374,6 @@ Res_t SXCSync::synchronize(ProcessType_t& pt)
                 }
             LOOP_CAMERAS_END
 
-            int mb[2];
             mStereoXiCamera->put_mean_brightness(mb);
 
             testMsgSS << "{" << std::endl
@@ -391,27 +398,7 @@ Res_t SXCSync::synchronize(ProcessType_t& pt)
             mTestMsgPublisher.publish(testMsg);
         }
 
-        // Diagnostics.
-        diagnostic_msgs::DiagnosticArray da;
-        diagnostic_msgs::DiagnosticStatus ds;
-        std::stringstream ssDiag;
-
-        ssDiag << mNImages;
-
-        ds.level = diagnostic_msgs::DiagnosticStatus::OK;
-        ds.name = "stereo ximea camera";
-        ds.message = "Diagnostic message.";
-        ds.hardware_id = "sxc";
-        diagnostic_msgs::KeyValue kv;
-        kv.key = "seq";
-        kv.value = ssDiag.str();
-        ds.values.push_back(kv);
-        da.status.push_back(ds);
-
-        da.header.seq   = mNImages;
-        da.header.stamp = mRosTimeStamp;
-
-        mDiagPublisher.publish(da);
+        publish_diagnostics(mNImages, mRosTimeStamp, mCP, mb);
 
         // ROS spin.
         ros::spinOnce();
@@ -445,6 +432,57 @@ Res_t SXCSync::synchronize(ProcessType_t& pt)
     PROFILER_OUT(__PRETTY_FUNCTION__);
 
     return res;
+}
+
+void SXCSync::publish_diagnostics( int seq,
+        ros::Time& t,
+        sxc::StereoXiCamera::CameraParams_t* cpArray,
+        int* mbArray )
+{
+    // Diagnostics.
+    diagnostic_msgs::DiagnosticArray da;
+    diagnostic_msgs::DiagnosticStatus ds;
+    std::stringstream ssDiag;
+
+    ds.level       = diagnostic_msgs::DiagnosticStatus::OK;
+    ds.name        = "stereo ximea camera";
+    ds.message     = "Diagnostic message.";
+    ds.hardware_id = "sxc";
+    diagnostic_msgs::KeyValue kv;
+
+    // Key-value pairs.
+    ssDiag << seq;
+    kv.key   = "seq";
+    kv.value = ssDiag.str();
+    ds.values.push_back(kv);
+
+    ssDiag.str(""); ssDiag.clear();
+    ssDiag << cpArray[CAM_0_IDX].exposure / 1000.0 << "," 
+           << cpArray[CAM_1_IDX].exposure / 1000.0;
+    kv.key   = "exp";
+    kv.value = ssDiag.str();
+    ds.values.push_back(kv);
+
+    ssDiag.str(""); ssDiag.clear();
+    ssDiag << cpArray[CAM_0_IDX].gain / 1000.0 << "," 
+           << cpArray[CAM_1_IDX].gain / 1000.0;
+    kv.key   = "gain";
+    kv.value = ssDiag.str();
+    ds.values.push_back(kv);
+
+    ssDiag.str(""); ssDiag.clear();
+    ssDiag << mbArray[CAM_0_IDX] << "," 
+           << mbArray[CAM_1_IDX];
+    kv.key   = "mb";
+    kv.value = ssDiag.str();
+    ds.values.push_back(kv);
+
+    da.status.push_back(ds);
+
+    da.header.seq   = seq;
+    da.header.stamp = t;
+
+    mDiagPublisher.publish(da);
 }
 
 Res_t SXCSync::pause(ProcessType_t& pt)
@@ -534,6 +572,11 @@ void SXCSync::destroy_members(void)
     if ( NULL != mCvImages )
     {
         delete [] mCvImages; mCvImages = NULL;
+    }
+
+    if ( NULL != mIPE )
+    {
+        delete mIPE; mIPE = NULL;
     }
 
     if ( NULL != mMbAEAG )

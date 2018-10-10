@@ -21,6 +21,7 @@ public:
     virtual void get_AEAG(cv::InputArray _m,
         xf exposure, xf gain, int mb, xf& newExposure, xf& newGain,
         int* pLMB = NULL);
+    virtual void put_image_parameters(cv::InputArray _m, int* pLMB);
 
     xf get_exposure(void);
     xf get_gain(void);

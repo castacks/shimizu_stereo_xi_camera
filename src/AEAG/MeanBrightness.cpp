@@ -124,3 +124,23 @@ void MeanBrightness::get_AEAG(cv::InputArray _m, xf exposure, xf gain, int mb, x
         *pLMB = mmb;
     }
 }
+
+void MeanBrightness::put_image_parameters(cv::InputArray _m, int* pLMB)
+{
+    // Get the Mat object.
+    cv::Mat m = _m.getMat();
+
+    // Calculate the mean brightness of the Mat object.
+    int mmb = get_mean_brightness(m);
+
+    if ( -1 == mmb )
+    {
+        std::cout << "Error. Cannot calculate mean brightness." << std::endl;
+        return;
+    }
+
+    if ( NULL != pLMB )
+    {
+        *pLMB = mmb;
+    }
+}

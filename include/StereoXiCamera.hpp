@@ -191,6 +191,8 @@ public:
     void disable_custom_AEAG(void);
     bool is_custom_AEAG_enabled(void);
 
+    void set_image_parameter_evaluator(AEAG* ipe);
+
     /** Save the mean brightness into the array referred by mb.
      * 
      */
@@ -230,6 +232,7 @@ protected:
     void set_exposure_gain(int idx, int e, xf g);
     void set_white_balance(int idx, xf r, xf g, xf b);
     void apply_custom_AEAG(cv::Mat &img0, cv::Mat &img1, CameraParams_t &camP0, CameraParams_t &camP1);
+    void evaluate_image_parameters(cv::Mat &img0, cv::Mat &img1, CameraParams_t &camP0, CameraParams_t &camP1);
     
 public:
     const xf  AUTO_GAIN_EXPOSURE_PRIORITY_MAX;
@@ -297,6 +300,9 @@ protected:
     int  mCAEAG_TargetBrightnessLevel8Bit;
     bool mCAEAG_IsEnabled;
     int  mMeanBrightness[2];
+
+    // Image parameter evaluator.
+    AEAG* mIPE;
 
     // Debug flag.
     bool mFlagDebug;

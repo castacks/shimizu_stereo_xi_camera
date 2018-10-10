@@ -30,6 +30,7 @@ StereoXiCamera::StereoXiCamera(std::string &camSN0, std::string &camSN1)
   mSelfAdjustNumTrialLoops((mSelfAdjustNumOmittedFrames+mSelfAdjustNumFrames)*2), mIsSelfAdjusting(false),
   mXi_Exposure(100), mXi_Gain(0), mXi_AWB_kr(0.0), mXi_AWB_kg(0.0), mXi_AWB_kb(0.0), 
   mCAEAG(NULL), mCAEAG_TargetBrightnessLevel(10), mCAEAG_TargetBrightnessLevel8Bit(0), mCAEAG_IsEnabled(false),
+  mIPE(NULL),
   mFlagDebug(false)
 {
     mCamSN[CAM_IDX_0] = camSN0;
@@ -174,7 +175,7 @@ void StereoXiCamera::record_settings(int nFrames, std::vector<CameraParams_t> &v
 
 void StereoXiCamera::self_adjust_exposure_gain(std::vector<CameraParams_t> &cp)
 {
-    // Caclulate the averaged exposure and gain settings.
+    // Calculate the averaged exposure and gain settings.
     int n = cp.size();
 
     int avgExposure = 0;
@@ -318,6 +319,18 @@ void StereoXiCamera::apply_custom_AEAG(cv::Mat &img0, cv::Mat &img1, CameraParam
                   << std::endl;
         }
     LOOP_CAMERAS_END
+}
+
+void StereoXiCamera::evaluate_image_parameters(
+    cv::Mat &img0, cv::Mat &img1, CameraParams_t &camP0, CameraParams_t &camP1)
+{
+    // The first camera.
+    cv::cvtColor( img0, mGrayMatBuffer[CAM_IDX_0], cv::COLOR_BGR2GRAY, 1 );
+    mIPE->put_image_parameters( mGrayMatBuffer[CAM_IDX_0], mMeanBrightness + CAM_IDX_0 );
+
+    // The second camera.
+    cv::cvtColor( img1, mGrayMatBuffer[CAM_IDX_1], cv::COLOR_BGR2GRAY, 1 );
+    mIPE->put_image_parameters( mGrayMatBuffer[CAM_IDX_1], mMeanBrightness + CAM_IDX_1 );
 }
 
 void StereoXiCamera::start_acquisition(int waitMS)
@@ -598,9 +611,17 @@ int StereoXiCamera::get_images(cv::Mat &img0, cv::Mat &img1, CameraParams_t &cam
         put_single_camera_params( mCams[CAM_IDX_0], camP0 );
         put_single_camera_params( mCams[CAM_IDX_1], camP1 );
 
-        if ( true == mCAEAG_IsEnabled && false == mIsSelfAdjusting )
+        if ( true == mCAEAG_IsEnabled )
         {
-            apply_custom_AEAG(img0, img1, camP0, camP1);
+            if ( false == mIsSelfAdjusting )
+            {
+                apply_custom_AEAG(img0, img1, camP0, camP1);
+            }
+        }
+        else
+        {
+            // Evaluate image parameters.
+            evaluate_image_parameters(img0, img1, camP0, camP1);
         }
     }
     catch ( xiAPIplus_Exception& exp )
@@ -1055,6 +1076,11 @@ void StereoXiCamera::disable_custom_AEAG(void)
 bool StereoXiCamera::is_custom_AEAG_enabled(void)
 {
     return mCAEAG_IsEnabled;
+}
+
+void StereoXiCamera::set_image_parameter_evaluator(AEAG* ipe)
+{
+    mIPE = ipe;
 }
 
 void StereoXiCamera::put_mean_brightness(int* mb)

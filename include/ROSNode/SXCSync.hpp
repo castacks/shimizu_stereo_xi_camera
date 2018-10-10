@@ -84,6 +84,10 @@ public:
 protected:
     void destroy_members(void);
     void set_transfer_format(sxc::StereoXiCamera*, const std::string& tf, std::string& encoding);
+    void publish_diagnostics( int seq,
+        ros::Time& t,
+        sxc::StereoXiCamera::CameraParams_t* cpArray,
+        int* mbArray );
 
 public:
     static const double DEFAULT_AUTO_GAIN_EXPOSURE_PRIORITY     = 0.9;
@@ -143,6 +147,9 @@ protected:
 
     // The custom AEAG object.
 	sxc::MeanBrightness* mMbAEAG;
+
+    // Image parameter evaluator.
+    sxc::MeanBrightness* mIPE;
 
     // Temporary variables.
     cv::Mat* mCvImages;        // OpenCV Mat array to hold the images.

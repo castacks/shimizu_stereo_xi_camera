@@ -21,6 +21,11 @@ void AEAG::get_AEAG(cv::InputArray _m, xf exposure, xf gain, int mb, xf& newExpo
     
 }
 
+void AEAG::put_image_parameters(cv::InputArray _m, int* pLMB)
+{
+
+}
+
 xf AEAG::get_exposure(void)
 {
     return mExposure;
