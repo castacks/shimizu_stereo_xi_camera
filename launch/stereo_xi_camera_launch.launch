@@ -1,7 +1,7 @@
 <launch>
     <node name="xic_stereo" pkg="ros_stereo_xi_camera" type="ros_stereo_xi_camera_node" output="screen">
-        <param name="pXICameraSN_0" type="str" value="CUCAU1814018" />
-        <param name="pXICameraSN_1" type="str" value="CUCAU1814020" />
+        <param name="pXICameraSN_0" type="str" value="CUCAU1903000" />
+        <param name="pXICameraSN_1" type="str" value="CUCAU1903001" />
         <param name="pAutoGainExposurePriority" type="double" value="1.0" />
         <param name="pAutoGainExposureTargetLevel" type="double" value="30" />
         <param name="pAutoExposureTopLimit" type="int" value="20000" />
@@ -13,12 +13,12 @@
         <!-- <param name="pTransferFormat" type="str" value="mono" /> -->
         <!-- <param name="pTransferFormat" type="str" value="raw" /> -->
 
-        <param name="pExternalTrigger" type="int" value="1" />
+        <param name="pExternalTrigger" type="int" value="0" />
         <param name="pNextImageTimeout_ms" type="int" value="1200" />
 
-        <param name="pSelfAdjust" type="int" value="1" />
+        <param name="pSelfAdjust" type="int" value="0" />
 
-        <param name="pCustomAEAGEnabled" type="int" value="1" />
+        <param name="pCustomAEAGEnabled" type="int" value="0" />
         <param name="pCustomAEAGPriority" type="double" value="0.7" />
         <param name="pCustomAEAGExposureTopLimit" type="double" value="20000" />
         <param name="pCustomAEAGGainTopLimit" type="double" value="20" />
