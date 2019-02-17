@@ -170,18 +170,27 @@ add_executable(${PROJECT_NAME}_node ${SRC_LIST})
 # same as for the library above
 add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS} ros_stereo_xi_camera_gencpp)
 
-FIND_LIBRARY( LIB_OPENCV_CORE NAMES opencv_core )
-FIND_LIBRARY( LIB_OPENCV_HIGHGUI NAMES opencv_highgui )
-FIND_LIBRARY( LIB_OPENCV_IMGPROC NAMES opencv_imgproc )
+# FIND_LIBRARY( LIB_OPENCV_CORE NAMES opencv_core )
+# FIND_LIBRARY( LIB_OPENCV_HIGHGUI NAMES opencv_highgui )
+# FIND_LIBRARY( LIB_OPENCV_IMGPROC NAMES opencv_imgproc )
 FIND_LIBRARY( LIB_XIMEA NAMES m3api )
 FIND_LIBRARY( LIB_BOOST_EXCEPTION NAMES boost_exception )
+find_package( OpenCV REQUIRED )
 
 # Specify libraries to link a library or executable target against
+# target_link_libraries(${PROJECT_NAME}_node
+#   ${catkin_LIBRARIES}
+#   ${LIB_XIMEA} ${LIB_OPENCV_CORE} ${LIB_OPENCV_HIGHGUI} ${LIB_OPENCV_IMGPROC}
+#   ${LIB_BOOST_EXCEPTION}
+#   Threads::Threads
+# )
+
 target_link_libraries(${PROJECT_NAME}_node
   ${catkin_LIBRARIES}
-  ${LIB_XIMEA} ${LIB_OPENCV_CORE} ${LIB_OPENCV_HIGHGUI} ${LIB_OPENCV_IMGPROC}
+  ${LIB_XIMEA}
   ${LIB_BOOST_EXCEPTION}
   Threads::Threads
+  ${OpenCV_LIBS}
 )
 
 #############
