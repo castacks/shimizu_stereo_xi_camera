@@ -26,6 +26,7 @@ StereoXiCamera::StereoXiCamera(std::string &camSN0, std::string &camSN1)
   mXi_BandwidthMargin(BANDWIDTH_MARGIN_DEFAULT),
   mTransferFormat(TF_COLOR),
   mIsExternalTriggered(false), mXi_NextImageTimeout_ms(1000),
+  mIsExternalTimeStampReset(false), 
   mSelfAdjustNumOmittedFrames(5), mSelfAdjustNumFrames(3), 
   mSelfAdjustNumTrialLoops((mSelfAdjustNumOmittedFrames+mSelfAdjustNumFrames)*2), mIsSelfAdjusting(false),
   mXi_Exposure(100), mXi_Gain(0), mXi_AWB_kr(0.0), mXi_AWB_kg(0.0), mXi_AWB_kb(0.0), 
@@ -771,6 +772,12 @@ void StereoXiCamera::open_and_common_settings(void)
     {
         set_stereo_external_trigger();
     }
+
+    // External timestamp reset.
+    if ( true == mIsExternalTimeStampReset )
+    {
+        set_external_timestamp_reset();
+    }
 }
 
 void StereoXiCamera::set_transfer_format_single_camera(xiAPIplusCameraOcv& cam, TransferFormat_t tf)
@@ -858,6 +865,18 @@ void StereoXiCamera::set_stereo_software_trigger(void)
     LOOP_CAMERAS_BEGIN
         mCams[loopIdx].SetTriggerSource(XI_TRG_SOFTWARE);
     LOOP_CAMERAS_END
+}
+
+void StereoXiCamera::set_external_timestamp_reset(void)
+{
+    // Set the external timestamp reset.
+    // LOOP_CAMERAS_BEGIN
+    //     mCams[loopIdx].SetTimeStampResetMode(XI_TS_RST_ARM_PERSIST);
+    //     mCams[loopIdx].SetTimeStampResetSource(XI_TS_RST_SRC_GPI_2);
+    // LOOP_CAMERAS_END
+
+    mCams[CAM_IDX_0].SetTimeStampResetMode(XI_TS_RST_ARM_PERSIST);
+    mCams[CAM_IDX_0].SetTimeStampResetSource(XI_TS_RST_SRC_GPI_2);
 }
 
 int StereoXiCamera::EXPOSURE_MILLISEC(int val)
@@ -1031,6 +1050,21 @@ bool StereoXiCamera::is_external_triger(void)
 int StereoXiCamera::get_next_image_timeout(void)
 {
     return mXi_NextImageTimeout_ms;
+}
+
+void StereoXiCamera::enable_external_timestamp_reset(void)
+{
+    mIsExternalTimeStampReset = true;
+}
+
+void StereoXiCamera::disable_external_timestamp_reset(void)
+{
+    mIsExternalTimeStampReset = false;
+}
+
+bool StereoXiCamera::is_external_timestamp_reset(void)
+{
+    return mIsExternalTimeStampReset;
 }
 
 void StereoXiCamera::set_self_adjust_trail_loops(int t)

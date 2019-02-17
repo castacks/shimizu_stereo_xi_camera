@@ -16,6 +16,8 @@
         <param name="pExternalTrigger" type="int" value="0" />
         <param name="pNextImageTimeout_ms" type="int" value="1200" />
 
+        <param name="pExternalTimestampReset" type="int" value="0" />
+
         <param name="pSelfAdjust" type="int" value="0" />
 
         <param name="pCustomAEAGEnabled" type="int" value="0" />

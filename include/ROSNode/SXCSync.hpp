@@ -178,6 +178,8 @@ private:
 	int    mExternalTrigger;
 	int    mNextImageTimeout_ms;
 
+    int    mExternalTimestampReset;
+
 	int    mSelfAdjust;
 
 	int    mCustomAEAGEnabled;

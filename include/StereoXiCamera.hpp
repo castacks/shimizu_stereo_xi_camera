@@ -181,6 +181,10 @@ public:
     bool is_external_triger(void);
     int  get_next_image_timeout(void);
 
+    void enable_external_timestamp_reset(void);
+    void disable_external_timestamp_reset(void);
+    bool is_external_timestamp_reset(void);
+
     void set_self_adjust_trail_loops(int t);
     int  get_self_adjust_trail_loops(void);
 
@@ -209,6 +213,7 @@ protected:
     void set_stereo_external_trigger(void);
     void set_stereo_master_trigger(void);
     void set_stereo_software_trigger(void);
+    void set_external_timestamp_reset(void);
 
     cv::Mat get_single_image(int idx);
     /**
@@ -281,6 +286,8 @@ protected:
 
     bool mIsExternalTriggered;
     int mXi_NextImageTimeout_ms;      // Millisecond.
+
+    bool mIsExternalTimeStampReset;
 
     int mSelfAdjustNumOmittedFrames;
     int mSelfAdjustNumFrames;

@@ -34,6 +34,7 @@ SXCSync::SXCSync(const std::string& name)
   mTransferFormat(DEFAULT_TRANSFER_FORMAT), mEncoding("bgr8"),
   mExternalTrigger(0),
   mNextImageTimeout_ms(DEFAULT_NEXT_IMAGE_TIMEOUT_MS),
+  mExternalTimestampReset(0), 
   mSelfAdjust(1),
   mCustomAEAGEnabled(0),
   mCustomAEAGPriority(DEFAULT_CUSTOM_AEAG_PRIORITY),
@@ -109,6 +110,7 @@ Res_t SXCSync::parse_launch_parameters(void)
 	ROSLAUNCH_GET_PARAM((*mpROSNode), "pOutDir", mOutDir, "./");
 	ROSLAUNCH_GET_PARAM((*mpROSNode), "pExternalTrigger", mExternalTrigger, 0);
 	ROSLAUNCH_GET_PARAM((*mpROSNode), "pNextImageTimeout_ms", mNextImageTimeout_ms, DEFAULT_NEXT_IMAGE_TIMEOUT_MS);
+	ROSLAUNCH_GET_PARAM((*mpROSNode), "pExternalTimestampReset", mExternalTimestampReset, 0);    
 	ROSLAUNCH_GET_PARAM((*mpROSNode), "pSelfAdjust", mSelfAdjust, 1)
 	ROSLAUNCH_GET_PARAM((*mpROSNode), "pCustomAEAGEnabled", mCustomAEAGEnabled, 0);
 	ROSLAUNCH_GET_PARAM((*mpROSNode), "pCustomAEAGPriority", mCustomAEAGPriority, DEFAULT_CUSTOM_AEAG_PRIORITY);
@@ -168,6 +170,12 @@ Res_t SXCSync::prepare(void)
         if ( 1 == mExternalTrigger )
         {
             mStereoXiCamera->enable_external_trigger(mNextImageTimeout_ms);
+        }
+
+        // Timestamp reset configuration.
+        if ( 1 == mExternalTimestampReset )
+        {
+            mStereoXiCamera->enable_external_timestamp_reset();
         }
 
         // Custom AEAG.
