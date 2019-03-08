@@ -81,9 +81,10 @@ public:
         ros_stereo_xi_camera::change_status::Request &req,
         ros_stereo_xi_camera::change_status::Response &res);
 
-protected:
+private:
     void destroy_members(void);
     void set_transfer_format(sxc::StereoXiCamera*, const std::string& tf, std::string& encoding);
+    void align_cpu_time(ros::Time& cpuTime, const sxc::StereoXiCamera::CameraParams_t& cam);
     void publish_diagnostics( int seq,
         ros::Time& t,
         sxc::StereoXiCamera::CameraParams_t* cpArray,
@@ -94,8 +95,9 @@ public:
     static const double DEFAULT_AUTO_GAIN_EXPOSURE_TARGET_LEVEL = 40.0;
     static const int    DEFAULT_AUTO_EXPOSURE_TOP_LIMIT         = 200000;  // Microsecond.
     static const int    DEFAULT_AUTO_GAIN_TOP_LIMIT             = 12;   // dB.
-    static const int    DEFAULT_TOTAL_BANDWIDTH                 = 2400;
-    static const int    DEFAULT_BANDWIDTH_MARGIN                = 10;
+    static const int    DEFAULT_TOTAL_BANDWIDTH                 = 2400;  // MBits/s.
+    static const int    DEFAULT_BANDWIDTH_MARGIN                = 10;    // Percentage.
+    static const double DEFAULT_SINGLE_IMAGE_SIZE               = 12.37; // MBytes.
     static const double DEFAULT_LOOP_RATE                       = 3.0;
     static const int    DEFAULT_NEXT_IMAGE_TIMEOUT_MS           = 1000;
     static const double DEFAULT_CUSTOM_AEAG_PRIORITY            = 0.9;
@@ -168,8 +170,10 @@ private:
 	double mAutoGainExposureTargetLevel;
 	int    mAutoExposureTopLimit; // Microsecond.
 	int    mAutoGainTopLimit;
-	int    mTotalBandwidth;
-	int    mBandwidthMargin;
+	int    mTotalBandwidth;  // MBits/s.
+	int    mBandwidthMargin; // Percentage.
+    double mSingleImageSize; // MBytes.
+    int    mMinTransferTimeSingleImage; // us.
 	int    mFlagWriteImage;
 	double mLoopRate;
     std::string mTransferFormat;

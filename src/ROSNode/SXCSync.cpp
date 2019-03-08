@@ -5,6 +5,16 @@
 using namespace cv;
 using namespace SRN;
 
+/**
+ * \param bw Bandwidth, MBits/s.
+ * \param imSize Image size, MBytes.
+ * \return Transfer time in us.
+ */
+static int single_image_transfer_time_ms(int bw, double imSize)
+{
+    return (int)( imSize * 8 / bw * 1000000 );
+}
+
 SXCSync::SXCSync(const std::string& name)
 : SyncROSNode(name),
   DEFAULT_TRANSFER_FORMAT("color"),
@@ -29,6 +39,7 @@ SXCSync::SXCSync(const std::string& name)
   mAutoGainTopLimit(DEFAULT_AUTO_GAIN_TOP_LIMIT),
   mTotalBandwidth(DEFAULT_TOTAL_BANDWIDTH),
   mBandwidthMargin(DEFAULT_BANDWIDTH_MARGIN),
+  mSingleImageSize(DEFAULT_SINGLE_IMAGE_SIZE), mMinTransferTimeSingleImage( single_image_transfer_time_ms(mTotalBandwidth, mSingleImageSize) ),
   mFlagWriteImage(0),
   mLoopRate(DEFAULT_LOOP_RATE),
   mTransferFormat(DEFAULT_TRANSFER_FORMAT), mEncoding("bgr8"),
@@ -104,6 +115,7 @@ Res_t SXCSync::parse_launch_parameters(void)
 	ROSLAUNCH_GET_PARAM((*mpROSNode), "pAutoGainTopLimit", mAutoGainTopLimit, DEFAULT_AUTO_GAIN_TOP_LIMIT);
 	ROSLAUNCH_GET_PARAM((*mpROSNode), "pTotalBandwidth", mTotalBandwidth, DEFAULT_TOTAL_BANDWIDTH);
 	ROSLAUNCH_GET_PARAM((*mpROSNode), "pBandwidthMargin", mBandwidthMargin, DEFAULT_BANDWIDTH_MARGIN);
+	ROSLAUNCH_GET_PARAM((*mpROSNode), "pSingleImageSize", mSingleImageSize, DEFAULT_SINGLE_IMAGE_SIZE);
 	ROSLAUNCH_GET_PARAM((*mpROSNode), "pLoopRate", mLoopRate, DEFAULT_LOOP_RATE);
 	ROSLAUNCH_GET_PARAM((*mpROSNode), "pTransferFormat", mTransferFormat, DEFAULT_TRANSFER_FORMAT);
 	ROSLAUNCH_GET_PARAM((*mpROSNode), "pFlagWriteImage", mFlagWriteImage, 0);
@@ -256,6 +268,10 @@ Res_t SXCSync::prepare(void)
             res = RES_ERROR;
         }
 
+        // Transfer time.
+        mMinTransferTimeSingleImage = single_image_transfer_time_ms( mTotalBandwidth, mSingleImageSize );
+        ROS_INFO("Minimum transfer time for a single image is approximatedly %d ms.", mMinTransferTimeSingleImage);
+
         mLastStatus = LAST_STA_PREPARE;
 
         return res;
@@ -327,9 +343,8 @@ Res_t SXCSync::synchronize(ProcessType_t& pt)
             ROS_ERROR("Get images failed");
         }
         else
-        {
-            // Prepare the time stamp for the header.
-            mRosTimeStamp = ros::Time::now();
+        {  
+            ros::Time imageTS;
 
             // Convert the image into ROS image message.
             LOOP_CAMERAS_BEGIN
@@ -370,7 +385,18 @@ Res_t SXCSync::synchronize(ProcessType_t& pt)
                 PROFILER_OUT("cv_bridge::CvImage");
 
                 mMsgImage->header.seq   = mNImages;
-                mMsgImage->header.stamp = mRosTimeStamp;
+                
+                // Prepare the time stamp for the header.
+                imageTS = ros::Time::now();
+                align_cpu_time( imageTS, mCP[loopIdx] );
+
+                mMsgImage->header.stamp = imageTS;
+
+                // Check the timestamp.
+                if ( mCP[loopIdx].tsSec > 0 )
+                {
+                    ROS_WARN("Stereo camera %d missed %d PPS signals.", loopIdx, mCP[loopIdx].tsSec);
+                }
 
                 PROFILER_IN("ImagePublishing");
                 mPublishersImage[loopIdx].publish(mMsgImage);
@@ -406,6 +432,7 @@ Res_t SXCSync::synchronize(ProcessType_t& pt)
             mTestMsgPublisher.publish(testMsg);
         }
 
+        mRosTimeStamp = ros::Time::now();
         publish_diagnostics(mNImages, mRosTimeStamp, mCP, mb);
 
         // ROS spin.
@@ -441,6 +468,40 @@ Res_t SXCSync::synchronize(ProcessType_t& pt)
 
     return res;
 }
+
+/*
+ * Assumptions regarding the time synchronization between the camera and the cpu.
+ * (1) Ths PPS signal is fired at exactly integer second timestamp, such as 1.0s, 2.0s. PPS signal
+ * is not possible to be fired at timestamps like 1.1s, 2.5s, or 3.9s.
+ * (2) An image data must be received and processed within 3 PPS signals. That means the maximum
+ * time lag between a camera trigger and the timestamp this very image is received and processed by
+ * the cpu must be less than 2s.
+ * (3) Once there is ambiguity, choose the nearest timestamp measured from the cpu timestamp.
+ *
+ * The input argument cpuTime will be altered according to argument cam and member variable
+ * mMinTransferTimeSingleImage.
+*/
+void SXCSync::align_cpu_time(ros::Time& cpuTime, const sxc::StereoXiCamera::CameraParams_t& cam)
+{
+    // Convert cpuTime.nsec into microsecond.
+    DWORD cpuMSec = (DWORD)( cpuTime.nsec / 1000 );
+    if ( cpuMSec > cam.tsUSec + mMinTransferTimeSingleImage + cam.exposure )
+    {
+        // Reveived data is recorded in the same sencod.
+        cpuTime.nsec = cam.tsUSec * 1000;
+    }
+    else
+    {
+        // Received data is recorded in the previous second.
+        // Here we consider the assumption (3).
+        cpuTime.sec -= 1;
+        cpuTime.nsec = cam.tsUSec * 1000;
+    }
+
+    // Handle the second field recorded in the data.
+    cpuTime.sec -= cam.tsSec;
+}
+
 
 void SXCSync::publish_diagnostics( int seq,
         ros::Time& t,

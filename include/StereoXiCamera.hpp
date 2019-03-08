@@ -121,7 +121,7 @@ public:
     {
         int AEAGEnabled;  // 1 for enabled.
         xf  AEAGPriority;
-        int exposure;     // Milliseconds.
+        int exposure;     // Milliseconds. Microseconds!
         xf  gain;         // db.
         int AWBEnabled;   // 1 for enabled.
         xf  AWB_kr;       // Auto white balance, read coefficient.
