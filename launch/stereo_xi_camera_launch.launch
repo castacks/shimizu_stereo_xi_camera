@@ -9,12 +9,12 @@
         <param name="pTotalBandwidth" type="int" value="3200" />
         <param name="pBandwidthMargin" type="int" value="0" />
         <param name="pSingleImageSize" type="double" value="12.37" />
-        <param name="pLoopRate" type="double" value="20" />
+        <param name="pLoopRate" type="double" value="11" />
         <!-- <param name="pTransferFormat" type="str" value="color" /> -->
         <param name="pTransferFormat" type="str" value="mono" />
         <!-- <param name="pTransferFormat" type="str" value="raw" /> -->
 
-        <param name="pExternalTrigger" type="int" value="0" />
+        <param name="pExternalTrigger" type="int" value="1" />
         <param name="pNextImageTimeout_ms" type="int" value="1200" />
 
         <param name="pExternalTimestampReset" type="int" value="0" />
