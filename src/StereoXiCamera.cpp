@@ -17,7 +17,7 @@ StereoXiCamera::StereoXiCamera(std::string &camSN0, std::string &camSN1)
   AUTO_EXPOSURE_TOP_LIMIT_MAX(900000), AUTO_EXPOSURE_TOP_LIMIT_MIN(1), AUTO_EXPOSURE_TOP_LIMIT_DEFAULT(200000),
   AUTO_GAIN_TOP_LIMIT_MAX(36.0), AUTO_GAIN_TOP_LIMIT_MIN(0.0), AUTO_GAIN_TOP_LIMIT_DEFAULT(12.0),
   TOTAL_BANDWIDTH_MAX(4000), TOTAL_BANDWIDTH_MIN(2400),
-  BANDWIDTH_MARGIN_MAX(50), BANDWIDTH_MARGIN_MIN(5), BANDWIDTH_MARGIN_DEFAULT(10),
+  BANDWIDTH_MARGIN_MAX(50), BANDWIDTH_MARGIN_MIN(0), BANDWIDTH_MARGIN_DEFAULT(10),
   TRIGGER_SOFTWARE(1), EXPOSURE_MILLISEC_BASE(1000), CAM_IDX_0(0), CAM_IDX_1(1),
   XI_DEFAULT_TOTAL_BANDWIDTH(2400), XI_DEFAULT_BANDWIDTH_MARGIN(10),
   mXi_AutoGainExposurePriority(AUTO_GAIN_EXPOSURE_PRIORITY_DEFAULT),
@@ -75,7 +75,15 @@ void StereoXiCamera::self_adjust(bool verbose)
         std::cout << "Begin self-adjust..." << std::endl;
     }
 
+    LOOP_CAMERAS_BEGIN
+        mCams[loopIdx].EnableWhiteBalanceAuto();
+    LOOP_CAMERAS_END
+
     record_settings(mSelfAdjustNumFrames, camParams, verbose);
+
+    LOOP_CAMERAS_BEGIN
+        mCams[loopIdx].DisableWhiteBalanceAuto();
+    LOOP_CAMERAS_END
 
     if ( true == verbose )
     {
@@ -275,8 +283,27 @@ void StereoXiCamera::apply_custom_AEAG(cv::Mat &img0, cv::Mat &img1, CameraParam
         currentGain[loopIdx]     = dBToGain(currentGainDB[loopIdx]);
     LOOP_CAMERAS_END
 
+    // Convert images.
+    switch(mTransferFormat)
+    {
+        case TF_COLOR:
+        {
+            cv::cvtColor( img0, mGrayMatBuffer[CAM_IDX_0], cv::COLOR_BGR2GRAY, 1 );
+            cv::cvtColor( img1, mGrayMatBuffer[CAM_IDX_1], cv::COLOR_BGR2GRAY, 1 );
+            break;
+        }
+        case TF_MONO:
+        {
+            mGrayMatBuffer[CAM_IDX_0] = img0;
+            mGrayMatBuffer[CAM_IDX_1] = img1;
+        }
+        default:
+        {
+            BOOST_THROW_EXCEPTION( exception_base() << ExceptionInfoString("Cannot perform custom AEAG with transfer format other than TF_COLOR or TF_MONO.") );
+        }
+    }
+
     // The first camera.
-    cv::cvtColor( img0, mGrayMatBuffer[CAM_IDX_0], cv::COLOR_BGR2GRAY, 1 );
     mCAEAG->get_AEAG(mGrayMatBuffer[CAM_IDX_0], 
         currentExposure[CAM_IDX_0], currentGain[CAM_IDX_0], 
         mCAEAG_TargetBrightnessLevel8Bit, 
@@ -284,7 +311,6 @@ void StereoXiCamera::apply_custom_AEAG(cv::Mat &img0, cv::Mat &img1, CameraParam
         mMeanBrightness + CAM_IDX_0);
 
     // The second camera.
-    cv::cvtColor( img1, mGrayMatBuffer[CAM_IDX_1], cv::COLOR_BGR2GRAY, 1 );
     mCAEAG->get_AEAG(mGrayMatBuffer[CAM_IDX_1], 
         currentExposure[CAM_IDX_1], currentGain[CAM_IDX_1], 
         mCAEAG_TargetBrightnessLevel8Bit, 
@@ -326,11 +352,27 @@ void StereoXiCamera::evaluate_image_parameters(
     cv::Mat &img0, cv::Mat &img1, CameraParams_t &camP0, CameraParams_t &camP1)
 {
     // The first camera.
-    cv::cvtColor( img0, mGrayMatBuffer[CAM_IDX_0], cv::COLOR_BGR2GRAY, 1 );
+    switch(mTransferFormat)
+    {
+        case TF_COLOR:
+        {
+            cv::cvtColor( img0, mGrayMatBuffer[CAM_IDX_0], cv::COLOR_BGR2GRAY, 1 );
+            cv::cvtColor( img1, mGrayMatBuffer[CAM_IDX_1], cv::COLOR_BGR2GRAY, 1 );
+            break;
+        }
+        case TF_MONO:
+        {
+            mGrayMatBuffer[CAM_IDX_0] = img0;
+            mGrayMatBuffer[CAM_IDX_1] = img1;
+            break;
+        }
+        default:
+        {
+            BOOST_THROW_EXCEPTION( exception_base() << ExceptionInfoString("Cannot evaluate image parameters with TF_RAW.") );
+        }
+    }
+    
     mIPE->put_image_parameters( mGrayMatBuffer[CAM_IDX_0], mMeanBrightness + CAM_IDX_0 );
-
-    // The second camera.
-    cv::cvtColor( img1, mGrayMatBuffer[CAM_IDX_1], cv::COLOR_BGR2GRAY, 1 );
     mIPE->put_image_parameters( mGrayMatBuffer[CAM_IDX_1], mMeanBrightness + CAM_IDX_1 );
 }
 
@@ -433,12 +475,20 @@ thd_get_single_image(void* arg)
     XI_IMG_FORMAT format;
     cv::Mat cv_mat_image;
 
+    // For profiler.
+    std::string profilerName_GetImageDataFormat = "GetImageDataFormat_" + a->name;
+    std::string profilerName_GetNextImageOcvMat = "GetNextImageOcvMat_" + a->name;
+
     try
     {
+        PROFILER_IN(profilerName_GetImageDataFormat.c_str());
         format = a->cam->GetImageDataFormat();
+        PROFILER_OUT(profilerName_GetImageDataFormat.c_str());
         // std::cout << "format = " << format << std::endl;
         
+        PROFILER_IN(profilerName_GetNextImageOcvMat.c_str());
         cv_mat_image = a->cam->GetNextImageOcvMat( a->ts );
+        PROFILER_OUT(profilerName_GetNextImageOcvMat.c_str());
         
         if (format == XI_RAW16 || format == XI_MONO16)
         {
@@ -612,17 +662,27 @@ int StereoXiCamera::get_images(cv::Mat &img0, cv::Mat &img1, CameraParams_t &cam
         put_single_camera_params( mCams[CAM_IDX_0], camP0 );
         put_single_camera_params( mCams[CAM_IDX_1], camP1 );
 
-        if ( true == mCAEAG_IsEnabled )
+        if ( TF_RAW != mTransferFormat )
         {
-            if ( false == mIsSelfAdjusting )
+            if ( true == mCAEAG_IsEnabled )
             {
-                apply_custom_AEAG(img0, img1, camP0, camP1);
+                if ( false == mIsSelfAdjusting )
+                {
+                    apply_custom_AEAG(img0, img1, camP0, camP1);
+                }
+            }
+            else
+            {
+                // Evaluate image parameters.
+                evaluate_image_parameters(img0, img1, camP0, camP1);
             }
         }
         else
         {
-            // Evaluate image parameters.
-            evaluate_image_parameters(img0, img1, camP0, camP1);
+            if ( true == mCAEAG_IsEnabled )
+            {
+                BOOST_THROW_EXCEPTION( exception_base() << ExceptionInfoString("Cannot enable AEAG with RAW transfer format.") );
+            }
         }
     }
     catch ( xiAPIplus_Exception& exp )
@@ -802,7 +862,9 @@ void StereoXiCamera::set_transfer_format_single_camera(xiAPIplusCameraOcv& cam, 
         default:
         {
             // Should never reach here!
-            std::cout << "Unexpected transfer format = " << tf << std::endl;
+            std::stringstream ss;
+            ss << "Unexpected transfer format = " << tf;
+            BOOST_THROW_EXCEPTION( exception_base() << ExceptionInfoString(ss.str()) );
         }
     }
 }
@@ -810,14 +872,20 @@ void StereoXiCamera::set_transfer_format_single_camera(xiAPIplusCameraOcv& cam, 
 void StereoXiCamera::setup_camera_common(xiAPIplusCameraOcv& cam)
 {
     // Set exposure time.
-	cam.SetAutoExposureAutoGainExposurePriority( mXi_AutoGainExposurePriority );
-    cam.SetAutoExposureAutoGainTargetLevel(mXi_AutoGainExposureTargetLevel);
-	cam.SetAutoExposureTopLimit( mXi_AutoExposureTopLimit );
-    cam.SetAutoGainTopLimit( mXi_AutoGainTopLimit );
-    cam.EnableAutoExposureAutoGain();
+	// cam.SetAutoExposureAutoGainExposurePriority( mXi_AutoGainExposurePriority );
+    // cam.SetAutoExposureAutoGainTargetLevel(mXi_AutoGainExposureTargetLevel);
+	// cam.SetAutoExposureTopLimit( mXi_AutoExposureTopLimit );
+    // cam.SetAutoGainTopLimit( mXi_AutoGainTopLimit );
+    // cam.EnableAutoExposureAutoGain();
+
+    // Temporary debug.
+    cam.SetExposureTime(mXi_AutoExposureTopLimit);
+    cam.SetGain(0);
+    cam.DisableAutoExposureAutoGain();
 
 	// Enable auto-whitebalance.
-	cam.EnableWhiteBalanceAuto();
+	// cam.EnableWhiteBalanceAuto();
+    cam.DisableWhiteBalanceAuto();
 
 	// Image format.
 	// cam.SetImageDataFormat(XI_RGB24);
@@ -833,6 +901,7 @@ void StereoXiCamera::setup_camera_common(xiAPIplusCameraOcv& cam)
 	int cameraDataRate = (int)( mXi_TotalBandwidth / 2.0 * ( 100.0 - mXi_BandwidthMargin ) / 100 );
     mXi_MaxFrameRate = mXi_TotalBandwidth / 2.0 / cameraDataRate;
 	cam.SetBandwidthLimit( cameraDataRate );
+    cam.SetBandwidthLimitMode( XI_ON );
 }
 
 void StereoXiCamera::set_stereo_external_trigger(void)

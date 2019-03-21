@@ -384,19 +384,22 @@ Res_t SXCSync::synchronize(ProcessType_t& pt)
                 mMsgImage = cv_bridge::CvImage(std_msgs::Header(), mEncoding, mCvImages[loopIdx]).toImageMsg();
                 PROFILER_OUT("cv_bridge::CvImage");
 
-                mMsgImage->header.seq   = mNImages;
+                mMsgImage->header.seq = mNImages;
                 
                 // Prepare the time stamp for the header.
                 imageTS = ros::Time::now();
-                align_cpu_time( imageTS, mCP[loopIdx] );
+                if ( 1 == mExternalTimestampReset )
+                {
+                    align_cpu_time( imageTS, mCP[loopIdx] );
+
+                    // Check the timestamp.
+                    if ( mCP[loopIdx].tsSec > 0 )
+                    {
+                        ROS_WARN("Stereo camera %d missed %d PPS signals.", loopIdx, mCP[loopIdx].tsSec);
+                    }
+                }
 
                 mMsgImage->header.stamp = imageTS;
-
-                // Check the timestamp.
-                if ( mCP[loopIdx].tsSec > 0 )
-                {
-                    ROS_WARN("Stereo camera %d missed %d PPS signals.", loopIdx, mCP[loopIdx].tsSec);
-                }
 
                 PROFILER_IN("ImagePublishing");
                 mPublishersImage[loopIdx].publish(mMsgImage);

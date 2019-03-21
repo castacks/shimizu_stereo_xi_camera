@@ -1,18 +1,19 @@
 
 #include "Profiler/Profiler.hpp"
 
-std::map<const char*, Profiler> gProfilers;
+std::map<std::string, Profiler> gProfilers;
 
-void save_profile_info(const std::string& fn, std::map<const char*, Profiler>& m)
+void save_profile_info(const std::string& fn, std::map<std::string, Profiler>& m)
 {
     // Open file for output.
     std::ofstream ofs;
     ofs.open(fn.c_str());
 
-    std::map<const char*, Profiler>::iterator iter;
+    std::map<std::string, Profiler>::iterator iter;
 
     // Column headers.
-    ofs << "Function name; "
+    ofs << "Identifier;"
+        << "Function name; "
         << "count;"
         << "total time (ms); "
         << "average time (ms);"
@@ -20,7 +21,8 @@ void save_profile_info(const std::string& fn, std::map<const char*, Profiler>& m
 
     for ( iter = m.begin(); iter != m.end(); ++iter )
     {
-        ofs << iter->second.get_name() << "; " 
+        ofs << iter->first << "; "
+            << iter->second.get_name() << "; " 
             << iter->second.get_count() << "; " 
             << iter->second.get_total_time() / 1000.0 << "; " 
             << iter->second.get_total_time() / 1000.0 / iter->second.get_count() << std::endl;
