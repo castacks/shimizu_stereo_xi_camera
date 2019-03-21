@@ -1,5 +1,9 @@
 #include"xiApiPlusOcv.hpp"
 
+#include <boost/date_time/posix_time/posix_time.hpp>
+typedef boost::posix_time::ptime ttime_t;
+typedef boost::posix_time::time_duration ttd_t;
+
 //-------------------------------------------------------------------------------------------------------------------
 // xiAPIplus parameters implementation file - created from gen_xiAPIplus_cpp_file.xslt
 // XIMEA Application Programming Interface Object Oriented Approach
@@ -9541,7 +9545,15 @@ xiAPIplus_Image* xiAPIplus_Camera::GetNextImage(xiAPIplus_Image* app_image)
 		image = app_image;
 
 	XI_RETURN res = XI_OK;
+	
+	// ttime_t ts0 = boost::posix_time::microsec_clock::local_time();
+	
 	res = xiGetImage(camera_handle, image_timeout_ms, image->GetXI_IMG());
+	
+	// ttime_t ts1 = boost::posix_time::microsec_clock::local_time();
+	// ttd_t td = ts1 - ts0;
+	// std::cout << "GetNextImage " << td.total_microseconds() / 1000.0 << " ms." << std::endl;
+
 	CheckResult(res,"GetNextImage");
 	return image;	
 }
@@ -9874,6 +9886,7 @@ xiAPIplusCameraOcv::~xiAPIplusCameraOcv(){
 //Reads an image and converts it to OpenCV IplImage
 IplImage*  xiAPIplusCameraOcv::GetNextImageOcvIpl(){
 	next_image_ =	GetNextImage(NULL);
+
 	return ConvertOcvIpl(next_image_);
 }
 
