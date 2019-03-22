@@ -52,6 +52,7 @@ SXCSync::SXCSync(const std::string& name)
   mCustomAEAGExposureTopLimit(DEFAULT_CUSTOM_AEAG_EXPOSURE_TOP_LIMIT),
   mCustomAEAGGainTopLimit(DEFAULT_CUSTOM_AEAG_GAIN_TOP_LIMIT),
   mCustomAEAGBrightnessLevel(DEFAULT_CUSTOM_AEAG_BRIGHTNESS_LEVEL),
+  mForceXiAutoWhiteBalance(DEFAULT_FORCE_XI_AUTO_WHITE_BALANCE),
   mVerbose(DEFAULT_VERBOSE)
 {
     mXiCameraSN[CAM_0_IDX] = "CUCAU1814018";
@@ -134,6 +135,8 @@ Res_t SXCSync::parse_launch_parameters(void)
     ROSLAUNCH_GET_PARAM((*mpROSNode), "pCustomAEAG_CT", mCustomAEAG_CT, DEFAULT_CUSTOM_AEAG_CT);
 	ROSLAUNCH_GET_PARAM((*mpROSNode), "pXICameraSN_0", pXICameraSN_0, mXiCameraSN[CAM_0_IDX]);
 	ROSLAUNCH_GET_PARAM((*mpROSNode), "pXICameraSN_1", pXICameraSN_1, mXiCameraSN[CAM_1_IDX]);
+
+	ROSLAUNCH_GET_PARAM((*mpROSNode), "pForceXiAutoWhiteBalance", mForceXiAutoWhiteBalance, DEFAULT_FORCE_XI_AUTO_WHITE_BALANCE);
 
     mXiCameraSN[CAM_0_IDX] = pXICameraSN_0;
     mXiCameraSN[CAM_1_IDX] = pXICameraSN_1;
@@ -271,6 +274,12 @@ Res_t SXCSync::prepare(void)
         // Transfer time.
         mMinTransferTimeSingleImage = single_image_transfer_time_ms( mTotalBandwidth, mSingleImageSize );
         ROS_INFO("Minimum transfer time for a single image is approximatedly %d ms.", mMinTransferTimeSingleImage);
+
+        // Debug use.
+        if ( true == mForceXiAutoWhiteBalance )
+        {
+            mStereoXiCamera->enable_force_xi_auto_white_balance();
+        }
 
         mLastStatus = LAST_STA_PREPARE;
 
@@ -421,14 +430,20 @@ Res_t SXCSync::synchronize(ProcessType_t& pt)
                       << "\t\t\"tsUSec\": " << mCP[CAM_0_IDX].tsUSec << "," << std::endl
                       << "\t\t\"exp\": " << mCP[CAM_0_IDX].exposure / 1000.0 << "," << std::endl
                       << "\t\t\"gain\": " << mCP[CAM_0_IDX].gain / 1000.0 << "," << std::endl
-                      << "\t\t\"mb\": " << mb[CAM_0_IDX] << "" << std::endl
+                      << "\t\t\"mb\": " << mb[CAM_0_IDX] << "," << std::endl
+                      << "\t\t\"wbKr\": " << mCP[CAM_0_IDX].AWB_kr << "," << std::endl
+                      << "\t\t\"wbKg\": " << mCP[CAM_0_IDX].AWB_kg << "," << std::endl
+                      << "\t\t\"wbKb\": " << mCP[CAM_0_IDX].AWB_kb << "" << std::endl
                       << "\t}," << std::endl
                       << "\t\t{ \"idx\": 1," << std::endl
                       << "\t\t\"tsSec\": " << mCP[CAM_1_IDX].tsSec << "," << std::endl
                       << "\t\t\"tsUSec\": " << mCP[CAM_1_IDX].tsUSec << "," << std::endl
                       << "\t\t\"exp\": " << mCP[CAM_1_IDX].exposure / 1000.0 << "," << std::endl
                       << "\t\t\"gain\": " << mCP[CAM_1_IDX].gain / 1000.0 << "," << std::endl
-                      << "\t\t\"mb\": " << mb[CAM_1_IDX] << "" << std::endl
+                      << "\t\t\"mb\": " << mb[CAM_1_IDX] << "," << std::endl
+                      << "\t\t\"wbKr\": " << mCP[CAM_1_IDX].AWB_kr << "," << std::endl
+                      << "\t\t\"wbKg\": " << mCP[CAM_1_IDX].AWB_kg << "," << std::endl
+                      << "\t\t\"wbKb\": " << mCP[CAM_1_IDX].AWB_kb << "" << std::endl
                       << "\t} ]" << std::endl
                       << "}" << std::endl;
             testMsg.data = testMsgSS.str();
@@ -437,6 +452,14 @@ Res_t SXCSync::synchronize(ProcessType_t& pt)
 
         mRosTimeStamp = ros::Time::now();
         publish_diagnostics(mNImages, mRosTimeStamp, mCP, mb);
+
+        // Debug use.
+        if ( true == mForceXiAutoWhiteBalance )
+        {
+            ROS_INFO( "ForceXiAutoWhiteBalance: krgb0 [%f, %f, %f], krgb1 [%f, %f, %f].", 
+                mCP[CAM_0_IDX].AWB_kr, mCP[CAM_0_IDX].AWB_kg, mCP[CAM_0_IDX].AWB_kb, 
+                mCP[CAM_1_IDX].AWB_kr, mCP[CAM_1_IDX].AWB_kg, mCP[CAM_1_IDX].AWB_kb );
+        }
 
         // ROS spin.
         ros::spinOnce();

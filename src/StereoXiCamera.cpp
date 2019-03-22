@@ -31,6 +31,7 @@ StereoXiCamera::StereoXiCamera(std::string &camSN0, std::string &camSN1)
   mSelfAdjustNumTrialLoops((mSelfAdjustNumOmittedFrames+mSelfAdjustNumFrames)*2), mIsSelfAdjusting(false),
   mXi_Exposure(100), mXi_Gain(0), mXi_AWB_kr(0.0), mXi_AWB_kg(0.0), mXi_AWB_kb(0.0), 
   mCAEAG(NULL), mCAEAG_TargetBrightnessLevel(10), mCAEAG_TargetBrightnessLevel8Bit(0), mCAEAG_IsEnabled(false),
+  mForceXiAutoWhiteBalance(false),
   mIPE(NULL),
   mFlagDebug(false)
 {
@@ -384,6 +385,14 @@ void StereoXiCamera::start_acquisition(int waitMS)
         {
             LOOP_CAMERAS_BEGIN
                 mCams[loopIdx].DisableAutoExposureAutoGain();
+            LOOP_CAMERAS_END
+        }
+
+        // Debug use.
+        if ( true == mForceXiAutoWhiteBalance )
+        {
+            LOOP_CAMERAS_BEGIN
+                mCams[loopIdx].EnableWhiteBalanceAuto();
             LOOP_CAMERAS_END
         }
 
@@ -1190,6 +1199,16 @@ void StereoXiCamera::put_mean_brightness(int* mb)
 {
     mb[CAM_IDX_0] = mMeanBrightness[CAM_IDX_0];
     mb[CAM_IDX_1] = mMeanBrightness[CAM_IDX_1];
+}
+
+void StereoXiCamera::enable_force_xi_auto_white_balance(void)
+{
+    mForceXiAutoWhiteBalance = true;
+}
+
+void StereoXiCamera::disable_force_xi_auto_white_balance(void)
+{
+    mForceXiAutoWhiteBalance = false;
 }
 
 void StereoXiCamera::enable_debug(void)

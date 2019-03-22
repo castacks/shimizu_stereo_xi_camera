@@ -202,6 +202,9 @@ public:
      */
     void put_mean_brightness(int* mb);
 
+    void enable_force_xi_auto_white_balance(void);
+    void disable_force_xi_auto_white_balance(void);
+
     void enable_debug(void);
     void disable_debug(void);
 
@@ -307,6 +310,8 @@ protected:
     int  mCAEAG_TargetBrightnessLevel8Bit;
     bool mCAEAG_IsEnabled;
     int  mMeanBrightness[2];
+
+    bool mForceXiAutoWhiteBalance;
 
     // Image parameter evaluator.
     AEAG* mIPE;

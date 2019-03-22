@@ -34,5 +34,8 @@
         <!-- Warning: Setting the following flag as 1 will enable continous images writing to the file system. -->
         <param name="pFlagWriteImage" type="int" value="0" />
         <param name="pOutDir" type="str" value="/home/yaoyu/Documents/CMU/AirLab/Shimizu/Stereo/CapturedImages" />
+
+        <!-- Debug using parameters. Use with caution -->
+        <param name="pForceXiAutoWhiteBalance" type="int" value="1" />
     </node>
 </launch>

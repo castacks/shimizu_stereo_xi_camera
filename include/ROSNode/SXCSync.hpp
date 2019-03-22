@@ -109,6 +109,8 @@ public:
     static const int    DEFAULT_CUSTOM_AEAG_CT                  = 10000; // Mirosecond.
     static const int    DEFAULT_VERBOSE                         = 0;
 
+    static const int    DEFAULT_FORCE_XI_AUTO_WHITE_BALANCE     = 0;
+
     static const int    SERVICE_REQUEST_CODE_UNDEFINED          = 0;
     static const int    SERVICE_REQUEST_CODE_START              = 1;
     static const int    SERVICE_REQUEST_CODE_PAUSE              = 2;
@@ -194,6 +196,9 @@ private:
     double mCustomAEAG_CP;
     double mCustomAEAG_CD;
     double mCustomAEAG_CT;
+
+    int    mForceXiAutoWhiteBalance;
+
     int    mVerbose;
 };
 
