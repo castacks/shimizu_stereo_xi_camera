@@ -4,20 +4,20 @@
         <param name="pXICameraSN_1" type="str" value="CUCAU1903001" />
         <param name="pAutoGainExposurePriority" type="double" value="1.0" />
         <param name="pAutoGainExposureTargetLevel" type="double" value="30" />
-        <param name="pAutoExposureTopLimit" type="int" value="150000" />
+        <param name="pAutoExposureTopLimit" type="int" value="10000" />
         <param name="pAutoGainTopLimit" type="int" value="1" />
         <param name="pTotalBandwidth" type="int" value="3200" />
         <param name="pBandwidthMargin" type="int" value="0" />
         <param name="pSingleImageSize" type="double" value="12.37" />
-        <param name="pLoopRate" type="double" value="3" />
-        <param name="pTransferFormat" type="str" value="color" />
-        <!-- <param name="pTransferFormat" type="str" value="mono" />
-        <param name="pTransferFormat" type="str" value="raw" /> -->
+        <param name="pLoopRate" type="double" value="10" />
+        <!-- <param name="pTransferFormat" type="str" value="color" /> -->
+        <!-- <param name="pTransferFormat" type="str" value="mono" /> -->
+        <param name="pTransferFormat" type="str" value="raw" />
 
         <param name="pExternalTrigger" type="int" value="1" />
         <param name="pNextImageTimeout_ms" type="int" value="1200" />
 
-        <param name="pExternalTimestampReset" type="int" value="0" />
+        <param name="pExternalTimestampReset" type="int" value="1" />
 
         <param name="pSelfAdjust" type="int" value="0" />
 

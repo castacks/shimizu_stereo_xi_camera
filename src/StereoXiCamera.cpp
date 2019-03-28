@@ -975,8 +975,8 @@ void StereoXiCamera::set_external_timestamp_reset(void)
 {
     // Set the external timestamp reset.
     LOOP_CAMERAS_BEGIN
-        mCams[loopIdx].SetTimeStampResetMode(XI_TS_RST_ARM_PERSIST);
-        mCams[loopIdx].SetTimeStampResetSource(XI_TS_RST_SRC_GPI_2);
+        mCams[loopIdx].SetTimestampResetMode(XI_TS_RST_ARM_PERSIST);
+        mCams[loopIdx].SetTimestampResetSource(XI_TS_RST_SRC_GPI_2);
     LOOP_CAMERAS_END
 
     // mCams[CAM_IDX_0].SetTimeStampResetMode(XI_TS_RST_ARM_PERSIST);
