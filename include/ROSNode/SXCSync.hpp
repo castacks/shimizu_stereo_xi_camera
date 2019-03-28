@@ -107,6 +107,10 @@ public:
     static const double DEFAULT_CUSTOM_AEAG_CP                  = 2000.0;
     static const double DEFAULT_CUSTOM_AEAG_CD                  = 500.0;
     static const int    DEFAULT_CUSTOM_AEAG_CT                  = 10000; // Mirosecond.
+    static const int    DEFAULT_FIXED_WB                        = 1;
+    static const double DEFAULT_WB_R                            = 1.325575;
+    static const double DEFAULT_WB_G                            = 1.0;
+    static const double DEFAULT_WB_B                            = 2.783976;
     static const int    DEFAULT_VERBOSE                         = 0;
 
     static const int    DEFAULT_FORCE_XI_AUTO_WHITE_BALANCE     = 0;
@@ -196,6 +200,11 @@ private:
     double mCustomAEAG_CP;
     double mCustomAEAG_CD;
     double mCustomAEAG_CT;
+
+    int    mFixedWB;
+    double mWB_R;
+    double mWB_G;
+    double mWB_B;
 
     int    mForceXiAutoWhiteBalance;
 

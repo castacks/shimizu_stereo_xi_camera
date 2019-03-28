@@ -205,6 +205,9 @@ public:
     void enable_force_xi_auto_white_balance(void);
     void disable_force_xi_auto_white_balance(void);
 
+    void enable_fixed_white_balance(xf cr, xf cg, xf cb);
+    void disable_fixed_white_balance(void);
+
     void enable_debug(void);
     void disable_debug(void);
 
@@ -239,6 +242,7 @@ protected:
     void self_adjust_white_balance(std::vector<CameraParams_t> &cp);
     void set_exposure_gain(int idx, int e, xf g);
     void set_white_balance(int idx, xf r, xf g, xf b);
+    void set_white_balance(xiAPIplusCameraOcv& cam, xf r, xf g, xf b);
     void apply_custom_AEAG(cv::Mat &img0, cv::Mat &img1, CameraParams_t &camP0, CameraParams_t &camP1);
     void evaluate_image_parameters(cv::Mat &img0, cv::Mat &img1, CameraParams_t &camP0, CameraParams_t &camP1);
     
@@ -312,6 +316,11 @@ protected:
     int  mMeanBrightness[2];
 
     bool mForceXiAutoWhiteBalance;
+
+    bool mFixedWB;
+    xf   mWB_R;
+    xf   mWB_G;
+    xf   mWB_B;
 
     // Image parameter evaluator.
     AEAG* mIPE;

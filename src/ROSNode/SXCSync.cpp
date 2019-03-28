@@ -52,6 +52,7 @@ SXCSync::SXCSync(const std::string& name)
   mCustomAEAGExposureTopLimit(DEFAULT_CUSTOM_AEAG_EXPOSURE_TOP_LIMIT),
   mCustomAEAGGainTopLimit(DEFAULT_CUSTOM_AEAG_GAIN_TOP_LIMIT),
   mCustomAEAGBrightnessLevel(DEFAULT_CUSTOM_AEAG_BRIGHTNESS_LEVEL),
+  mFixedWB(DEFAULT_FIXED_WB), mWB_R(DEFAULT_WB_R), mWB_G(DEFAULT_WB_G), mWB_B(DEFAULT_WB_B),
   mForceXiAutoWhiteBalance(DEFAULT_FORCE_XI_AUTO_WHITE_BALANCE),
   mVerbose(DEFAULT_VERBOSE)
 {
@@ -133,6 +134,10 @@ Res_t SXCSync::parse_launch_parameters(void)
     ROSLAUNCH_GET_PARAM((*mpROSNode), "pCustomAEAG_CP", mCustomAEAG_CP, DEFAULT_CUSTOM_AEAG_CP);
     ROSLAUNCH_GET_PARAM((*mpROSNode), "pCustomAEAG_CD", mCustomAEAG_CD, DEFAULT_CUSTOM_AEAG_CD);
     ROSLAUNCH_GET_PARAM((*mpROSNode), "pCustomAEAG_CT", mCustomAEAG_CT, DEFAULT_CUSTOM_AEAG_CT);
+    ROSLAUNCH_GET_PARAM((*mpROSNode), "pFixedWB", mFixedWB, DEFAULT_FIXED_WB);
+    ROSLAUNCH_GET_PARAM((*mpROSNode), "pWB_R", mWB_R, DEFAULT_WB_R);
+    ROSLAUNCH_GET_PARAM((*mpROSNode), "pWB_G", mWB_G, DEFAULT_WB_G);
+    ROSLAUNCH_GET_PARAM((*mpROSNode), "pWB_B", mWB_B, DEFAULT_WB_B);
 	ROSLAUNCH_GET_PARAM((*mpROSNode), "pXICameraSN_0", pXICameraSN_0, mXiCameraSN[CAM_0_IDX]);
 	ROSLAUNCH_GET_PARAM((*mpROSNode), "pXICameraSN_1", pXICameraSN_1, mXiCameraSN[CAM_1_IDX]);
 
@@ -213,6 +218,17 @@ Res_t SXCSync::prepare(void)
             mStereoXiCamera->set_image_parameter_evaluator(mIPE);
         }
 
+        // White balance.
+        if ( 1 == mFixedWB )
+        {
+            mStereoXiCamera->enable_fixed_white_balance( mWB_R, mWB_G, mWB_B );
+        }
+        else
+        {
+            mStereoXiCamera->disable_fixed_white_balance();
+        }
+        
+
         // Prepare with the camera API.
         try
         {
@@ -231,11 +247,15 @@ Res_t SXCSync::prepare(void)
             mStereoXiCamera->open();
 
             // Self-adjust.
-            if ( 1 == mSelfAdjust )
+            if ( 1 == mSelfAdjust && 1 != mFixedWB )
             {
                 ROS_INFO("Perform self-adjust...");
                 mStereoXiCamera->self_adjust(true);
                 ROS_INFO("Self-adjust done.");
+            }
+            else
+            {
+                ROS_INFO("No self-adjust will be performed.");
             }
 
             // Get the sensor array.

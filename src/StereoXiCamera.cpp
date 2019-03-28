@@ -32,6 +32,7 @@ StereoXiCamera::StereoXiCamera(std::string &camSN0, std::string &camSN1)
   mXi_Exposure(100), mXi_Gain(0), mXi_AWB_kr(0.0), mXi_AWB_kg(0.0), mXi_AWB_kb(0.0), 
   mCAEAG(NULL), mCAEAG_TargetBrightnessLevel(10), mCAEAG_TargetBrightnessLevel8Bit(0), mCAEAG_IsEnabled(false),
   mForceXiAutoWhiteBalance(false),
+  mFixedWB(true), mWB_R(1.3), mWB_G(1.0), mWB_B(2.7),
   mIPE(NULL),
   mFlagDebug(false)
 {
@@ -66,6 +67,12 @@ void StereoXiCamera::open()
 
 void StereoXiCamera::self_adjust(bool verbose)
 {
+    // Check if the white balance is fixed.
+    if ( true == mFixedWB )
+    {
+        BOOST_THROW_EXCEPTION( exception_base() << ExceptionInfoString( "Cannot perform self adjust with fixed white balance." ) );
+    }
+
     mIsSelfAdjusting = true;
 
     // Take several images and record the settings.
@@ -230,6 +237,17 @@ void StereoXiCamera::set_white_balance(int idx, xf r, xf g, xf b)
     mCams[idx].SetWhiteBalanceRed(r);
     mCams[idx].SetWhiteBalanceGreen(g);
     mCams[idx].SetWhiteBalanceBlue(b);
+}
+
+void StereoXiCamera::set_white_balance(xiAPIplusCameraOcv& cam, xf r, xf g, xf b)
+{
+    // Disable the auto white balance.
+    cam.DisableWhiteBalanceAuto();
+
+    // Set the parameters.
+    cam.SetWhiteBalanceRed(r);
+    cam.SetWhiteBalanceGreen(g);
+    cam.SetWhiteBalanceBlue(b);
 }
 
 void StereoXiCamera::self_adjust_white_balance(std::vector<CameraParams_t> &cp)
@@ -893,8 +911,16 @@ void StereoXiCamera::setup_camera_common(xiAPIplusCameraOcv& cam)
     cam.DisableAutoExposureAutoGain();
 
 	// Enable auto-whitebalance.
-	// cam.EnableWhiteBalanceAuto();
-    cam.DisableWhiteBalanceAuto();
+    if ( true == mFixedWB )
+    {
+        cam.DisableWhiteBalanceAuto();
+        set_white_balance( cam, mWB_R, mWB_G, mWB_B );
+    }
+    else
+    {
+        cam.EnableWhiteBalanceAuto();
+    }
+    
 
 	// Image format.
 	// cam.SetImageDataFormat(XI_RGB24);
@@ -1209,6 +1235,20 @@ void StereoXiCamera::enable_force_xi_auto_white_balance(void)
 void StereoXiCamera::disable_force_xi_auto_white_balance(void)
 {
     mForceXiAutoWhiteBalance = false;
+}
+
+void StereoXiCamera::enable_fixed_white_balance(xf cr, xf cg, xf cb)
+{
+    mWB_R = cr;
+    mWB_G = cg;
+    mWB_B = cb;
+
+    mFixedWB = true;
+}
+
+void StereoXiCamera::disable_fixed_white_balance(void)
+{
+    mFixedWB = false;
 }
 
 void StereoXiCamera::enable_debug(void)
