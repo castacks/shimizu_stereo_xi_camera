@@ -500,6 +500,7 @@ thd_get_single_image(void* arg)
 
     // Obtain the images.
     XI_IMG_FORMAT format;
+    XI_COLOR_FILTER_ARRAY filter;
     cv::Mat cv_mat_image;
 
     // For profiler.
@@ -512,6 +513,8 @@ thd_get_single_image(void* arg)
         format = a->cam->GetImageDataFormat();
         PROFILER_OUT(profilerName_GetImageDataFormat.c_str());
         // std::cout << "format = " << format << std::endl;
+        filter = a->cam->GetSensorColorFilterArray();
+        std::cout << "filter = " << filter << std::endl;
         
         PROFILER_IN(profilerName_GetNextImageOcvMat.c_str());
         cv_mat_image = a->cam->GetNextImageOcvMat( a->ts );
