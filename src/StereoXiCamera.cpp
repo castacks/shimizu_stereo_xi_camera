@@ -364,17 +364,18 @@ void StereoXiCamera::apply_custom_AEAG(cv::Mat &img0, cv::Mat &img1, CameraParam
 
     // Apply exposure and gain settings.
     LOOP_CAMERAS_BEGIN
-        mCams[loopIdx].SetExposureTime(avgExposure);
-        mCams[loopIdx].SetGain(avgGain);
-
         // For test use.
         if ( true == mFlagDebug )
+        // if ( true )
         {
             std::cout << "Cam " << loopIdx 
                   << ", avgExposure (ms) = " << avgExposure / 1000.0
                   << ", avgGain (dB) = " << avgGain
                   << std::endl;
         }
+
+        mCams[loopIdx].SetExposureTime(avgExposure);
+        mCams[loopIdx].SetGain(avgGain);
     LOOP_CAMERAS_END
 }
 

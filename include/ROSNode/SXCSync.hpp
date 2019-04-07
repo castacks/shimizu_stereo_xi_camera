@@ -105,8 +105,10 @@ public:
     static const double DEFAULT_CUSTOM_AEAG_EXPOSURE_TOP_LIMIT  = 200000.0; // Mirosecond.
     static const double DEFAULT_CUSTOM_AEAG_GAIN_TOP_LIMIT      = 12.0;  // dB.
     static const int    DEFAULT_CUSTOM_AEAG_BRIGHTNESS_LEVEL    = 30;    // %.
-    static const double DEFAULT_CUSTOM_AEAG_CP                  = 2000.0;
-    static const double DEFAULT_CUSTOM_AEAG_CD                  = 500.0;
+    static const double DEFAULT_CUSTOM_AEAG_EP                  = 0.0;
+    static const double DEFAULT_CUSTOM_AEAG_ED                  = 0.0;
+    static const double DEFAULT_CUSTOM_AEAG_GP                  = 0.0;
+    static const double DEFAULT_CUSTOM_AEAG_GD                  = 0.0;
     static const int    DEFAULT_CUSTOM_AEAG_CT                  = 10000; // Mirosecond.
     static const int    DEFAULT_FIXED_WB                        = 1;
     static const double DEFAULT_WB_R                            = 1.325575;
@@ -198,8 +200,10 @@ private:
 	double mCustomAEAGExposureTopLimit;
 	double mCustomAEAGGainTopLimit;
 	int    mCustomAEAGBrightnessLevel;
-    double mCustomAEAG_CP;
-    double mCustomAEAG_CD;
+    double mCustomAEAG_EP;
+    double mCustomAEAG_ED;
+    double mCustomAEAG_GP;
+    double mCustomAEAG_GD;
     double mCustomAEAG_CT;
     std::string mCustomAEAG_Mask;
 

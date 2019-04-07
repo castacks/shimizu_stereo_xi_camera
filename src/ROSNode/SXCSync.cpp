@@ -132,8 +132,10 @@ Res_t SXCSync::parse_launch_parameters(void)
 	ROSLAUNCH_GET_PARAM((*mpROSNode), "pCustomAEAGExposureTopLimit", mCustomAEAGExposureTopLimit, DEFAULT_CUSTOM_AEAG_EXPOSURE_TOP_LIMIT);
 	ROSLAUNCH_GET_PARAM((*mpROSNode), "pCustomAEAGGainTopLimit", mCustomAEAGGainTopLimit, DEFAULT_CUSTOM_AEAG_GAIN_TOP_LIMIT);
 	ROSLAUNCH_GET_PARAM((*mpROSNode), "pCustomAEAGBrightnessLevel", mCustomAEAGBrightnessLevel, DEFAULT_CUSTOM_AEAG_BRIGHTNESS_LEVEL);
-    ROSLAUNCH_GET_PARAM((*mpROSNode), "pCustomAEAG_CP", mCustomAEAG_CP, DEFAULT_CUSTOM_AEAG_CP);
-    ROSLAUNCH_GET_PARAM((*mpROSNode), "pCustomAEAG_CD", mCustomAEAG_CD, DEFAULT_CUSTOM_AEAG_CD);
+    ROSLAUNCH_GET_PARAM((*mpROSNode), "pCustomAEAG_EP", mCustomAEAG_EP, DEFAULT_CUSTOM_AEAG_EP);
+    ROSLAUNCH_GET_PARAM((*mpROSNode), "pCustomAEAG_ED", mCustomAEAG_ED, DEFAULT_CUSTOM_AEAG_ED);
+    ROSLAUNCH_GET_PARAM((*mpROSNode), "pCustomAEAG_GP", mCustomAEAG_GP, DEFAULT_CUSTOM_AEAG_GP);
+    ROSLAUNCH_GET_PARAM((*mpROSNode), "pCustomAEAG_GD", mCustomAEAG_GD, DEFAULT_CUSTOM_AEAG_GD);
     ROSLAUNCH_GET_PARAM((*mpROSNode), "pCustomAEAG_CT", mCustomAEAG_CT, DEFAULT_CUSTOM_AEAG_CT);
     ROSLAUNCH_GET_PARAM((*mpROSNode), "pCustomAEAG_Mask", mCustomAEAG_Mask, "");
     ROSLAUNCH_GET_PARAM((*mpROSNode), "pFixedWB", mFixedWB, DEFAULT_FIXED_WB);
@@ -215,8 +217,8 @@ Res_t SXCSync::prepare(void)
             mMbAEAG->set_exposure_top_limit(mCustomAEAGExposureTopLimit);
             mMbAEAG->set_gain_top_limit(sxc::dBToGain(mCustomAEAGGainTopLimit));
             mMbAEAG->set_priority(mCustomAEAGPriority);
-            mMbAEAG->set_p(mCustomAEAG_CP);
-            mMbAEAG->set_d(mCustomAEAG_CD);
+            mMbAEAG->set_p(mCustomAEAG_EP, mCustomAEAG_GP);
+            mMbAEAG->set_d(mCustomAEAG_ED, mCustomAEAG_ED);
 
             mStereoXiCamera->set_custom_AEAG(mMbAEAG);
             mStereoXiCamera->set_custom_AEAG_target_brightness_level(mCustomAEAGBrightnessLevel);

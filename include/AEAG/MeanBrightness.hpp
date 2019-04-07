@@ -12,23 +12,23 @@ public:
     MeanBrightness();
     virtual ~MeanBrightness();
 
-    void set_p(xf p);
-    void set_d(xf d);
+    void set_p(xf ep, xf gp);
+    void set_d(xf ed, xf gd);
     void set_t(int t);
 
-    xf get_p(void);
-    xf get_d(void);
+    // xf get_p(void);
+    // xf get_d(void);
 
     void get_AEAG(cv::InputArray _m, xf exposure, xf gain, int mb, xf& newExposure, xf& newGain, int* pLMB = NULL);
     void put_image_parameters(cv::InputArray _m, int* pLMB);
 
 protected:
-    int get_mean_brightness(cv::InputArray _img);
+    xf get_mean_brightness(cv::InputArray _img);
     void split_exposure_gain(xf optimumEG, xf expPriority, xf topE, xf topG, xf& exposure, xf& gain);
 
 protected:
-    xf mCP; // The p coefficient of PD control.
-    xf mCD; // The d coefficient of PD control.
+    xf mEP, mGP; // The p coefficient of PD control.
+    xf mED, mGD; // The d coefficient of PD control.
     xf mLastBDiff; // The brightness difference of the last round.
     int mCT; // The limit for the exposure adjustment, in microsecond.
 };
