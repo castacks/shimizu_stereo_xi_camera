@@ -315,10 +315,17 @@ void StereoXiCamera::apply_custom_AEAG(cv::Mat &img0, cv::Mat &img1, CameraParam
         {
             mGrayMatBuffer[CAM_IDX_0] = img0;
             mGrayMatBuffer[CAM_IDX_1] = img1;
+            break;
+        }
+        case TF_RAW:
+        {
+            mGrayMatBuffer[CAM_IDX_0] = img0;
+            mGrayMatBuffer[CAM_IDX_1] = img1;
+            break;
         }
         default:
         {
-            BOOST_THROW_EXCEPTION( exception_base() << ExceptionInfoString("Cannot perform custom AEAG with transfer format other than TF_COLOR or TF_MONO.") );
+            BOOST_THROW_EXCEPTION( exception_base() << ExceptionInfoString("Cannot perform custom AEAG with undefined transfer format.") );
         }
     }
 
@@ -329,16 +336,20 @@ void StereoXiCamera::apply_custom_AEAG(cv::Mat &img0, cv::Mat &img1, CameraParam
         newExposure[CAM_IDX_0], newGain[CAM_IDX_0],
         mMeanBrightness + CAM_IDX_0);
 
-    // The second camera.
-    mCAEAG->get_AEAG(mGrayMatBuffer[CAM_IDX_1], 
-        currentExposure[CAM_IDX_1], currentGain[CAM_IDX_1], 
-        mCAEAG_TargetBrightnessLevel8Bit, 
-        newExposure[CAM_IDX_1], newGain[CAM_IDX_1],
-        mMeanBrightness + CAM_IDX_1);
+    // // The second camera.
+    // mCAEAG->get_AEAG(mGrayMatBuffer[CAM_IDX_1], 
+    //     currentExposure[CAM_IDX_1], currentGain[CAM_IDX_1], 
+    //     mCAEAG_TargetBrightnessLevel8Bit, 
+    //     newExposure[CAM_IDX_1], newGain[CAM_IDX_1],
+    //     mMeanBrightness + CAM_IDX_1);
 
-    // Average.
-    int avgExposure = (int)(0.5 * ( newExposure[0] + newExposure[1] ));
-    xf  avgGain     = 0.5 * ( newGain[0] + newGain[1] );
+    // // Average.
+    // int avgExposure = (int)(0.5 * ( newExposure[0] + newExposure[1] ));
+    // xf  avgGain     = 0.5 * ( newGain[0] + newGain[1] );
+
+    int avgExposure = (int)( newExposure[0] );
+    xf  avgGain     = newGain[0];
+
     if ( true == mFlagDebug )
     {
         std::cout << "avgGain = " << avgGain << std::endl;
@@ -385,9 +396,15 @@ void StereoXiCamera::evaluate_image_parameters(
             mGrayMatBuffer[CAM_IDX_1] = img1;
             break;
         }
+        case TF_RAW:
+        {
+            mGrayMatBuffer[CAM_IDX_0] = img0;
+            mGrayMatBuffer[CAM_IDX_1] = img1;
+            break;
+        }
         default:
         {
-            BOOST_THROW_EXCEPTION( exception_base() << ExceptionInfoString("Cannot evaluate image parameters with TF_RAW.") );
+            BOOST_THROW_EXCEPTION( exception_base() << ExceptionInfoString("Cannot evaluate image parameters with undefined transfer format.") );
         }
     }
     
@@ -513,8 +530,8 @@ thd_get_single_image(void* arg)
         format = a->cam->GetImageDataFormat();
         PROFILER_OUT(profilerName_GetImageDataFormat.c_str());
         // std::cout << "format = " << format << std::endl;
-        filter = a->cam->GetSensorColorFilterArray();
-        std::cout << "filter = " << filter << std::endl;
+        // filter = a->cam->GetSensorColorFilterArray();
+        // std::cout << "filter = " << filter << std::endl;
         
         PROFILER_IN(profilerName_GetNextImageOcvMat.c_str());
         cv_mat_image = a->cam->GetNextImageOcvMat( a->ts );
