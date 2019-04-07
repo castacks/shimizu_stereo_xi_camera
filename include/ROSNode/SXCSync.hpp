@@ -15,6 +15,7 @@
 #include <cv_bridge/cv_bridge.h>
 
 #include "AEAG/MeanBrightness.hpp"
+#include "AEAG/MaskedMeanBrightness.hpp"
 #include "StereoXiCamera.hpp"
 
 #include "ROSNode/SyncROSNode.hpp"
@@ -200,6 +201,7 @@ private:
     double mCustomAEAG_CP;
     double mCustomAEAG_CD;
     double mCustomAEAG_CT;
+    std::string mCustomAEAG_Mask;
 
     int    mFixedWB;
     double mWB_R;

@@ -30,6 +30,7 @@
         <param name="pCustomAEAG_CP" type="double" value="3000.0" />
         <param name="pCustomAEAG_CD" type="double" value="500.0" />
         <param name="pCustomAEAG_CT" type="int" value="10000" />
+        <param name="pCustomAEAG_Mask" type="str" value="/home/yyhu/ROS/catkin_ws/src/ros_stereo_xi_camera/script/index.dat" />
 
         <param name="pFixedWB" type="int" value="0" />
         <param name="pWB_R" type="double" value="1.325575" />
