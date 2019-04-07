@@ -31,7 +31,7 @@
         <param name="pCustomAEAG_CD" type="double" value="500.0" />
         <param name="pCustomAEAG_CT" type="int" value="10000" />
 
-        <param name="pFixedWB" type="int" value="1" />
+        <param name="pFixedWB" type="int" value="0" />
         <param name="pWB_R" type="double" value="1.325575" />
         <param name="pWB_G" type="double" value="0.996636" />
         <param name="pWB_B" type="double" value="2.783976" />
@@ -41,6 +41,6 @@
         <param name="pOutDir" type="str" value="/home/yaoyu/Documents/CMU/AirLab/Shimizu/Stereo/CapturedImages" />
 
         <!-- Debug using parameters. Use with caution -->
-        <param name="pForceXiAutoWhiteBalance" type="int" value="0" />
+        <param name="pForceXiAutoWhiteBalance" type="int" value="1" />
     </node>
 </launch>
