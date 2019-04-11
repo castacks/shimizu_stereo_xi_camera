@@ -27,7 +27,7 @@ StereoXiCamera::StereoXiCamera(std::string &camSN0, std::string &camSN1)
   mTransferFormat(TF_COLOR),
   mIsExternalTriggered(false), mXi_NextImageTimeout_ms(1000),
   mIsExternalTimeStampReset(false), 
-  mSelfAdjustNumOmittedFrames(15), mSelfAdjustNumFrames(5), 
+  mSelfAdjustNumOmittedFrames(5), mSelfAdjustNumFrames(5), 
   mSelfAdjustNumTrialLoops((mSelfAdjustNumOmittedFrames+mSelfAdjustNumFrames)*2), mIsSelfAdjusting(false),
   mXi_Exposure(100), mXi_Gain(0), mXi_AWB_kr(0.0), mXi_AWB_kg(0.0), mXi_AWB_kb(0.0), 
   mCAEAG(NULL), mCAEAG_TargetBrightnessLevel(10), mCAEAG_TargetBrightnessLevel8Bit(0), mCAEAG_IsEnabled(false),
