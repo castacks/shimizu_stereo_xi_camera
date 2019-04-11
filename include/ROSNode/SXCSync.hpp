@@ -15,7 +15,8 @@
 #include <cv_bridge/cv_bridge.h>
 
 #include "AEAG/MeanBrightness.hpp"
-#include "AEAG/MaskedMeanBrightness.hpp"
+// #include "AEAG/MaskedMeanBrightness.hpp"
+#include "AEAG/DownSampledMeanBrightness.hpp"
 #include "StereoXiCamera.hpp"
 
 #include "ROSNode/SyncROSNode.hpp"

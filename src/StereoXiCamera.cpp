@@ -27,7 +27,7 @@ StereoXiCamera::StereoXiCamera(std::string &camSN0, std::string &camSN1)
   mTransferFormat(TF_COLOR),
   mIsExternalTriggered(false), mXi_NextImageTimeout_ms(1000),
   mIsExternalTimeStampReset(false), 
-  mSelfAdjustNumOmittedFrames(5), mSelfAdjustNumFrames(3), 
+  mSelfAdjustNumOmittedFrames(15), mSelfAdjustNumFrames(5), 
   mSelfAdjustNumTrialLoops((mSelfAdjustNumOmittedFrames+mSelfAdjustNumFrames)*2), mIsSelfAdjusting(false),
   mXi_Exposure(100), mXi_Gain(0), mXi_AWB_kr(0.0), mXi_AWB_kg(0.0), mXi_AWB_kb(0.0), 
   mCAEAG(NULL), mCAEAG_TargetBrightnessLevel(10), mCAEAG_TargetBrightnessLevel8Bit(0), mCAEAG_IsEnabled(false),
@@ -729,7 +729,11 @@ int StereoXiCamera::get_images(cv::Mat &img0, cv::Mat &img1, CameraParams_t &cam
         {
             if ( true == mCAEAG_IsEnabled )
             {
-                BOOST_THROW_EXCEPTION( exception_base() << ExceptionInfoString("Cannot enable AEAG with RAW transfer format.") );
+                // BOOST_THROW_EXCEPTION( exception_base() << ExceptionInfoString("Cannot enable AEAG with RAW transfer format.") );
+                if ( false == mIsSelfAdjusting )
+                {
+                    apply_custom_AEAG(img0, img1, camP0, camP1);
+                }
             }
         }
     }
