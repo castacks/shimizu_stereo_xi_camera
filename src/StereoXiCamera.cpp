@@ -722,31 +722,17 @@ int StereoXiCamera::get_images(cv::Mat &img0, cv::Mat &img1, CameraParams_t &cam
         put_single_camera_params( mCams[CAM_IDX_0], camP0 );
         put_single_camera_params( mCams[CAM_IDX_1], camP1 );
 
-        if ( TF_RAW != mTransferFormat )
+        if ( true == mCAEAG_IsEnabled )
         {
-            if ( true == mCAEAG_IsEnabled )
+            if ( false == mIsSelfAdjusting )
             {
-                if ( false == mIsSelfAdjusting )
-                {
-                    apply_custom_AEAG(img0, img1, camP0, camP1);
-                }
-            }
-            else
-            {
-                // Evaluate image parameters.
-                evaluate_image_parameters(img0, img1, camP0, camP1);
+                apply_custom_AEAG(img0, img1, camP0, camP1);
             }
         }
         else
         {
-            if ( true == mCAEAG_IsEnabled )
-            {
-                // BOOST_THROW_EXCEPTION( exception_base() << ExceptionInfoString("Cannot enable AEAG with RAW transfer format.") );
-                if ( false == mIsSelfAdjusting )
-                {
-                    apply_custom_AEAG(img0, img1, camP0, camP1);
-                }
-            }
+            // Evaluate image parameters.
+            evaluate_image_parameters(img0, img1, camP0, camP1);
         }
     }
     catch ( xiAPIplus_Exception& exp )

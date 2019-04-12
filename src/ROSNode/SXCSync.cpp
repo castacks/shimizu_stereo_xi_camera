@@ -205,27 +205,37 @@ Res_t SXCSync::prepare(void)
         }
 
         // Custom AEAG.
-        if ( 1 == mCustomAEAGEnabled )
+        if ( 1 != mFixedExposureGain )
         {
-            if ( 0 == mTransferFormat.compare( "raw" ) )
+            if ( 1 == mCustomAEAGEnabled )
             {
-                // mMbAEAG = new sxc::MaskedMeanBrightness(mCustomAEAG_Mask);
-                mMbAEAG = new sxc::DownSampledMeanBrightness(4112, 3008, 100, 100);
-            }
-            else
-            {
-                mMbAEAG = new sxc::MeanBrightness;
-            }
-            
-            mMbAEAG->set_exposure_top_limit(mCustomAEAGExposureTopLimit);
-            mMbAEAG->set_gain_top_limit(sxc::dBToGain(mCustomAEAGGainTopLimit));
-            mMbAEAG->set_priority(mCustomAEAGPriority);
-            mMbAEAG->set_p(mCustomAEAG_EP, mCustomAEAG_GP);
-            mMbAEAG->set_d(mCustomAEAG_ED, mCustomAEAG_ED);
+                if ( 0 == mTransferFormat.compare( "raw" ) )
+                {
+                    // mMbAEAG = new sxc::MaskedMeanBrightness(mCustomAEAG_Mask);
+                    mMbAEAG = new sxc::DownSampledMeanBrightness(4112, 3008, 100, 100);
+                }
+                else
+                {
+                    mMbAEAG = new sxc::MeanBrightness;
+                }
+                
+                mMbAEAG->set_exposure_top_limit(mCustomAEAGExposureTopLimit);
+                mMbAEAG->set_gain_top_limit(sxc::dBToGain(mCustomAEAGGainTopLimit));
+                mMbAEAG->set_priority(mCustomAEAGPriority);
+                mMbAEAG->set_p(mCustomAEAG_EP, mCustomAEAG_GP);
+                mMbAEAG->set_d(mCustomAEAG_ED, mCustomAEAG_ED);
 
-            mStereoXiCamera->set_custom_AEAG(mMbAEAG);
-            mStereoXiCamera->set_custom_AEAG_target_brightness_level(mCustomAEAGBrightnessLevel);
-            mStereoXiCamera->enable_custom_AEAG();
+                mStereoXiCamera->set_custom_AEAG(mMbAEAG);
+                mStereoXiCamera->set_custom_AEAG_target_brightness_level(mCustomAEAGBrightnessLevel);
+                mStereoXiCamera->enable_custom_AEAG();
+            }
+        }
+
+        // Image parameter evaluator.
+        if ( 0 == mTransferFormat.compare( "raw" ) )
+        {
+            mIPE = new sxc::DownSampledMeanBrightness(4112, 3008, 100, 100);
+            mStereoXiCamera->set_image_parameter_evaluator(mIPE);
         }
         else
         {

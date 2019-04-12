@@ -7,7 +7,7 @@
         <param name="pFixedExposureGain" type="int" value="0" />
 
         <param name="pAutoGainExposurePriority" type="double" value="1.0" />
-        <param name="pAutoGainExposureTargetLevel" type="double" value="20" />
+        <param name="pAutoGainExposureTargetLevel" type="double" value="10" />
         <param name="pAutoExposureTopLimit" type="int" value="200000" />
         <param name="pAutoGainTopLimit" type="int" value="1" />
 
@@ -15,17 +15,17 @@
         <param name="pTotalBandwidth" type="int" value="3200" />
         <param name="pBandwidthMargin" type="int" value="0" />
         <param name="pSingleImageSize" type="double" value="12.37" />
-        <param name="pLoopRate" type="double" value="5" />
+        <param name="pLoopRate" type="double" value="3" />
         <!-- <param name="pTransferFormat" type="str" value="color" /> -->
-        <param name="pTransferFormat" type="str" value="mono" />
-        <!-- <param name="pTransferFormat" type="str" value="raw" /> -->
+        <!-- <param name="pTransferFormat" type="str" value="mono" /> -->
+        <param name="pTransferFormat" type="str" value="raw" />
 
         <param name="pExternalTrigger" type="int" value="1" />
         <param name="pNextImageTimeout_ms" type="int" value="1200" />
 
         <param name="pExternalTimestampReset" type="int" value="1" />
 
-        <param name="pSelfAdjust" type="int" value="1" />
+        <param name="pSelfAdjust" type="int" value="0" />
 
         <param name="pCustomAEAGEnabled" type="int" value="1" />
         <param name="pCustomAEAGPriority" type="double" value="1.0" />
@@ -41,7 +41,7 @@
         <param name="pCustomAEAG_CT" type="int" value="10000" />
         <!-- <param name="pCustomAEAG_Mask" type="str" value="/home/yyhu/ROS/catkin_ws/src/ros_stereo_xi_camera/script/index.dat" /> -->
 
-        <param name="pFixedWB" type="int" value="1" />
+        <param name="pFixedWB" type="int" value="0" />
         <param name="pWB_R" type="double" value="1.325575" />
         <param name="pWB_G" type="double" value="0.996636" />
         <param name="pWB_B" type="double" value="2.783976" />
