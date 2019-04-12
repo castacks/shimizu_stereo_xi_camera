@@ -111,6 +111,7 @@ public:
     static const double DEFAULT_CUSTOM_AEAG_GP                  = 0.0;
     static const double DEFAULT_CUSTOM_AEAG_GD                  = 0.0;
     static const int    DEFAULT_CUSTOM_AEAG_CT                  = 10000; // Mirosecond.
+    static const double DEFAULT_CUSTOM_AEAG_DEM                 = 50000; // Mirosecond, delta exposure max.
     static const int    DEFAULT_FIXED_WB                        = 1;
     static const double DEFAULT_WB_R                            = 1.325575;
     static const double DEFAULT_WB_G                            = 1.0;
@@ -210,6 +211,7 @@ private:
     double mCustomAEAG_GP;
     double mCustomAEAG_GD;
     double mCustomAEAG_CT;
+    double mCustomAEAG_DEM; // Delta exposure max.
     std::string mCustomAEAG_Mask;
 
     int    mFixedWB;

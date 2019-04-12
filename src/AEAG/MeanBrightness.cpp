@@ -7,7 +7,7 @@ using namespace sxc;
 
 MeanBrightness::MeanBrightness()
 : ExposurePriorAEAG(), 
-  mEP(1.0), mGP(1.0), mED(1.0), mGD(1.0), mLastBDiff(0.0), mCT(10000)
+  mEP(1.0), mGP(1.0), mED(1.0), mGD(1.0), mLastBDiff(0.0), mCT(10000), mDEM(50000)
 {
 
 }
@@ -70,6 +70,11 @@ void MeanBrightness::set_d(xf ed, xf gd)
     mGD = gd;
 }
 
+void MeanBrightness::set_dem(xf dem)
+{
+    mDEM = dem;
+}
+
 // xf MeanBrightness::get_p(void)
 // {
 //     return mCP;
@@ -104,13 +109,13 @@ void MeanBrightness::get_AEAG(cv::InputArray _m, xf exposure, xf gain, int mb, x
     deltaE = mPriority * deltaE;
     deltaG = (1 - mPriority) * deltaG;
 
-    if ( deltaE > 50000 )
+    if ( deltaE > mDEM )
     {
-        deltaE = 50000;
+        deltaE = mDEM;
     }
-    else if ( deltaE < -50000 )
+    else if ( deltaE < -mDEM )
     {
-        deltaE = -50000;
+        deltaE = -mDEM;
     }
 
     newExposure = exposure + deltaE;

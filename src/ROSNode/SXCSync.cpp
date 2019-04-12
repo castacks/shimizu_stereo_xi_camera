@@ -139,6 +139,7 @@ Res_t SXCSync::parse_launch_parameters(void)
     ROSLAUNCH_GET_PARAM((*mpROSNode), "pCustomAEAG_GP", mCustomAEAG_GP, DEFAULT_CUSTOM_AEAG_GP);
     ROSLAUNCH_GET_PARAM((*mpROSNode), "pCustomAEAG_GD", mCustomAEAG_GD, DEFAULT_CUSTOM_AEAG_GD);
     ROSLAUNCH_GET_PARAM((*mpROSNode), "pCustomAEAG_CT", mCustomAEAG_CT, DEFAULT_CUSTOM_AEAG_CT);
+    ROSLAUNCH_GET_PARAM((*mpROSNode), "pCustomAEAG_DeltaExpMax", mCustomAEAG_DEM, DEFAULT_CUSTOM_AEAG_DEM);
     ROSLAUNCH_GET_PARAM((*mpROSNode), "pCustomAEAG_Mask", mCustomAEAG_Mask, "");
     ROSLAUNCH_GET_PARAM((*mpROSNode), "pFixedWB", mFixedWB, DEFAULT_FIXED_WB);
     ROSLAUNCH_GET_PARAM((*mpROSNode), "pWB_R", mWB_R, DEFAULT_WB_R);
