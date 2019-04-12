@@ -15,7 +15,7 @@
         <param name="pTotalBandwidth" type="int" value="3200" />
         <param name="pBandwidthMargin" type="int" value="0" />
         <param name="pSingleImageSize" type="double" value="12.37" />
-        <param name="pLoopRate" type="double" value="3" />
+        <param name="pLoopRate" type="double" value="5" />
         <!-- <param name="pTransferFormat" type="str" value="color" /> -->
         <!-- <param name="pTransferFormat" type="str" value="mono" /> -->
         <param name="pTransferFormat" type="str" value="raw" />
@@ -31,10 +31,10 @@
         <param name="pCustomAEAGPriority" type="double" value="1.0" />
         <param name="pCustomAEAGExposureTopLimit" type="double" value="200000" />
         <param name="pCustomAEAGGainTopLimit" type="double" value="20" />
-        <param name="pCustomAEAGBrightnessLevel" type="int" value="20" />
+        <param name="pCustomAEAGBrightnessLevel" type="int" value="10" />
 
-        <param name="pCustomAEAG_EP" type="double" value="373.0" />
-        <param name="pCustomAEAG_ED" type="double" value="100.0" />
+        <param name="pCustomAEAG_EP" type="double" value="200.0" />
+        <param name="pCustomAEAG_ED" type="double" value="0.0" />
         <!-- <param name="pCustomAEAG_CT" type="int" value="10000" /> -->
         <param name="pCustomAEAG_GP" type="double" value="0.01" />
         <param name="pCustomAEAG_GD" type="double" value="0.0" />

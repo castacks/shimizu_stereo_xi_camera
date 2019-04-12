@@ -213,10 +213,12 @@ Res_t SXCSync::prepare(void)
                 {
                     // mMbAEAG = new sxc::MaskedMeanBrightness(mCustomAEAG_Mask);
                     mMbAEAG = new sxc::DownSampledMeanBrightness(4112, 3008, 100, 100);
+                    ROS_WARN("Use RAW transfer format and custom AEAG.");
                 }
                 else
                 {
                     mMbAEAG = new sxc::MeanBrightness;
+                    ROS_WARN("Use the custom AEAG.");
                 }
                 
                 mMbAEAG->set_exposure_top_limit(mCustomAEAGExposureTopLimit);
@@ -230,6 +232,7 @@ Res_t SXCSync::prepare(void)
                 mStereoXiCamera->enable_custom_AEAG();
             }
         }
+        // ROS_WARN("After 1 != mFixedExposureGain.");
 
         // Image parameter evaluator.
         if ( 0 == mTransferFormat.compare( "raw" ) )

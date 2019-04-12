@@ -19,7 +19,7 @@ private:
     void fill_indices(int nx, int ny, int blockSamplesX, int blockSamplesY);
 
 protected:
-    int get_mean_brightness(cv::InputArray _img);
+    xf get_mean_brightness(cv::InputArray _img);
 
 protected:
     const xf CR;

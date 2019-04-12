@@ -23,7 +23,7 @@ public:
     void put_image_parameters(cv::InputArray _m, int* pLMB);
 
 protected:
-    xf get_mean_brightness(cv::InputArray _img);
+    virtual xf get_mean_brightness(cv::InputArray _img);
     void split_exposure_gain(xf optimumEG, xf expPriority, xf topE, xf topG, xf& exposure, xf& gain);
 
 protected:

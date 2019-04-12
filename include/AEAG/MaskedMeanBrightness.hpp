@@ -20,7 +20,7 @@ private:
     void destroy(void);
 
 protected:
-    int get_mean_brightness(cv::InputArray _img);
+    xf get_mean_brightness(cv::InputArray _img);
 
 protected:
     int  mMaskN;

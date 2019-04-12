@@ -90,7 +90,7 @@ void MaskedMeanBrightness::read_exposure_mask(const std::string& fn)
     ifs.close();
 }
 
-int MaskedMeanBrightness::get_mean_brightness(cv::InputArray _img)
+xf MaskedMeanBrightness::get_mean_brightness(cv::InputArray _img)
 {
     std::cout << "In MaskedMeanBrightness::get_mean_brightness()" << std::endl;
     
@@ -111,5 +111,5 @@ int MaskedMeanBrightness::get_mean_brightness(cv::InputArray _img)
         meanBrightness += img.at<uint8_t>( mMaskY[i], mMaskX[i] ) * mMaskF[i];
     }
 
-    return static_cast<int>(meanBrightness);
+    return meanBrightness;
 }

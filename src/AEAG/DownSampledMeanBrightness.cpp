@@ -95,9 +95,9 @@ void DownSampledMeanBrightness::fill_indices(int nx, int ny, int blockSamplesX, 
     }
 }
 
-int DownSampledMeanBrightness::get_mean_brightness(cv::InputArray _img)
+xf DownSampledMeanBrightness::get_mean_brightness(cv::InputArray _img)
 {
-    std::cout << "In DownSampledMeanBrightness::get_mean_brightness()" << std::endl;
+    // std::cout << "In DownSampledMeanBrightness::get_mean_brightness()" << std::endl;
     
     cv::Mat img = _img.getMat();
 
@@ -116,5 +116,5 @@ int DownSampledMeanBrightness::get_mean_brightness(cv::InputArray _img)
         meanBrightness += img.at<uint8_t>( mY[i], mX[i] ) * mC[i];
     }
 
-    return static_cast<int>(meanBrightness / ( mN/4 )  );
+    return meanBrightness / ( mN/4 );
 }
