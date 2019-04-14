@@ -33,8 +33,8 @@
         <param name="pCustomAEAGGainTopLimit" type="double" value="20" />
         <param name="pCustomAEAGBrightnessLevel" type="int" value="10" />
 
-        <param name="pCustomAEAG_EP" type="double" value="3.0" />
-        <param name="pCustomAEAG_ED" type="double" value="0.0" />
+        <param name="pCustomAEAG_EP" type="double" value="0.3" />
+        <param name="pCustomAEAG_ED" type="double" value="0.05" />
         <!-- <param name="pCustomAEAG_CT" type="int" value="10000" /> -->
         <param name="pCustomAEAG_GP" type="double" value="0.01" />
         <param name="pCustomAEAG_GD" type="double" value="0.0" />
