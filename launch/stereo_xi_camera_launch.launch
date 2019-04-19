@@ -31,7 +31,7 @@
         <param name="pCustomAEAGPriority" type="double" value="1.0" />
         <param name="pCustomAEAGExposureTopLimit" type="double" value="200000" />
         <param name="pCustomAEAGGainTopLimit" type="double" value="20" />
-        <param name="pCustomAEAGBrightnessLevel" type="int" value="10" />
+        <param name="pCustomAEAGBrightnessLevel" type="int" value="40" />
 
         <param name="pCustomAEAG_EP" type="double" value="0.3" />
         <param name="pCustomAEAG_ED" type="double" value="0.05" />
