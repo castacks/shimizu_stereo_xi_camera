@@ -144,14 +144,14 @@ void MeanBrightness::get_AEAG(cv::InputArray _m, xf exposure, xf gain, int mb, x
     mExposure = newExposure;
     mGain     = newGain;
 
-    // Debug.
-    std::cout << "mb: " << mb << ", "
-              << "mmb: " << mmb << ", "
-              << "currentBDiff: " << currentBDiff << ", "
-              << "mLastBDIff: " << mLastBDiff << ", "
-              << "exposure: " << exposure << ", "
-              << "alpha: " << alpha << ", "
-              << "deltaE: " << deltaE << std::endl;
+    // // Debug.
+    // std::cout << "mb: " << mb << ", "
+    //           << "mmb: " << mmb << ", "
+    //           << "currentBDiff: " << currentBDiff << ", "
+    //           << "mLastBDIff: " << mLastBDiff << ", "
+    //           << "exposure: " << exposure << ", "
+    //           << "alpha: " << alpha << ", "
+    //           << "deltaE: " << deltaE << std::endl;
 
     // xf optEG = exposure * gain + mCP * currentBDiff + mCD * ( currentBDiff - mLastBDiff );
 

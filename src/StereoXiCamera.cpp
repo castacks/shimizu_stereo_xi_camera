@@ -971,7 +971,6 @@ void StereoXiCamera::setup_camera_common(xiAPIplusCameraOcv& cam)
         cam.EnableWhiteBalanceAuto();
     }
     
-
 	// Image format.
 	// cam.SetImageDataFormat(XI_RGB24);
     set_transfer_format_single_camera(cam, mTransferFormat);
