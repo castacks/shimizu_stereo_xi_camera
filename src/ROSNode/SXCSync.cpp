@@ -442,7 +442,9 @@ Res_t SXCSync::synchronize(ProcessType_t& pt)
                 mMsgImage = cv_bridge::CvImage(std_msgs::Header(), mEncoding, mCvImages[loopIdx]).toImageMsg();
                 PROFILER_OUT("cv_bridge::CvImage");
 
-                mMsgImage->header.seq = mNImages;
+                // header.seq is not supposed to be filled by user.
+                // https://answers.ros.org/question/55126/why-does-ros-overwrite-my-sequence-number/
+                // mMsgImage->header.seq = mNImages;
                 
                 // Prepare the time stamp for the header.
                 imageTS = ros::Time::now();
