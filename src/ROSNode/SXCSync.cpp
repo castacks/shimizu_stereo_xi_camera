@@ -52,6 +52,7 @@ SXCSync::SXCSync(const std::string& name)
   mCustomAEAGExposureTopLimit(DEFAULT_CUSTOM_AEAG_EXPOSURE_TOP_LIMIT),
   mCustomAEAGGainTopLimit(DEFAULT_CUSTOM_AEAG_GAIN_TOP_LIMIT),
   mCustomAEAGBrightnessLevel(DEFAULT_CUSTOM_AEAG_BRIGHTNESS_LEVEL),
+  mCustomAEAG_Mask(""),
   mFixedWB(DEFAULT_FIXED_WB), mWB_R(DEFAULT_WB_R), mWB_G(DEFAULT_WB_G), mWB_B(DEFAULT_WB_B),
   mForceXiAutoWhiteBalance(DEFAULT_FORCE_XI_AUTO_WHITE_BALANCE),
   mVerbose(DEFAULT_VERBOSE)
@@ -134,6 +135,7 @@ Res_t SXCSync::parse_launch_parameters(void)
     ROSLAUNCH_GET_PARAM((*mpROSNode), "pCustomAEAG_CP", mCustomAEAG_CP, DEFAULT_CUSTOM_AEAG_CP);
     ROSLAUNCH_GET_PARAM((*mpROSNode), "pCustomAEAG_CD", mCustomAEAG_CD, DEFAULT_CUSTOM_AEAG_CD);
     ROSLAUNCH_GET_PARAM((*mpROSNode), "pCustomAEAG_CT", mCustomAEAG_CT, DEFAULT_CUSTOM_AEAG_CT);
+    ROSLAUNCH_GET_PARAM((*mpROSNode), "pCustomAEAG_Mask", mCustomAEAG_Mask, "");
     ROSLAUNCH_GET_PARAM((*mpROSNode), "pFixedWB", mFixedWB, DEFAULT_FIXED_WB);
     ROSLAUNCH_GET_PARAM((*mpROSNode), "pWB_R", mWB_R, DEFAULT_WB_R);
     ROSLAUNCH_GET_PARAM((*mpROSNode), "pWB_G", mWB_G, DEFAULT_WB_G);
@@ -201,7 +203,15 @@ Res_t SXCSync::prepare(void)
         // Custom AEAG.
         if ( 1 == mCustomAEAGEnabled )
         {
-            mMbAEAG = new sxc::MeanBrightness;
+            if ( 0 == mTransferFormat.compare( "raw" ) )
+            {
+                mMbAEAG = new sxc::MaskedMeanBrightness(mCustomAEAG_Mask);
+            }
+            else
+            {
+                mMbAEAG = new sxc::MeanBrightness;
+            }
+            
             mMbAEAG->set_exposure_top_limit(mCustomAEAGExposureTopLimit);
             mMbAEAG->set_gain_top_limit(sxc::dBToGain(mCustomAEAGGainTopLimit));
             mMbAEAG->set_priority(mCustomAEAGPriority);

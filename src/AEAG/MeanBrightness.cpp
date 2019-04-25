@@ -6,7 +6,8 @@
 using namespace sxc;
 
 MeanBrightness::MeanBrightness()
-: mCP(2000.0), mCD(500.0), mLastBDiff(0.0), mCT(10000)
+: ExposurePriorAEAG(), 
+  mCP(2000.0), mCD(500.0), mLastBDiff(0.0), mCT(10000)
 {
 
 }
@@ -16,7 +17,7 @@ MeanBrightness::~MeanBrightness()
 
 }
 
-static int get_mean_brightness(cv::InputArray _img)
+int MeanBrightness::get_mean_brightness(cv::InputArray _img)
 {
     cv::Mat img = _img.getMat();
 
@@ -33,7 +34,7 @@ static int get_mean_brightness(cv::InputArray _img)
     return meanBrightness;
 }
 
-static void split_exposure_gain(xf optimumEG, xf expPriority, xf topE, xf topG, xf& exposure, xf& gain)
+void MeanBrightness::split_exposure_gain(xf optimumEG, xf expPriority, xf topE, xf topG, xf& exposure, xf& gain)
 {
     exposure = expPriority * optimumEG;
 
@@ -83,7 +84,7 @@ void MeanBrightness::get_AEAG(cv::InputArray _m, xf exposure, xf gain, int mb, x
     cv::Mat m = _m.getMat();
 
     // Calculate the mean brightness of the Mat object.
-    int mmb = get_mean_brightness(m);
+    int mmb = this->get_mean_brightness(m);
 
     if ( -1 == mmb )
     {

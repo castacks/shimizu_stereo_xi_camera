@@ -23,6 +23,10 @@ public:
     void put_image_parameters(cv::InputArray _m, int* pLMB);
 
 protected:
+    int get_mean_brightness(cv::InputArray _img);
+    void split_exposure_gain(xf optimumEG, xf expPriority, xf topE, xf topG, xf& exposure, xf& gain);
+
+protected:
     xf mCP; // The p coefficient of PD control.
     xf mCD; // The d coefficient of PD control.
     xf mLastBDiff; // The brightness difference of the last round.
