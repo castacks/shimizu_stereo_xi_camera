@@ -157,7 +157,7 @@ void MeanBrightness::put_image_parameters(cv::InputArray _m, int* pLMB)
     cv::Mat m = _m.getMat();
 
     // Calculate the mean brightness of the Mat object.
-    int mmb = get_mean_brightness(m);
+    int mmb = this->get_mean_brightness(m);
 
     if ( -1 == mmb )
     {

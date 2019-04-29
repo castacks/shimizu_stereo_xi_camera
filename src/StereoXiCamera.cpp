@@ -729,7 +729,11 @@ int StereoXiCamera::get_images(cv::Mat &img0, cv::Mat &img1, CameraParams_t &cam
         {
             if ( true == mCAEAG_IsEnabled )
             {
-                BOOST_THROW_EXCEPTION( exception_base() << ExceptionInfoString("Cannot enable AEAG with RAW transfer format.") );
+                // BOOST_THROW_EXCEPTION( exception_base() << ExceptionInfoString("Cannot enable AEAG with RAW transfer format.") );
+                if ( false == mIsSelfAdjusting )
+                {
+                    apply_custom_AEAG(img0, img1, camP0, camP1);
+                }
             }
         }
     }

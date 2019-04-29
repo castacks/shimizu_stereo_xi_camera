@@ -21,6 +21,8 @@ private:
 
 protected:
     int get_mean_brightness(cv::InputArray _img);
+
+protected:
     int  mMaskN;
     int* mMaskX;
     int* mMaskY;

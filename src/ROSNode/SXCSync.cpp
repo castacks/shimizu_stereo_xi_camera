@@ -207,7 +207,8 @@ Res_t SXCSync::prepare(void)
         {
             if ( 0 == mTransferFormat.compare( "raw" ) )
             {
-                mMbAEAG = new sxc::MaskedMeanBrightness(mCustomAEAG_Mask);
+                // mMbAEAG = new sxc::MaskedMeanBrightness(mCustomAEAG_Mask);
+                mMbAEAG = new sxc::DownSampledMeanBrightness(4112, 3008, 100, 100);
             }
             else
             {
