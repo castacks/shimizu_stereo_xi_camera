@@ -33,6 +33,7 @@ SXCSync::SXCSync(const std::string& name)
   mCP(NULL),
   mNImages(0),
   mROSLoopRate(NULL),
+  mFixedExposureGain(0),
   mAutoGainExposurePriority(DEFAULT_AUTO_GAIN_EXPOSURE_PRIORITY),
   mAutoGainExposureTargetLevel(DEFAULT_AUTO_GAIN_EXPOSURE_TARGET_LEVEL),
   mAutoExposureTopLimit(DEFAULT_AUTO_EXPOSURE_TOP_LIMIT),
@@ -112,6 +113,7 @@ Res_t SXCSync::parse_launch_parameters(void)
     std::string pXICameraSN_0 = mXiCameraSN[CAM_0_IDX];
 	std::string pXICameraSN_1 = mXiCameraSN[CAM_1_IDX];
 
+    ROSLAUNCH_GET_PARAM((*mpROSNode), "pFixedExposureGain", mFixedExposureGain, 0);
 	ROSLAUNCH_GET_PARAM((*mpROSNode), "pAutoGainExposurePriority", mAutoGainExposurePriority, DEFAULT_AUTO_GAIN_EXPOSURE_PRIORITY);
 	ROSLAUNCH_GET_PARAM((*mpROSNode), "pAutoGainExposureTargetLevel", mAutoGainExposureTargetLevel, DEFAULT_AUTO_GAIN_EXPOSURE_TARGET_LEVEL);
 	ROSLAUNCH_GET_PARAM((*mpROSNode), "pAutoExposureTopLimit", mAutoExposureTopLimit, DEFAULT_AUTO_EXPOSURE_TOP_LIMIT);

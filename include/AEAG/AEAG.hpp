@@ -33,6 +33,9 @@ public:
     xf   get_gain_top_limit(void);
 
 protected:
+    xf EXPOSURE_MIN;
+
+protected:
     xf mExposure;
     xf mGain;
 

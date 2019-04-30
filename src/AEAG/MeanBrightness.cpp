@@ -107,8 +107,8 @@ void MeanBrightness::get_AEAG(cv::InputArray _m, xf exposure, xf gain, int mb, x
     newExposure = exposure + deltaE;
     newGain = gain + deltaG;
 
-    if(newExposure < 0)
-        newExposure = 0; 
+    if(newExposure < EXPOSURE_MIN)
+        newExposure = EXPOSURE_MIN; 
     else if(newExposure > mExposureTopLimit)
         newExposure = mExposureTopLimit;
 

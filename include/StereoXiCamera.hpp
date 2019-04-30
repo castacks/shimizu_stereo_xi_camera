@@ -151,6 +151,9 @@ public:
     void put_sensor_filter_array(int idx, std::string &strFilterArray);
 
     // Getters and setters.
+    void enable_fixed_exposure_gain(void);
+    void disable_fixed_exposure_gain(void);
+
     void set_autogain_exposure_priority(xf val);
     xf   get_autogain_exposure_priority(void);
 
@@ -281,6 +284,7 @@ protected:
 
     cv::Mat mGrayMatBuffer[N_XI_C];
 
+    bool mFixedXiExposureGain;
     xf  mXi_AutoGainExposurePriority;
     xf  mXi_AutoGainExposureTargetLevel;
     int mXi_AutoExposureTopLimit;     // Microsecond.

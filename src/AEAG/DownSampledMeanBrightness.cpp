@@ -15,6 +15,10 @@
 
 using namespace sxc;
 
+// The values of CR, CG, and, CB are obtained from
+// https://docs.opencv.org/3.4.0/de/d25/imgproc_color_conversions.html
+// CG is further divided by 2.
+
 DownSampledMeanBrightness::DownSampledMeanBrightness(int nx, int ny, int blockSamplesX, int blockSamplesY)
 : MeanBrightness(),
   CR(0.299), CG(0.587/2), CB(0.114),

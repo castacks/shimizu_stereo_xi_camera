@@ -176,6 +176,10 @@ protected:
   	ros::Rate* mROSLoopRate;
 
 private:
+    // 1 for fixed exposure and gain. 
+    // The exposure and again values are specified by
+    // mAutoGainExposureTopLimit and gain is always 0db.
+    int    mFixedExposureGain;
     double mAutoGainExposurePriority;
 	double mAutoGainExposureTargetLevel;
 	int    mAutoExposureTopLimit; // Microsecond.

@@ -20,6 +20,7 @@ StereoXiCamera::StereoXiCamera(std::string &camSN0, std::string &camSN1)
   BANDWIDTH_MARGIN_MAX(50), BANDWIDTH_MARGIN_MIN(0), BANDWIDTH_MARGIN_DEFAULT(10),
   TRIGGER_SOFTWARE(1), EXPOSURE_MILLISEC_BASE(1000), CAM_IDX_0(0), CAM_IDX_1(1),
   XI_DEFAULT_TOTAL_BANDWIDTH(2400), XI_DEFAULT_BANDWIDTH_MARGIN(10),
+  mFixedXiExposureGain(false),
   mXi_AutoGainExposurePriority(AUTO_GAIN_EXPOSURE_PRIORITY_DEFAULT),
   mXi_AutoExposureTopLimit(AUTO_EXPOSURE_TOP_LIMIT_DEFAULT),
   mXi_AutoGainTopLimit(AUTO_GAIN_TOP_LIMIT_DEFAULT),
@@ -216,6 +217,17 @@ void StereoXiCamera::self_adjust_exposure_gain(std::vector<CameraParams_t> &cp)
 
     mXi_Exposure = avgExposure;
     mXi_Gain     = avgGain;
+}
+
+void StereoXiCamera::enable_fixed_exposure_gain(void)
+{
+    // TODO: Error checking with customized AEAG.
+    mFixedXiExposureGain = true;
+}
+
+void StereoXiCamera::disable_fixed_exposure_gain(void)
+{
+    mFixedXiExposureGain = false;
 }
 
  void StereoXiCamera::set_exposure_gain(int idx, int e, xf g)
@@ -518,7 +530,7 @@ thd_get_single_image(void* arg)
 
     // Obtain the images.
     XI_IMG_FORMAT format;
-    XI_COLOR_FILTER_ARRAY filter;
+    // XI_COLOR_FILTER_ARRAY filter;
     cv::Mat cv_mat_image;
 
     // For profiler.
@@ -924,16 +936,20 @@ void StereoXiCamera::set_transfer_format_single_camera(xiAPIplusCameraOcv& cam, 
 void StereoXiCamera::setup_camera_common(xiAPIplusCameraOcv& cam)
 {
     // Set exposure time.
-	// cam.SetAutoExposureAutoGainExposurePriority( mXi_AutoGainExposurePriority );
-    // cam.SetAutoExposureAutoGainTargetLevel(mXi_AutoGainExposureTargetLevel);
-	// cam.SetAutoExposureTopLimit( mXi_AutoExposureTopLimit );
-    // cam.SetAutoGainTopLimit( mXi_AutoGainTopLimit );
-    // cam.EnableAutoExposureAutoGain();
-
-    // Temporary debug.
-    cam.SetExposureTime(mXi_AutoExposureTopLimit);
-    cam.SetGain(0);
-    cam.DisableAutoExposureAutoGain();
+    if ( false == mFixedXiExposureGain )
+    {
+        cam.SetAutoExposureAutoGainExposurePriority( mXi_AutoGainExposurePriority );
+        cam.SetAutoExposureAutoGainTargetLevel(mXi_AutoGainExposureTargetLevel);
+        cam.SetAutoExposureTopLimit( mXi_AutoExposureTopLimit );
+        cam.SetAutoGainTopLimit( mXi_AutoGainTopLimit );
+        cam.EnableAutoExposureAutoGain();
+    }
+    else
+    {
+        cam.SetExposureTime(mXi_AutoExposureTopLimit);
+        cam.SetGain(0);
+        cam.DisableAutoExposureAutoGain();
+    }
 
 	// Enable auto-whitebalance.
     if ( true == mFixedWB )
