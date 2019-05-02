@@ -4,6 +4,7 @@ import cv2
 import math
 import numpy as np
 from numpy.linalg import norm
+import time
 
 H = 3008
 W = 4112
@@ -90,11 +91,14 @@ if __name__ == "__main__":
     # Create the validators.
     vList = []
     vList.append( RadiusValidator( imgCenter, min( W/2, H/2 ) * 0.75, 20 ) )
-    vList.append( PolarLineSegmentValidator( imgCenter,  math.pi/2, min( W/2, H/2 ) * 0.75, 20 ) )
-    vList.append( PolarLineSegmentValidator( imgCenter,  math.pi/4, min( W/2, H/2 ) * 0.75, 20 ) )
-    vList.append( PolarLineSegmentValidator( imgCenter,          0, min( W/2, H/2 ) * 0.75, 20 ) )
-    vList.append( PolarLineSegmentValidator( imgCenter, -math.pi/4, min( W/2, H/2 ) * 0.75, 20 ) )
-    vList.append( PolarLineSegmentValidator( imgCenter, -math.pi/2, min( W/2, H/2 ) * 0.75, 20 ) )
+    vList.append( PolarLineSegmentValidator( imgCenter,  math.pi/2, min( W/2, H/2 ) * 0.75, 10 ) )
+    vList.append( PolarLineSegmentValidator( imgCenter,  math.pi/4, min( W/2, H/2 ) * 0.75, 10 ) )
+    vList.append( PolarLineSegmentValidator( imgCenter,          0, min( W/2, H/2 ) * 0.75, 10 ) )
+    vList.append( PolarLineSegmentValidator( imgCenter, -math.pi/4, min( W/2, H/2 ) * 0.75, 10 ) )
+    vList.append( PolarLineSegmentValidator( imgCenter, -math.pi/2, min( W/2, H/2 ) * 0.75, 10 ) )
+
+    # Record the starting time.
+    start = time.time()
 
     for i in range(H):
         for j in range(W):
@@ -105,7 +109,13 @@ if __name__ == "__main__":
             if ( True == flag ):
                 img[i, j] = 255
 
-        print("%d," % (i), end=None)
+        if ( 0 == i % 100 ):
+            print("%d," % (i), end=None)
     
+    # Record the ending time.
+    end = time.time()
+
+    print(end - start)
+
     # Save the image.
     cv2.imwrite("ValidPixels.png", img)

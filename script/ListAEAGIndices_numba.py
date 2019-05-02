@@ -4,8 +4,8 @@ import cv2
 import math
 import matplotlib.pyplot as plt
 import numpy as np
-
 from numba import cuda
+import time
 
 @cuda.jit(device=True)
 def d_radius_validate(cx, cy, R, width, x, y):
@@ -54,7 +54,7 @@ def k_validate(imgOut):
 
     cx, cy = 2056, 1504
     R = 1504*0.75
-    halfWidth = 2.0
+    halfWidth = 10.0
 
     for y in range( ty, imgOut.shape[0], yStride ):
         for x in range( tx, imgOut.shape[1], xStride ):
@@ -154,6 +154,9 @@ if __name__ == "__main__":
     # Create an image.
     img = np.zeros((3008, 4112), dtype=np.int32)
 
+    # Record the starting time.
+    start = time.time()
+
     dImg = cuda.to_device(img)
 
     cuda.synchronize()
@@ -161,6 +164,11 @@ if __name__ == "__main__":
     cuda.synchronize()
 
     img = dImg.copy_to_host()
+
+    # Record the ending time.
+    end = time.time()
+
+    print(end - start)
 
     # Save the image.
     cv2.imwrite("ValidPixels_numba.png", img)

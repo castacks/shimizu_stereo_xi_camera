@@ -101,12 +101,14 @@ void MeanBrightness::get_AEAG(cv::InputArray _m, xf exposure, xf gain, int mb, x
 
     // Optimum Exposure-gain.
     // xf optEG = 1.0 * mb / mmb * exposure * gain;
-    xf currentBDiff = mb - mmb;
+    const xf alpha = mmb / exposure;
+
+    const xf currentBDiff = mb - mmb;
     
     xf deltaE = mEP * currentBDiff + mED * (currentBDiff - mLastBDiff);
     xf deltaG = mGP * currentBDiff + mGD * (currentBDiff - mLastBDiff);
 
-    deltaE = mPriority * deltaE;
+    deltaE = mPriority * deltaE / alpha;
     deltaG = (1 - mPriority) * deltaG;
 
     if ( deltaE > mDEM )
@@ -140,6 +142,7 @@ void MeanBrightness::get_AEAG(cv::InputArray _m, xf exposure, xf gain, int mb, x
               << "currentBDiff: " << currentBDiff << ", "
               << "mLastBDIff: " << mLastBDiff << ", "
               << "exposure: " << exposure << ", "
+              << "alpha: " << alpha << ", "
               << "deltaE: " << deltaE << std::endl;
 
     // xf optEG = exposure * gain + mCP * currentBDiff + mCD * ( currentBDiff - mLastBDiff );
