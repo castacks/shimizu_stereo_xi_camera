@@ -308,10 +308,6 @@ protected:
     int mXi_Exposure; // Microsecond.
     xf  mXi_Gain;
 
-    xf  mXi_AWB_kr;
-    xf  mXi_AWB_kg;
-    xf  mXi_AWB_kb;
-
     // Custom auto-exposure-auto-gain (AEAG).
     AEAG* mCAEAG;
     int  mCAEAG_TargetBrightnessLevel;

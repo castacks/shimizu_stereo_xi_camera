@@ -30,7 +30,7 @@ StereoXiCamera::StereoXiCamera(std::string &camSN0, std::string &camSN1)
   mIsExternalTimeStampReset(false), 
   mSelfAdjustNumOmittedFrames(5), mSelfAdjustNumFrames(5), 
   mSelfAdjustNumTrialLoops((mSelfAdjustNumOmittedFrames+mSelfAdjustNumFrames)*2), mIsSelfAdjusting(false),
-  mXi_Exposure(100), mXi_Gain(0), mXi_AWB_kr(0.0), mXi_AWB_kg(0.0), mXi_AWB_kb(0.0), 
+  mXi_Exposure(100), mXi_Gain(0),  
   mCAEAG(NULL), mCAEAG_TargetBrightnessLevel(10), mCAEAG_TargetBrightnessLevel8Bit(0), mCAEAG_IsEnabled(false),
   mForceXiAutoWhiteBalance(false),
   mFixedWB(true), mWB_R(1.3), mWB_G(1.0), mWB_B(2.7),
@@ -88,7 +88,21 @@ void StereoXiCamera::self_adjust(bool verbose)
         mCams[loopIdx].EnableWhiteBalanceAuto();
     LOOP_CAMERAS_END
 
+    if ( TF_RAW == mTransferFormat )
+    {
+        LOOP_CAMERAS_BEGIN
+            set_transfer_format_single_camera( mCams[loopIdx], TF_COLOR );
+        LOOP_CAMERAS_END
+    }
+
     record_settings(mSelfAdjustNumFrames, camParams, verbose);
+
+    if ( TF_RAW == mTransferFormat )
+    {
+        LOOP_CAMERAS_BEGIN
+            set_transfer_format_single_camera( mCams[loopIdx], TF_RAW );
+        LOOP_CAMERAS_END
+    }
 
     LOOP_CAMERAS_BEGIN
         mCams[loopIdx].DisableWhiteBalanceAuto();
@@ -289,9 +303,9 @@ void StereoXiCamera::self_adjust_white_balance(std::vector<CameraParams_t> &cp)
         set_white_balance(loopIdx, avgR, avgG, avgB);
     LOOP_CAMERAS_END
 
-    mXi_AWB_kr = avgR;
-    mXi_AWB_kg = avgG;
-    mXi_AWB_kb = avgB;
+    mWB_R = avgR;
+    mWB_G = avgG;
+    mWB_B = avgB;
 }
 
 void StereoXiCamera::apply_custom_AEAG(cv::Mat &img0, cv::Mat &img1, CameraParams_t &camP0, CameraParams_t &camP1)
@@ -764,10 +778,19 @@ void StereoXiCamera::put_single_camera_params(xiAPIplusCameraOcv &cam, CameraPar
 
     cp.AWBEnabled = ( true == cam.IsWhiteBalanceAuto() ) ? 1 : 0;
 
-    cp.AWB_kr = cam.GetWhiteBalanceRed();
-    cp.AWB_kg = cam.GetWhiteBalanceGreen();
-    cp.AWB_kb = cam.GetWhiteBalanceBlue();
-
+    if ( false == mFixedWB )
+    {
+        cp.AWB_kr = cam.GetWhiteBalanceRed();
+        cp.AWB_kg = cam.GetWhiteBalanceGreen();
+        cp.AWB_kb = cam.GetWhiteBalanceBlue();
+    }
+    else
+    {
+        cp.AWB_kr = mWB_R;
+        cp.AWB_kg = mWB_G;
+        cp.AWB_kb = mWB_B;
+    }
+    
     PROFILER_OUT(__PRETTY_FUNCTION__);
 }
 
@@ -1157,9 +1180,9 @@ xf StereoXiCamera::get_gain(void)
 
 void StereoXiCamera::put_WB_coefficients(xf& r, xf& g, xf& b)
 {
-    r = mXi_AWB_kr;
-    g = mXi_AWB_kg;
-    b = mXi_AWB_kb;
+    r = mWB_R;
+    g = mWB_G;
+    b = mWB_B;
 }
 
 void StereoXiCamera::enable_external_trigger(int nextImageTimeout_ms)
