@@ -55,6 +55,13 @@ public:
         LOOP_DESTROY
     } LoopTarget_t;
 
+    typedef enum
+    {
+        TRANS_FORMAT_COLOR = 0,
+        TRANS_FORMAT_MONO,
+        TRANS_FORMAT_RAW
+    } TransFormat_t;
+
 public:
     SXCSync(const std::string& name);
     virtual ~SXCSync();
@@ -86,6 +93,14 @@ public:
 private:
     void destroy_members(void);
     void set_transfer_format(sxc::StereoXiCamera*, const std::string& tf, std::string& encoding);
+    /**
+     * @param src The input image.
+     * @param dstGray The grayscale image.
+     * @param dstDS The downsampled image.
+     * @param h The height of the downsampled image.
+     * @param w The width of the downsampled iamge.
+     */
+    void convert_downsample_VIO( const cv::Mat& src, cv::Mat& dstGray, cv::Mat& dstDS, const TransFormat_t tf, cv::Size& s );
     void align_cpu_time(ros::Time& cpuTime, const sxc::StereoXiCamera::CameraParams_t& cam);
     void publish_diagnostics( int seq,
         ros::Time& t,
@@ -118,6 +133,9 @@ public:
     static const double DEFAULT_WB_B                            = 2.783976;
     static const int    DEFAULT_VERBOSE                         = 0;
 
+    static const int    DEFAULT_DS_HEIGHT                       = 240;
+    static const int    DEFAULT_DS_WIDTH                        = 320;
+
     static const int    DEFAULT_FORCE_XI_AUTO_WHITE_BALANCE     = 0;
 
     static const int    SERVICE_REQUEST_CODE_UNDEFINED          = 0;
@@ -135,6 +153,8 @@ protected:
 
     std::string mTopicNameLeftImage;
     std::string mTopicNameRightImage;
+    std::string mTopicNameVIOImage0;
+    std::string mTopicNameVIOImage1;
 
     std::string mOutDir;
 
@@ -149,11 +169,14 @@ protected:
 
     image_transport::ImageTransport* mImageTransport;
     image_transport::Publisher* mPublishersImage;
+    image_transport::Publisher* mPublishersVIO;
+
     ros::Publisher mTestMsgPublisher;
     ros::Publisher mDiagPublisher;
 
     // The image message to be published.
 	sensor_msgs::ImagePtr mMsgImage;
+    sensor_msgs::ImagePtr mMsgVIOImage;
 
     // The object of stereo camera based on the XIMEA cameras.
     sxc::StereoXiCamera* mStereoXiCamera;
@@ -166,6 +189,9 @@ protected:
 
     // Temporary variables.
     cv::Mat* mCvImages;        // OpenCV Mat array to hold the images.
+    cv::Mat* mCvVIOImages;     // OpenCV Mat array to hold the images for the VIO.
+    cv::Mat* mCvVIOImagesDownsampled;
+
     sxc::StereoXiCamera::CameraParams_t* mCP; // Camera parameters.
     ros::Time mRosTimeStamp; // ROS time stamp for the header of published ROS image messages.
 
@@ -192,6 +218,8 @@ private:
 	int    mFlagWriteImage;
 	double mLoopRate;
     std::string mTransferFormat;
+    TransFormat_t mTF;
+
     std::string mEncoding;
 
 	int    mExternalTrigger;
@@ -222,6 +250,10 @@ private:
     int    mForceXiAutoWhiteBalance;
 
     int    mVerbose;
+
+    int mDSHeight;
+    int mDSWidth;
+    cv::Size mDSSize; // The size of the down sampled image.
 };
 
 }
