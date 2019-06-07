@@ -20,16 +20,17 @@ SXCSync::SXCSync(const std::string& name)
   DEFAULT_TRANSFER_FORMAT("color"),
   CAM_0_IDX(0), CAM_1_IDX(1),
   mTopicNameLeftImage("left/image_raw"), mTopicNameRightImage("right/image_raw"), 
+  mTopicNameVIOImage0("cam_0/image"), mTopicNameVIOImage1("cam_1/image"),
   mOutDir("./"),
   mLastStatus(LAST_STA_UNDEFINED),
   mLoopTarget(LOOP_SYNC),
   mServiceRequestCode(SERVICE_REQUEST_CODE_START),
   mPrepared(false),
-  mImageTransport(NULL), mPublishersImage(NULL), 
+  mImageTransport(NULL), mPublishersImage(NULL), mPublishersVIO(NULL),
   mStereoXiCamera(NULL),
   mMbAEAG(NULL),
   mIPE(NULL),
-  mCvImages(NULL),
+  mCvImages(NULL), mCvVIOImages(NULL), mCvVIOImagesDownsampled(NULL), 
   mCP(NULL),
   mNImages(0),
   mROSLoopRate(NULL),
@@ -43,7 +44,8 @@ SXCSync::SXCSync(const std::string& name)
   mSingleImageSize(DEFAULT_SINGLE_IMAGE_SIZE), mMinTransferTimeSingleImage( single_image_transfer_time_ms(mTotalBandwidth, mSingleImageSize) ),
   mFlagWriteImage(0),
   mLoopRate(DEFAULT_LOOP_RATE),
-  mTransferFormat(DEFAULT_TRANSFER_FORMAT), mEncoding("bgr8"),
+  mTransferFormat(DEFAULT_TRANSFER_FORMAT), mTF(TRANS_FORMAT_COLOR),
+  mEncoding("bgr8"),
   mExternalTrigger(0),
   mNextImageTimeout_ms(DEFAULT_NEXT_IMAGE_TIMEOUT_MS),
   mExternalTimestampReset(0), 
@@ -56,7 +58,8 @@ SXCSync::SXCSync(const std::string& name)
   mCustomAEAG_Mask(""),
   mFixedWB(DEFAULT_FIXED_WB), mWB_R(DEFAULT_WB_R), mWB_G(DEFAULT_WB_G), mWB_B(DEFAULT_WB_B),
   mForceXiAutoWhiteBalance(DEFAULT_FORCE_XI_AUTO_WHITE_BALANCE),
-  mVerbose(DEFAULT_VERBOSE)
+  mVerbose(DEFAULT_VERBOSE),
+  mDSHeight(240), mDSWidth(320)
 {
     mXiCameraSN[CAM_0_IDX] = "CUCAU1814018";
     mXiCameraSN[CAM_1_IDX] = "CUCAU1814020";
@@ -65,6 +68,11 @@ SXCSync::SXCSync(const std::string& name)
 SXCSync::~SXCSync()
 {
     destroy_members();
+
+    if ( NULL != mPublishersVIO )
+    {
+        delete [] mPublishersVIO; mPublishersVIO = NULL;
+    }
 
     if ( NULL != mPublishersImage )
     {
@@ -96,6 +104,10 @@ Res_t SXCSync::init(int& argc, char** argv, const std::string& name, uint32_t op
     mPublishersImage = new image_transport::Publisher[2];
     mPublishersImage[CAM_0_IDX] = mImageTransport->advertise(mTopicNameLeftImage,  1);
     mPublishersImage[CAM_1_IDX] = mImageTransport->advertise(mTopicNameRightImage, 1);
+
+    mPublishersVIO = new image_transport::Publisher[2];
+    mPublishersVIO[CAM_0_IDX] = mImageTransport->advertise(mTopicNameVIOImage0, 1);
+    mPublishersVIO[CAM_1_IDX] = mImageTransport->advertise(mTopicNameVIOImage1, 1);
 
     mTestMsgPublisher = mpROSNode->advertise<std_msgs::String>("sxc_test_msg", 1000);
     mDiagPublisher    = mpROSNode->advertise<diagnostic_msgs::DiagnosticArray>("/diagnostics", 10);
@@ -150,6 +162,10 @@ Res_t SXCSync::parse_launch_parameters(void)
 
 	ROSLAUNCH_GET_PARAM((*mpROSNode), "pForceXiAutoWhiteBalance", mForceXiAutoWhiteBalance, DEFAULT_FORCE_XI_AUTO_WHITE_BALANCE);
 
+    ROSLAUNCH_GET_PARAM((*mpROSNode), "pDSHeight", mDSHeight, DEFAULT_DS_HEIGHT);
+    ROSLAUNCH_GET_PARAM((*mpROSNode), "pDSWidth",  mDSWidth,  DEFAULT_DS_WIDTH);
+    mDSSize = Size(mDSWidth, mDSHeight);
+
     mXiCameraSN[CAM_0_IDX] = pXICameraSN_0;
     mXiCameraSN[CAM_1_IDX] = pXICameraSN_1;
 
@@ -164,16 +180,19 @@ void SXCSync::set_transfer_format(sxc::StereoXiCamera* sxCam, const std::string&
     {
         sxCam->set_transfer_format( sxc::StereoXiCamera::TF_COLOR );
         encoding = "bgr8";
+        mTF = TRANS_FORMAT_COLOR;
     }
     else if ( 0 == tf.compare( "mono" ) )
     {
         sxCam->set_transfer_format( sxc::StereoXiCamera::TF_MONO );
         encoding = "mono8";
+        mTF = TRANS_FORMAT_MONO;
     }
     else if ( 0 == tf.compare( "raw" ) )
     {
         sxCam->set_transfer_format( sxc::StereoXiCamera::TF_RAW );
         encoding = "bayer_bggr8";
+        mTF = TRANS_FORMAT_RAW;
     }
     else
     {
@@ -182,6 +201,36 @@ void SXCSync::set_transfer_format(sxc::StereoXiCamera* sxCam, const std::string&
 
         sxCam->set_transfer_format( sxc::StereoXiCamera::TF_COLOR );
     }
+}
+
+void SXCSync::convert_downsample_VIO( const cv::Mat& src, cv::Mat& dstGray, cv::Mat& dstDS, const TransFormat_t tf, cv::Size& s )
+{
+    // Convert the input image into gray scale image.
+    switch ( tf )
+    {
+        case TRANS_FORMAT_COLOR:
+        {
+            cv::cvtColor( src, dstGray, cv::COLOR_BGR2GRAY );
+            break;
+        }
+        case TRANS_FORMAT_MONO:
+        {
+            dstGray = src;
+            break;
+        }
+        case TRANS_FORMAT_RAW:
+        {
+            cv::cvtColor( src, dstGray, cv::COLOR_BayerRG2GRAY );
+            break;
+        }
+        default:
+        {
+            ROS_ERROR("Unexpected tf value (%d)", tf);
+        }
+    }
+
+    // Downsample the image.
+    cv::resize( dstGray, dstDS, s, 0.0, 0.0, cv::INTER_LINEAR );
 }
 
 Res_t SXCSync::prepare(void)
@@ -293,6 +342,8 @@ Res_t SXCSync::prepare(void)
             ROS_INFO("The sensor array string is %s.", strSensorArray.c_str());
 
             mCvImages = new Mat[2];
+            mCvVIOImages = new Mat[2];
+            mCvVIOImagesDownsampled = new Mat[2];
             mCP = new sxc::StereoXiCamera::CameraParams_t[2];
 
             mJpegParams.push_back( CV_IMWRITE_JPEG_QUALITY );
@@ -437,9 +488,14 @@ Res_t SXCSync::synchronize(ProcessType_t& pt)
                     ROS_INFO( "Cam %d, E %.3f ms, G %.1f dB.", loopIdx, mCP[loopIdx].exposure / 1000.0, mCP[loopIdx].gain );
                 }
 
+                // Create the downsampled version.
+                convert_downsample_VIO( mCvImages[loopIdx], mCvVIOImages[loopIdx], mCvVIOImagesDownsampled[loopIdx],
+                    mTF, mDSSize );
+
                 // Publish images.
                 PROFILER_IN("cv_bridge::CvImage");
-                mMsgImage = cv_bridge::CvImage(std_msgs::Header(), mEncoding, mCvImages[loopIdx]).toImageMsg();
+                mMsgImage    = cv_bridge::CvImage(std_msgs::Header(), mEncoding, mCvImages[loopIdx]).toImageMsg();
+                mMsgVIOImage = cv_bridge::CvImage(std_msgs::Header(), "mono8", mCvVIOImagesDownsampled[loopIdx]).toImageMsg();
                 PROFILER_OUT("cv_bridge::CvImage");
 
                 // header.seq is not supposed to be filled by user.
@@ -459,10 +515,12 @@ Res_t SXCSync::synchronize(ProcessType_t& pt)
                     }
                 }
 
-                mMsgImage->header.stamp = imageTS;
+                mMsgImage->header.stamp    = imageTS;
+                mMsgVIOImage->header.stamp = imageTS;
 
                 PROFILER_IN("ImagePublishing");
                 mPublishersImage[loopIdx].publish(mMsgImage);
+                mPublishersVIO[loopIdx].publish(mMsgVIOImage);
                 PROFILER_OUT("ImagePublishing");
 
                 if ( true == mVerbose )
@@ -713,6 +771,16 @@ void SXCSync::destroy_members(void)
     if ( NULL != mCP )
     {
         delete [] mCP; mCP = NULL;
+    }
+
+    if ( NULL != mCvVIOImagesDownsampled )
+    {
+        delete [] mCvVIOImagesDownsampled; mCvVIOImagesDownsampled = NULL;
+    }
+
+    if ( NULL != mCvVIOImages )
+    {
+        delete [] mCvVIOImages; mCvVIOImages = NULL;
     }
 
     if ( NULL != mCvImages )
