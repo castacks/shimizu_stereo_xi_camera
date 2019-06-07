@@ -94,8 +94,8 @@ Res_t SXCSync::init(int& argc, char** argv, const std::string& name, uint32_t op
     mImageTransport = new image_transport::ImageTransport((*mpROSNode));
 
     mPublishersImage = new image_transport::Publisher[2];
-    mPublishersImage[CAM_0_IDX] = mImageTransport->advertise(mTopicNameLeftImage,  1);
-    mPublishersImage[CAM_1_IDX] = mImageTransport->advertise(mTopicNameRightImage, 1);
+    mPublishersImage[CAM_0_IDX] = mImageTransport->advertise(mTopicNameLeftImage,  5);
+    mPublishersImage[CAM_1_IDX] = mImageTransport->advertise(mTopicNameRightImage, 5);
 
     mTestMsgPublisher = mpROSNode->advertise<std_msgs::String>("sxc_test_msg", 1000);
     mDiagPublisher    = mpROSNode->advertise<diagnostic_msgs::DiagnosticArray>("/diagnostics", 10);
