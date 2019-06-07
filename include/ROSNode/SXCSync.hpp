@@ -250,6 +250,7 @@ private:
     int    mForceXiAutoWhiteBalance;
 
     int    mVerbose;
+    int    mSilent;
 
     int mDSHeight;
     int mDSWidth;

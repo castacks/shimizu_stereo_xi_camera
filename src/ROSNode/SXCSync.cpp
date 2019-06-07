@@ -58,7 +58,7 @@ SXCSync::SXCSync(const std::string& name)
   mCustomAEAG_Mask(""),
   mFixedWB(DEFAULT_FIXED_WB), mWB_R(DEFAULT_WB_R), mWB_G(DEFAULT_WB_G), mWB_B(DEFAULT_WB_B),
   mForceXiAutoWhiteBalance(DEFAULT_FORCE_XI_AUTO_WHITE_BALANCE),
-  mVerbose(DEFAULT_VERBOSE),
+  mVerbose(DEFAULT_VERBOSE), mSilent(0),
   mDSHeight(240), mDSWidth(320)
 {
     mXiCameraSN[CAM_0_IDX] = "CUCAU1814018";
@@ -165,6 +165,8 @@ Res_t SXCSync::parse_launch_parameters(void)
     ROSLAUNCH_GET_PARAM((*mpROSNode), "pDSHeight", mDSHeight, DEFAULT_DS_HEIGHT);
     ROSLAUNCH_GET_PARAM((*mpROSNode), "pDSWidth",  mDSWidth,  DEFAULT_DS_WIDTH);
     mDSSize = Size(mDSWidth, mDSHeight);
+
+    ROSLAUNCH_GET_PARAM((*mpROSNode), "pSilent", mSilent, 0);
 
     mXiCameraSN[CAM_0_IDX] = pXICameraSN_0;
     mXiCameraSN[CAM_1_IDX] = pXICameraSN_1;
@@ -434,7 +436,10 @@ Res_t SXCSync::synchronize(ProcessType_t& pt)
 
     try
     {
-        ROS_INFO("nImages = %d", mNImages);
+        if ( 0 == mSilent )
+        {
+            ROS_INFO("nImages = %d", mNImages);
+        }
 
         // Trigger.
         if ( false == mStereoXiCamera->is_external_triger() )
@@ -483,7 +488,7 @@ Res_t SXCSync::synchronize(ProcessType_t& pt)
                         loopIdx, mCvImages[loopIdx].rows, mCvImages[loopIdx].cols, mCvImages[loopIdx].type(),
                         mCP[loopIdx].AEAGEnabled, mCP[loopIdx].AEAGPriority, mCP[loopIdx].exposure / 1000.0, mCP[loopIdx].gain );
                 }
-                else
+                else if ( 0 == mSilent )
                 {
                     ROS_INFO( "Cam %d, E %.3f ms, G %.1f dB.", loopIdx, mCP[loopIdx].exposure / 1000.0, mCP[loopIdx].gain );
                 }
