@@ -541,6 +541,15 @@ Res_t SXCSync::synchronize(ProcessType_t& pt)
 
             // std::cout << "mNI = { " << mNI[0] << ", " << mNI[1] << " }. " << "mFrameIntervalUM = " << mFrameIntervalUM << std::endl;
 
+            if ( mNI[0] != 1 || mNI[1] != 1 )
+            {
+                ROS_WARN( "mNI: { %d, %d }. Time stamps: %d.%09d, %d.%09d. Frame interval: %d um. ", 
+                    mNI[0], mNI[1], 
+                    mMsgImage[CAM_0_IDX]->header.stamp.sec, mMsgImage[CAM_0_IDX]->header.stamp.nsec, 
+                    mMsgImage[CAM_1_IDX]->header.stamp.sec, mMsgImage[CAM_1_IDX]->header.stamp.nsec,
+                    mFrameIntervalUM );
+            }
+
             LOOP_CAMERAS_BEGIN
                 PROFILER_IN("ImagePublishing");
                 mPublishersImage[loopIdx].publish(mMsgImage[loopIdx]);
