@@ -525,6 +525,8 @@ typedef struct TArg_get_single_image
     cv::Mat image;
     cv::Mat* grayBuffer;
     DWORD ts[2];
+    int n; // Number of images to get.
+    int c; // Number of images already got.
 } TArg_get_single_image_t;
 
 /** A multi-thread version of get_single_image
@@ -541,6 +543,15 @@ thd_get_single_image(void* arg)
 {
     // Cast the input argument.
     TArg_get_single_image_t* a = (TArg_get_single_image_t*)arg;
+    a->c = 0;
+    
+    // Check if we need to get any image.
+    if ( 0 == a->n )
+    {
+        a->flag = 1;
+        return (void*)( &(a->flag) );
+    }
+
     a->ts[0] = 0;
     a->ts[1] = 0;
 
@@ -563,7 +574,11 @@ thd_get_single_image(void* arg)
         // std::cout << "filter = " << filter << std::endl;
         
         PROFILER_IN(profilerName_GetNextImageOcvMat.c_str());
-        cv_mat_image = a->cam->GetNextImageOcvMat( a->ts );
+        for ( int i = 0; i < a->n; i++ )
+        {
+            cv_mat_image = a->cam->GetNextImageOcvMat( a->ts );
+            a->c++; // Count the number of images.
+        }
         PROFILER_OUT(profilerName_GetNextImageOcvMat.c_str());
         
         if (format == XI_RAW16 || format == XI_MONO16)
@@ -602,7 +617,7 @@ thd_get_single_image(void* arg)
     return (void*)( &(a->flag) );
 }
 
-int StereoXiCamera::get_images_mt(cv::Mat &img0, cv::Mat &img1, CameraParams_t &cp0, CameraParams_t &cp1)
+int StereoXiCamera::get_images_mt(cv::Mat &img0, cv::Mat &img1, CameraParams_t &cp0, CameraParams_t &cp1, int n0, int n1)
 {
     PROFILER_IN(__PRETTY_FUNCTION__);
 
@@ -622,6 +637,9 @@ int StereoXiCamera::get_images_mt(cv::Mat &img0, cv::Mat &img1, CameraParams_t &
         args[loopIdx].ts[0] = 0;
         args[loopIdx].ts[1] = 0;
     LOOP_CAMERAS_END
+
+    args[CAM_IDX_0].n = n0;
+    args[CAM_IDX_1].n = n1;
 
     pthread_t thds[2];
     void* thdRes[2];
@@ -721,14 +739,21 @@ int StereoXiCamera::get_images(cv::Mat &img0, cv::Mat &img1)
     return 0;
 }
 
-int StereoXiCamera::get_images(cv::Mat &img0, cv::Mat &img1, CameraParams_t &camP0, CameraParams_t &camP1)
+int StereoXiCamera::get_images(cv::Mat &img0, cv::Mat &img1, CameraParams_t &camP0, CameraParams_t &camP1, int n0, int n1)
 {
     // if ( 0 != this->get_images(img0, img1) )
     // {
     //     return -1;
     // }
 
-    if ( 0 != this->get_images_mt(img0, img1, camP0, camP1) )
+    if ( n0 < 0 || n1 < 0 )
+    {
+        std::stringstream ss;
+        ss << "n0 (" << n0 << ") and n1 (" << n1 << ") must be non-negative numbers.";
+        BOOST_THROW_EXCEPTION( bad_argument() << ExceptionInfoString(ss.str()) );
+    }
+
+    if ( 0 != this->get_images_mt(img0, img1, camP0, camP1, n0, n1) )
     {
         return -1;
     }

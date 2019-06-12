@@ -142,9 +142,11 @@ public:
 
     void software_trigger(bool both = false);
     /**
+     * @param n0 Number of images to get for the first camera.
+     * @param n1 Number of images to get for the second camera.
      * @return 0 if succeed.
      */
-    int get_images(cv::Mat &img0, cv::Mat &img1, CameraParams_t &camP0, CameraParams_t &camP1);
+    int get_images(cv::Mat &img0, cv::Mat &img1, CameraParams_t &camP0, CameraParams_t &camP1, int n0=1, int n1=1);
     void stop_acquisition(int waitMS = 500);
     void close();
 
@@ -233,7 +235,7 @@ protected:
     /** Call the multi-thread version of the get_single_image.
      * 
      */
-    int get_images_mt(cv::Mat &img0, cv::Mat &img1, CameraParams_t &cp0, CameraParams_t &cp1);
+    int get_images_mt(cv::Mat &img0, cv::Mat &img1, CameraParams_t &cp0, CameraParams_t &cp1, int n0=1, int n1=1);
 
     void put_single_camera_params(xiAPIplusCameraOcv &cam, CameraParams_t &cp);
 

@@ -1,3 +1,5 @@
+#include <iomanip>
+
 #include "ROSNode/SXCSync.hpp"
 
 #include "Profiler/Profiler.hpp"
@@ -43,7 +45,7 @@ SXCSync::SXCSync(const std::string& name)
   mBandwidthMargin(DEFAULT_BANDWIDTH_MARGIN),
   mSingleImageSize(DEFAULT_SINGLE_IMAGE_SIZE), mMinTransferTimeSingleImage( single_image_transfer_time_ms(mTotalBandwidth, mSingleImageSize) ),
   mFlagWriteImage(0),
-  mLoopRate(DEFAULT_LOOP_RATE),
+  mLoopRate(DEFAULT_LOOP_RATE), mFrameIntervalUM( int(1000000.0 / DEFAULT_LOOP_RATE) ),
   mTransferFormat(DEFAULT_TRANSFER_FORMAT), mTF(TRANS_FORMAT_COLOR),
   mEncoding("bgr8"),
   mExternalTrigger(0),
@@ -63,6 +65,9 @@ SXCSync::SXCSync(const std::string& name)
 {
     mXiCameraSN[CAM_0_IDX] = "CUCAU1814018";
     mXiCameraSN[CAM_1_IDX] = "CUCAU1814020";
+
+    mNI[CAM_0_IDX] = 1;
+    mNI[CAM_1_IDX] = 1;
 }
 
 SXCSync::~SXCSync()
@@ -134,6 +139,7 @@ Res_t SXCSync::parse_launch_parameters(void)
 	ROSLAUNCH_GET_PARAM((*mpROSNode), "pBandwidthMargin", mBandwidthMargin, DEFAULT_BANDWIDTH_MARGIN);
 	ROSLAUNCH_GET_PARAM((*mpROSNode), "pSingleImageSize", mSingleImageSize, DEFAULT_SINGLE_IMAGE_SIZE);
 	ROSLAUNCH_GET_PARAM((*mpROSNode), "pLoopRate", mLoopRate, DEFAULT_LOOP_RATE);
+    mFrameIntervalUM = int( 1000000.0 / mLoopRate );
 	ROSLAUNCH_GET_PARAM((*mpROSNode), "pTransferFormat", mTransferFormat, DEFAULT_TRANSFER_FORMAT);
 	ROSLAUNCH_GET_PARAM((*mpROSNode), "pFlagWriteImage", mFlagWriteImage, 0);
 	ROSLAUNCH_GET_PARAM((*mpROSNode), "pOutDir", mOutDir, "./");
@@ -448,7 +454,9 @@ Res_t SXCSync::synchronize(ProcessType_t& pt)
         }
 
         // Get images.
-        getImagesRes = mStereoXiCamera->get_images( mCvImages[0], mCvImages[1], mCP[0], mCP[1] );
+        getImagesRes = mStereoXiCamera->get_images( 
+            mCvImages[CAM_0_IDX], mCvImages[CAM_1_IDX], 
+            mCP[CAM_0_IDX], mCP[CAM_1_IDX], mNI[CAM_0_IDX], mNI[CAM_1_IDX] );
 
         int mb[2];
 
@@ -499,13 +507,13 @@ Res_t SXCSync::synchronize(ProcessType_t& pt)
 
                 // Publish images.
                 PROFILER_IN("cv_bridge::CvImage");
-                mMsgImage    = cv_bridge::CvImage(std_msgs::Header(), mEncoding, mCvImages[loopIdx]).toImageMsg();
-                mMsgVIOImage = cv_bridge::CvImage(std_msgs::Header(), "mono8", mCvVIOImagesDownsampled[loopIdx]).toImageMsg();
+                mMsgImage[loopIdx]    = cv_bridge::CvImage(std_msgs::Header(), mEncoding, mCvImages[loopIdx]).toImageMsg();
+                mMsgVIOImage[loopIdx] = cv_bridge::CvImage(std_msgs::Header(), "mono8", mCvVIOImagesDownsampled[loopIdx]).toImageMsg();
                 PROFILER_OUT("cv_bridge::CvImage");
 
                 // header.seq is not supposed to be filled by user.
                 // https://answers.ros.org/question/55126/why-does-ros-overwrite-my-sequence-number/
-                // mMsgImage->header.seq = mNImages;
+                // mMsgImage[loopIdx]->header.seq = mNImages;
                 
                 // Prepare the time stamp for the header.
                 imageTS = ros::Time::now();
@@ -520,14 +528,23 @@ Res_t SXCSync::synchronize(ProcessType_t& pt)
                     }
                 }
 
-                mMsgImage->header.stamp    = imageTS;
-                mMsgVIOImage->header.stamp = imageTS;
+                mMsgImage[loopIdx]->header.stamp    = imageTS;
+                mMsgVIOImage[loopIdx]->header.stamp = imageTS;
 
-                std::cout << loopIdx << ":" << imageTS.nsec << std::endl;
+                // std::cout << loopIdx << ":" << imageTS.sec << "." << std::setfill('0') << std::setw(9) << imageTS.nsec << std::endl;
+            LOOP_CAMERAS_END
 
+            // Figure out if we need modify the mNI variable.
+            update_number_of_images_needed( 
+                mMsgImage[CAM_0_IDX]->header.stamp, mMsgImage[CAM_1_IDX]->header.stamp,
+                mNI[CAM_0_IDX], mNI[CAM_1_IDX] );
+
+            // std::cout << "mNI = { " << mNI[0] << ", " << mNI[1] << " }. " << "mFrameIntervalUM = " << mFrameIntervalUM << std::endl;
+
+            LOOP_CAMERAS_BEGIN
                 PROFILER_IN("ImagePublishing");
-                mPublishersImage[loopIdx].publish(mMsgImage);
-                mPublishersVIO[loopIdx].publish(mMsgVIOImage);
+                mPublishersImage[loopIdx].publish(mMsgImage[loopIdx]);
+                mPublishersVIO[loopIdx].publish(mMsgVIOImage[loopIdx]);
                 PROFILER_OUT("ImagePublishing");
 
                 if ( true == mVerbose )
@@ -644,6 +661,31 @@ void SXCSync::align_cpu_time(ros::Time& cpuTime, const sxc::StereoXiCamera::Came
     cpuTime.sec -= cam.tsSec;
 }
 
+void SXCSync::update_number_of_images_needed( const ros::Time& t0, const ros::Time& t1, int& n0, int& n1 )
+{
+    int diff = static_cast<int>( 
+        ( t1.sec + t1.nsec / 1e9 - t0.sec - t0.nsec / 1e9 ) * 1000000 );
+    
+    // std::cout << "diff = " << diff << std::endl;
+
+    if ( diff >= mFrameIntervalUM )
+    {
+        // 0-camera's image is older. 0-camera needs to receive more images.
+        n0 = 1 + diff / mFrameIntervalUM;
+        n1 = 1;
+    }
+    else if ( diff <= -mFrameIntervalUM )
+    {
+        // 0-camera's image is newer. 1-camera needs to receive more images.
+        n0 = 1;
+        n1 = 1 + (-diff) / mFrameIntervalUM;
+    }
+    else
+    {
+        n0 = 1;
+        n1 = 1;
+    }
+}
 
 void SXCSync::publish_diagnostics( int seq,
         ros::Time& t,

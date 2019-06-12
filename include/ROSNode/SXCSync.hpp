@@ -102,6 +102,7 @@ private:
      */
     void convert_downsample_VIO( const cv::Mat& src, cv::Mat& dstGray, cv::Mat& dstDS, const TransFormat_t tf, cv::Size& s );
     void align_cpu_time(ros::Time& cpuTime, const sxc::StereoXiCamera::CameraParams_t& cam);
+    void update_number_of_images_needed( const ros::Time& t0, const ros::Time& t1, int& n0, int& n1 );
     void publish_diagnostics( int seq,
         ros::Time& t,
         sxc::StereoXiCamera::CameraParams_t* cpArray,
@@ -175,8 +176,8 @@ protected:
     ros::Publisher mDiagPublisher;
 
     // The image message to be published.
-	sensor_msgs::ImagePtr mMsgImage;
-    sensor_msgs::ImagePtr mMsgVIOImage;
+	sensor_msgs::ImagePtr mMsgImage[2];
+    sensor_msgs::ImagePtr mMsgVIOImage[2];
 
     // The object of stereo camera based on the XIMEA cameras.
     sxc::StereoXiCamera* mStereoXiCamera;
@@ -217,6 +218,7 @@ private:
     int    mMinTransferTimeSingleImage; // us.
 	int    mFlagWriteImage;
 	double mLoopRate;
+    int    mFrameIntervalUM; // Microsecond.
     std::string mTransferFormat;
     TransFormat_t mTF;
 
@@ -251,6 +253,8 @@ private:
 
     int    mVerbose;
     int    mSilent;
+
+    int mNI[2]; // Number of images need to get.
 
     int mDSHeight;
     int mDSWidth;
