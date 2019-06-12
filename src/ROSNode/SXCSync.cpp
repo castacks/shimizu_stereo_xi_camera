@@ -523,6 +523,8 @@ Res_t SXCSync::synchronize(ProcessType_t& pt)
                 mMsgImage->header.stamp    = imageTS;
                 mMsgVIOImage->header.stamp = imageTS;
 
+                std::cout << loopIdx << ":" << imageTS.nsec << std::endl;
+
                 PROFILER_IN("ImagePublishing");
                 mPublishersImage[loopIdx].publish(mMsgImage);
                 mPublishersVIO[loopIdx].publish(mMsgVIOImage);

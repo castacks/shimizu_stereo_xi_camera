@@ -244,15 +244,15 @@ void StereoXiCamera::disable_fixed_exposure_gain(void)
     mFixedXiExposureGain = false;
 }
 
- void StereoXiCamera::set_exposure_gain(int idx, int e, xf g)
- {
-     // Disable the auto exposure auto gain (AEAG).
-     mCams[idx].DisableAutoExposureAutoGain();
+void StereoXiCamera::set_exposure_gain(int idx, int e, xf g)
+{
+    // Disable the auto exposure auto gain (AEAG).
+    mCams[idx].DisableAutoExposureAutoGain();
 
-     // Set the parameters.
-     mCams[idx].SetExposureTime( e );
-     mCams[idx].SetGain( g );
- }
+    // Set the parameters.
+    mCams[idx].SetExposureTime( e );
+    mCams[idx].SetGain( g );
+}
 
 void StereoXiCamera::set_white_balance(int idx, xf r, xf g, xf b)
 {
@@ -315,7 +315,7 @@ void StereoXiCamera::apply_custom_AEAG(cv::Mat &img0, cv::Mat &img1, CameraParam
         EXCEPTION_ARG_NULL(mCAEAG);
     }
 
-    int currentExposureMS[2] = { camP0.exposure, camP1.exposure };
+    int currentExposureUS[2] = { camP0.exposure, camP1.exposure };
     xf  currentGainDB[2]     = { camP0.gain, camP1.gain };
 
     xf currentExposure[2] = {0.0, 0.0};
@@ -324,7 +324,7 @@ void StereoXiCamera::apply_custom_AEAG(cv::Mat &img0, cv::Mat &img1, CameraParam
     xf newGain[2]         = {0.0, 0.0};
 
     LOOP_CAMERAS_BEGIN
-        currentExposure[loopIdx] = currentExposureMS[loopIdx];
+        currentExposure[loopIdx] = currentExposureUS[loopIdx];
         currentGain[loopIdx]     = dBToGain(currentGainDB[loopIdx]);
     LOOP_CAMERAS_END
 
@@ -383,10 +383,12 @@ void StereoXiCamera::apply_custom_AEAG(cv::Mat &img0, cv::Mat &img1, CameraParam
 
     if ( true == std::isnan(avgGain) )
     {
-        std::cout << std::endl;
+        std::cout << "avgGain is nan" << std::endl;
     }
 
     avgGain = GainToDB(avgGain);
+
+    // std::cout << "avgGain = " << avgGain << std::endl;
 
     // Apply exposure and gain settings.
     LOOP_CAMERAS_BEGIN
