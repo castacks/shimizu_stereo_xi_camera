@@ -550,6 +550,8 @@ Res_t SXCSync::synchronize(ProcessType_t& pt)
                     mFrameIntervalUM );
             }
 
+            mMsgVIOImage[1]->header.stamp = mMsgVIOImage[0]->header.stamp;
+
             LOOP_CAMERAS_BEGIN
                 PROFILER_IN("ImagePublishing");
                 mPublishersImage[loopIdx].publish(mMsgImage[loopIdx]);
