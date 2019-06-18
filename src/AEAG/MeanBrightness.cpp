@@ -99,18 +99,20 @@ void MeanBrightness::get_AEAG(cv::InputArray _m, xf exposure, xf gain, int mb, x
         return;
     }
 
-    // Optimum Exposure-gain.
+    // Optimum exposure-gain.
     // xf optEG = 1.0 * mb / mmb * exposure * gain;
-    const xf alpha = mmb / exposure;
-
-    const xf currentBDiff = mb - mmb;
     
+    const xf alpha        = mmb / exposure; // A damping factor to smooth the control.
+    const xf currentBDiff = mb - mmb;       // Current brightness difference.
+    
+    // Value for D-control.
     xf deltaE = mEP * currentBDiff + mED * (currentBDiff - mLastBDiff);
-    xf deltaG = mGP * currentBDiff + mGD * (currentBDiff - mLastBDiff);
+    // xf deltaG = mGP * currentBDiff + mGD * (currentBDiff - mLastBDiff);
 
-    deltaE = mPriority * deltaE / alpha;
-    deltaG = (1 - mPriority) * deltaG;
+    // Damp the delta value.
+    deltaE = deltaE / alpha;
 
+    // Clip the delta value.
     if ( deltaE > mDEM )
     {
         deltaE = mDEM;
@@ -120,9 +122,13 @@ void MeanBrightness::get_AEAG(cv::InputArray _m, xf exposure, xf gain, int mb, x
         deltaE = -mDEM;
     }
 
+    // New exposure from the PD control.
     newExposure = exposure + deltaE;
-    newGain = gain + deltaG;
+    
+    // Try to figure out the best combination of exposure and gain values.
+    split_exposure_gain( newExposure, mPriority, mExposureTopLimit, mGainTopLimit, newExposure, newGain );
 
+    // Clip the exposure and gain values.
     if(newExposure < EXPOSURE_MIN)
     {
         newExposure = EXPOSURE_MIN; 
@@ -141,8 +147,9 @@ void MeanBrightness::get_AEAG(cv::InputArray _m, xf exposure, xf gain, int mb, x
         newGain = mGainTopLimit;
     }
     
-    newGain = 5;
+    // newGain = 5; // Debug use.
 
+    // Transfer the values.
     mExposure = newExposure;
     mGain     = newGain;
 
@@ -173,13 +180,11 @@ void MeanBrightness::get_AEAG(cv::InputArray _m, xf exposure, xf gain, int mb, x
     //     mExposure = exposure;
     //     mGain     = gain;
     // }
-    
-    // Transfer the values.
-    // newExposure = mExposure;
-    // newGain     = mGain;
 
+    // Save the control value for next round of PD control.
     mLastBDiff = currentBDiff;
 
+    // Output value if required.
     if ( NULL != pLMB )
     {
         *pLMB = mmb;

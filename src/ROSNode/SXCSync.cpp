@@ -550,6 +550,8 @@ Res_t SXCSync::synchronize(ProcessType_t& pt)
                     mFrameIntervalUM );
             }
 
+            // This is due to the fact that some downstream programs require the timestamps of
+            // the images making a stereo pair to have exactly the same timestamps.
             mMsgVIOImage[1]->header.stamp = mMsgVIOImage[0]->header.stamp;
 
             LOOP_CAMERAS_BEGIN
