@@ -15,7 +15,7 @@
         <param name="pTotalBandwidth" type="int" value="3200" />
         <param name="pBandwidthMargin" type="int" value="0" />
         <param name="pSingleImageSize" type="double" value="12.37" />
-        <param name="pLoopRate" type="double" value="15" />
+        <param name="pLoopRate" type="double" value="5" />
         <!-- <param name="pTransferFormat" type="str" value="color" /> -->
         <!-- <param name="pTransferFormat" type="str" value="mono" /> -->
         <param name="pTransferFormat" type="str" value="raw" />
@@ -30,16 +30,18 @@
         <param name="pCustomAEAGEnabled" type="int" value="1" />
         <param name="pCustomAEAGPriority" type="double" value="1.0" />
         <param name="pCustomAEAGExposureTopLimit" type="double" value="50000" />
-        <param name="pCustomAEAGGainTopLimit" type="double" value="20" />
+        <param name="pCustomAEAGGainTopLimit" type="double" value="26" />
         <param name="pCustomAEAGBrightnessLevel" type="int" value="30" />
 
-        <param name="pCustomAEAG_EP" type="double" value="0.05" />
+        <param name="pCustomAEAG_EP" type="double" value="0.5" />
         <param name="pCustomAEAG_ED" type="double" value="0.02" />
+        <param name="pCustomAEAG_EI" type="double" value="0.0" />
         <!-- <param name="pCustomAEAG_CT" type="int" value="10000" /> -->
-        <param name="pCustomAEAG_GP" type="double" value="0.01" />
+        <param name="pCustomAEAG_GP" type="double" value="0.05" />
         <param name="pCustomAEAG_GD" type="double" value="0.0" />
+        <param name="pCustomAEAG_GI" type="double" value="0.0" />
         <param name="pCustomAEAG_CT" type="int" value="10000" />
-        <param name="pCustomAEAG_DeltaExpMax" type="double" value="50000" />
+        <param name="pCustomAEAG_DeltaExpMax" type="double" value="1000000" />
         <!-- <param name="pCustomAEAG_Mask" type="str" value="/home/yyhu/ROS/catkin_ws/src/ros_stereo_xi_camera/script/index.dat" /> -->
 
         <param name="pFixedWB" type="int" value="0" />

@@ -14,6 +14,7 @@ public:
 
     void set_p(xf ep, xf gp);
     void set_d(xf ed, xf gd);
+    void set_i(xf ei, xf gi);
     void set_t(int t);
     void set_dem(xf dem);
 
@@ -30,7 +31,9 @@ protected:
 protected:
     xf mEP, mGP; // The p coefficient of PD control.
     xf mED, mGD; // The d coefficient of PD control.
+    xf mEI, mGI; // The i coefficient.
     xf mLastBDiff; // The brightness difference of the last round.
+    xf mAccBDiff;  // Accumulated brightness difference.
     int mCT; // The limit for the exposure adjustment, in microsecond.
     xf mDEM; // Delta exposure max.
 };

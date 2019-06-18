@@ -7,7 +7,9 @@ using namespace sxc;
 
 MeanBrightness::MeanBrightness()
 : ExposurePriorAEAG(), 
-  mEP(1.0), mGP(1.0), mED(1.0), mGD(1.0), mLastBDiff(0.0), mCT(10000), mDEM(50000)
+  mEP(1.0), mGP(1.0), mED(1.0), mGD(1.0), mEI(0.0), mGI(0.0), 
+  mLastBDiff(0.0), mAccBDiff(0.0), 
+  mCT(10000), mDEM(50000)
 {
 
 }
@@ -51,6 +53,8 @@ void MeanBrightness::split_exposure_gain(xf optimumEG, xf expPriority, xf topE, 
     {
         gain = optimumEG / exposure;
 
+        // gain = gain * gain;
+
         if ( gain > topG )
         {
             gain = topG;
@@ -68,6 +72,12 @@ void MeanBrightness::set_d(xf ed, xf gd)
 {
     mED = ed;
     mGD = gd;
+}
+
+void MeanBrightness::set_i(xf ei, xf gi)
+{
+    mEI = ei;
+    mGI = gi;
 }
 
 void MeanBrightness::set_dem(xf dem)
@@ -106,11 +116,12 @@ void MeanBrightness::get_AEAG(cv::InputArray _m, xf exposure, xf gain, int mb, x
     const xf currentBDiff = mb - mmb;       // Current brightness difference.
     
     // Value for D-control.
-    xf deltaE = mEP * currentBDiff + mED * (currentBDiff - mLastBDiff);
-    // xf deltaG = mGP * currentBDiff + mGD * (currentBDiff - mLastBDiff);
+    xf deltaE = mEP * currentBDiff + mED * (currentBDiff - mLastBDiff) + mEI * mAccBDiff;
+    xf deltaG = mGP * currentBDiff + mGD * (currentBDiff - mLastBDiff) + mGI * mAccBDiff;
 
     // Damp the delta value.
     deltaE = deltaE / alpha;
+    // deltaG = deltaG / alpha;
 
     // Clip the delta value.
     if ( deltaE > mDEM )
@@ -123,10 +134,13 @@ void MeanBrightness::get_AEAG(cv::InputArray _m, xf exposure, xf gain, int mb, x
     }
 
     // New exposure from the PD control.
-    newExposure = exposure + deltaE;
+    xf optExposure = exposure + mPriority * deltaE;
+    newGain        = gain + ( 1.0f - mPriority ) * deltaG;
     
-    // Try to figure out the best combination of exposure and gain values.
-    split_exposure_gain( newExposure, mPriority, mExposureTopLimit, mGainTopLimit, newExposure, newGain );
+    // // Try to figure out the best combination of exposure and gain values.
+    // split_exposure_gain( optExposure, mPriority, mExposureTopLimit, mGainTopLimit, newExposure, newGain );
+
+    newExposure = optExposure;
 
     // Clip the exposure and gain values.
     if(newExposure < EXPOSURE_MIN)
@@ -154,13 +168,23 @@ void MeanBrightness::get_AEAG(cv::InputArray _m, xf exposure, xf gain, int mb, x
     mGain     = newGain;
 
     // // Debug.
+    // std::cout.precision(3);
+    // std::cout << std::scientific;
     // std::cout << "mb: " << mb << ", "
     //           << "mmb: " << mmb << ", "
-    //           << "currentBDiff: " << currentBDiff << ", "
-    //           << "mLastBDIff: " << mLastBDiff << ", "
-    //           << "exposure: " << exposure << ", "
-    //           << "alpha: " << alpha << ", "
-    //           << "deltaE: " << deltaE << std::endl;
+    //           << "cBDiff: " << currentBDiff << ", "
+    //           << "BDIff: " << mLastBDiff << ", "
+    //           << "acc: " << mAccBDiff << ", "
+    //           << "e: " << exposure << ", "
+    //           << "g: " << gain << ", "
+    //           << "optE: " << optExposure << ", "
+    //           << "ne: " << mExposure << ", "
+    //           << "ng: " << mGain << ", "
+    //           << "a: " << alpha << ", "
+    //           << "de: " << deltaE << ", "
+    //           << "dg: " << deltaG << ", "
+    //           << "topE: " << mExposureTopLimit << ", "
+    //           << "topG: " << mGainTopLimit << std::endl;
 
     // xf optEG = exposure * gain + mCP * currentBDiff + mCD * ( currentBDiff - mLastBDiff );
 
@@ -183,6 +207,7 @@ void MeanBrightness::get_AEAG(cv::InputArray _m, xf exposure, xf gain, int mb, x
 
     // Save the control value for next round of PD control.
     mLastBDiff = currentBDiff;
+    mAccBDiff += currentBDiff;
 
     // Output value if required.
     if ( NULL != pLMB )
