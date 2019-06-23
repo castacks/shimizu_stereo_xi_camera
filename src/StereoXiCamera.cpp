@@ -402,8 +402,18 @@ void StereoXiCamera::apply_custom_AEAG(cv::Mat &img0, cv::Mat &img1, CameraParam
                   << std::endl;
         }
 
-        mCams[loopIdx].SetExposureTime(avgExposure);
-        mCams[loopIdx].SetGain(avgGain);
+        try
+        {
+            mCams[loopIdx].SetExposureTime(avgExposure);
+            mCams[loopIdx].SetGain(avgGain);
+        }
+        catch ( xiAPIplus_Exception& exp )
+        {
+            std::cout << "*** AEAG *** " 
+                      << "avgExcposure = " << avgExposure << ", "
+                      << "avgGain = " << avgGain << ". " << std::endl;
+            throw exp;
+        }
     LOOP_CAMERAS_END
 }
 
