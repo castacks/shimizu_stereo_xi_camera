@@ -579,7 +579,7 @@ Res_t SXCSync::synchronize(ProcessType_t& pt)
                       << "\t\t\"tsSec\": " << mCP[CAM_0_IDX].tsSec << "," << std::endl
                       << "\t\t\"tsUSec\": " << mCP[CAM_0_IDX].tsUSec << "," << std::endl
                       << "\t\t\"exp\": " << mCP[CAM_0_IDX].exposure / 1000.0 << "," << std::endl
-                      << "\t\t\"gain\": " << mCP[CAM_0_IDX].gain / 1000.0 << "," << std::endl
+                      << "\t\t\"gain\": " << mCP[CAM_0_IDX].gain << "," << std::endl
                       << "\t\t\"mb\": " << mb[CAM_0_IDX] << "," << std::endl
                       << "\t\t\"wbKr\": " << mCP[CAM_0_IDX].AWB_kr << "," << std::endl
                       << "\t\t\"wbKg\": " << mCP[CAM_0_IDX].AWB_kg << "," << std::endl
@@ -589,7 +589,7 @@ Res_t SXCSync::synchronize(ProcessType_t& pt)
                       << "\t\t\"tsSec\": " << mCP[CAM_1_IDX].tsSec << "," << std::endl
                       << "\t\t\"tsUSec\": " << mCP[CAM_1_IDX].tsUSec << "," << std::endl
                       << "\t\t\"exp\": " << mCP[CAM_1_IDX].exposure / 1000.0 << "," << std::endl
-                      << "\t\t\"gain\": " << mCP[CAM_1_IDX].gain / 1000.0 << "," << std::endl
+                      << "\t\t\"gain\": " << mCP[CAM_1_IDX].gain << "," << std::endl
                       << "\t\t\"mb\": " << mb[CAM_1_IDX] << "," << std::endl
                       << "\t\t\"wbKr\": " << mCP[CAM_1_IDX].AWB_kr << "," << std::endl
                       << "\t\t\"wbKg\": " << mCP[CAM_1_IDX].AWB_kg << "," << std::endl
