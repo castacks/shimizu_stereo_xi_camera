@@ -49,7 +49,7 @@
         <param name="pWB_G" type="double" value="0.996636" />
         <param name="pWB_B" type="double" value="2.783976" />
 
-        <param name="pDSHeight" type="int" value="480" />
+        <param name="pDSHeight" type="int" value="468" />
         <param name="pDSWidth" type="int" value="640" />
 
         <param name="pSilent" type="int" value="1" />
