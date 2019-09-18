@@ -109,42 +109,42 @@ private:
         int* mbArray );
 
 public:
-    static const double DEFAULT_AUTO_GAIN_EXPOSURE_PRIORITY     = 0.9;
-    static const double DEFAULT_AUTO_GAIN_EXPOSURE_TARGET_LEVEL = 40.0;
-    static const int    DEFAULT_AUTO_EXPOSURE_TOP_LIMIT         = 200000;  // Microsecond.
-    static const int    DEFAULT_AUTO_GAIN_TOP_LIMIT             = 12;   // dB.
-    static const int    DEFAULT_TOTAL_BANDWIDTH                 = 2400;  // MBits/s.
-    static const int    DEFAULT_BANDWIDTH_MARGIN                = 10;    // Percentage.
-    static const double DEFAULT_SINGLE_IMAGE_SIZE               = 12.37; // MBytes.
-    static const double DEFAULT_LOOP_RATE                       = 3.0;
-    static const int    DEFAULT_NEXT_IMAGE_TIMEOUT_MS           = 1000;
-    static const double DEFAULT_CUSTOM_AEAG_PRIORITY            = 0.9;
-    static const double DEFAULT_CUSTOM_AEAG_EXPOSURE_TOP_LIMIT  = 200000.0; // Mirosecond.
-    static const double DEFAULT_CUSTOM_AEAG_GAIN_TOP_LIMIT      = 12.0;  // dB.
-    static const int    DEFAULT_CUSTOM_AEAG_BRIGHTNESS_LEVEL    = 30;    // %.
-    static const double DEFAULT_CUSTOM_AEAG_EP                  = 0.0;
-    static const double DEFAULT_CUSTOM_AEAG_ED                  = 0.0;
-    static const double DEFAULT_CUSTOM_AEAG_EI                  = 0.0;
-    static const double DEFAULT_CUSTOM_AEAG_GP                  = 0.0;
-    static const double DEFAULT_CUSTOM_AEAG_GD                  = 0.0;
-    static const double DEFAULT_CUSTOM_AEAG_GI                  = 0.0;
-    static const int    DEFAULT_CUSTOM_AEAG_CT                  = 10000; // Mirosecond.
-    static const double DEFAULT_CUSTOM_AEAG_DEM                 = 50000; // Mirosecond, delta exposure max.
-    static const int    DEFAULT_FIXED_WB                        = 1;
-    static const double DEFAULT_WB_R                            = 1.325575;
-    static const double DEFAULT_WB_G                            = 1.0;
-    static const double DEFAULT_WB_B                            = 2.783976;
-    static const int    DEFAULT_VERBOSE                         = 0;
+    static constexpr double DEFAULT_AUTO_GAIN_EXPOSURE_PRIORITY     = 0.9;
+    static constexpr double DEFAULT_AUTO_GAIN_EXPOSURE_TARGET_LEVEL = 40.0;
+    static constexpr int    DEFAULT_AUTO_EXPOSURE_TOP_LIMIT         = 200000;  // Microsecond.
+    static constexpr int    DEFAULT_AUTO_GAIN_TOP_LIMIT             = 12;   // dB.
+    static constexpr int    DEFAULT_TOTAL_BANDWIDTH                 = 2400;  // MBits/s.
+    static constexpr int    DEFAULT_BANDWIDTH_MARGIN                = 10;    // Percentage.
+    static constexpr double DEFAULT_SINGLE_IMAGE_SIZE               = 12.37; // MBytes.
+    static constexpr double DEFAULT_LOOP_RATE                       = 3.0;
+    static constexpr int    DEFAULT_NEXT_IMAGE_TIMEOUT_MS           = 1000;
+    static constexpr double DEFAULT_CUSTOM_AEAG_PRIORITY            = 0.9;
+    static constexpr double DEFAULT_CUSTOM_AEAG_EXPOSURE_TOP_LIMIT  = 200000.0; // Mirosecond.
+    static constexpr double DEFAULT_CUSTOM_AEAG_GAIN_TOP_LIMIT      = 12.0;  // dB.
+    static constexpr int    DEFAULT_CUSTOM_AEAG_BRIGHTNESS_LEVEL    = 30;    // %.
+    static constexpr double DEFAULT_CUSTOM_AEAG_EP                  = 0.0;
+    static constexpr double DEFAULT_CUSTOM_AEAG_ED                  = 0.0;
+    static constexpr double DEFAULT_CUSTOM_AEAG_EI                  = 0.0;
+    static constexpr double DEFAULT_CUSTOM_AEAG_GP                  = 0.0;
+    static constexpr double DEFAULT_CUSTOM_AEAG_GD                  = 0.0;
+    static constexpr double DEFAULT_CUSTOM_AEAG_GI                  = 0.0;
+    static constexpr int    DEFAULT_CUSTOM_AEAG_CT                  = 10000; // Mirosecond.
+    static constexpr double DEFAULT_CUSTOM_AEAG_DEM                 = 50000; // Mirosecond, delta exposure max.
+    static constexpr int    DEFAULT_FIXED_WB                        = 1;
+    static constexpr double DEFAULT_WB_R                            = 1.325575;
+    static constexpr double DEFAULT_WB_G                            = 1.0;
+    static constexpr double DEFAULT_WB_B                            = 2.783976;
+    static constexpr int    DEFAULT_VERBOSE                         = 0;
 
-    static const int    DEFAULT_DS_HEIGHT                       = 240;
-    static const int    DEFAULT_DS_WIDTH                        = 320;
+    static constexpr int    DEFAULT_DS_HEIGHT                       = 468; // 640 / 4112 * 3008
+    static constexpr int    DEFAULT_DS_WIDTH                        = 640;
 
-    static const int    DEFAULT_FORCE_XI_AUTO_WHITE_BALANCE     = 0;
+    static constexpr int    DEFAULT_FORCE_XI_AUTO_WHITE_BALANCE     = 0;
 
-    static const int    SERVICE_REQUEST_CODE_UNDEFINED          = 0;
-    static const int    SERVICE_REQUEST_CODE_START              = 1;
-    static const int    SERVICE_REQUEST_CODE_PAUSE              = 2;
-    static const int    SERVICE_REQUEST_CODE_STOP               = 3;
+    static constexpr int    SERVICE_REQUEST_CODE_UNDEFINED          = 0;
+    static constexpr int    SERVICE_REQUEST_CODE_START              = 1;
+    static constexpr int    SERVICE_REQUEST_CODE_PAUSE              = 2;
+    static constexpr int    SERVICE_REQUEST_CODE_STOP               = 3;
 
     const std::string   DEFAULT_TRANSFER_FORMAT;
 
