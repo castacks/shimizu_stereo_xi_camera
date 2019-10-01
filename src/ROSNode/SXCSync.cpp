@@ -293,7 +293,14 @@ Res_t SXCSync::prepare(void)
                 mStereoXiCamera->set_custom_AEAG_target_brightness_level(mCustomAEAGBrightnessLevel);
                 mStereoXiCamera->enable_custom_AEAG();
             }
+
+            mStereoXiCamera->disable_fixed_exposure_gain();
         }
+        else
+        {
+            mStereoXiCamera->enable_fixed_exposure_gain();
+        }
+        
         // ROS_WARN("After 1 != mFixedExposureGain.");
 
         // Image parameter evaluator.
