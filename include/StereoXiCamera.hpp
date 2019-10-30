@@ -289,7 +289,7 @@ protected:
 
     cv::Mat mGrayMatBuffer[N_XI_C];
 
-    int mXi_DownsamplingType; // 1 - binning, 2 - skipping. Only 1 has effect.
+    int mXi_DownsamplingType; // 1 - binning, 2 - skipping. Only 2 has effect.
     int mXi_Downsampling;     // 1 - Fullsize, 2 - 2x2. Only 2 has effect.
 
     bool mFixedXiExposureGain;
