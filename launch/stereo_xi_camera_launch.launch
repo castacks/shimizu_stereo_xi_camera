@@ -14,7 +14,14 @@
         <!-- Bandwidth and framrate. -->
         <param name="pTotalBandwidth" type="int" value="3200" />
         <param name="pBandwidthMargin" type="int" value="0" />
-        <param name="pSingleImageSize" type="double" value="12.37" />
+        
+        <!-- Original size. -->
+        <!-- <param name="pHardwareDownsampling" type="int" value="1" /> -->
+        <!-- <param name="pSingleImageSize" type="double" value="12.37" /> -->
+        <!-- 1/4 size. -->
+        <param name="pHardwareDownsampling" type="int" value="2" />
+        <param name="pSingleImageSize" type="double" value="3.82" />
+
         <param name="pLoopRate" type="double" value="15" />
         <!-- <param name="pTransferFormat" type="str" value="color" /> -->
         <!-- <param name="pTransferFormat" type="str" value="mono" /> -->

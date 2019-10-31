@@ -20,6 +20,7 @@ StereoXiCamera::StereoXiCamera(std::string &camSN0, std::string &camSN1)
   BANDWIDTH_MARGIN_MAX(50), BANDWIDTH_MARGIN_MIN(0), BANDWIDTH_MARGIN_DEFAULT(10),
   TRIGGER_SOFTWARE(1), EXPOSURE_MILLISEC_BASE(1000), CAM_IDX_0(0), CAM_IDX_1(1),
   XI_DEFAULT_TOTAL_BANDWIDTH(2400), XI_DEFAULT_BANDWIDTH_MARGIN(10),
+  mXi_DownsamplingType(XI_BINNING), mXi_Downsampling(XI_DWN_1x1), 
   mFixedXiExposureGain(false),
   mXi_AutoGainExposurePriority(AUTO_GAIN_EXPOSURE_PRIORITY_DEFAULT),
   mXi_AutoExposureTopLimit(AUTO_EXPOSURE_TOP_LIMIT_DEFAULT),
@@ -231,6 +232,18 @@ void StereoXiCamera::self_adjust_exposure_gain(std::vector<CameraParams_t> &cp)
 
     mXi_Exposure = avgExposure;
     mXi_Gain     = avgGain;
+}
+
+void StereoXiCamera::enable_downsampling(void)
+{
+    mXi_DownsamplingType = XI_BINNING;
+    mXi_Downsampling     = XI_DWN_2x2;
+}
+
+void StereoXiCamera::disable_downsampling(void)
+{
+    mXi_DownsamplingType = XI_BINNING;
+    mXi_Downsampling     = XI_DWN_1x1;
 }
 
 void StereoXiCamera::enable_fixed_exposure_gain(void)
@@ -981,6 +994,17 @@ void StereoXiCamera::set_transfer_format_single_camera(xiAPIplusCameraOcv& cam, 
 
 void StereoXiCamera::setup_camera_common(xiAPIplusCameraOcv& cam)
 {
+    // Downsample.
+    if ( XI_DWN_2x2 == mXi_Downsampling )
+    {
+        cam.SetDownsampling(XI_DWN_2x2);
+        
+        if ( XI_BINNING == mXi_DownsamplingType )
+        {
+            cam.SetDownsamplingType(XI_BINNING);
+        }
+    }
+
     // Set exposure time.
     if ( false == mFixedXiExposureGain )
     {

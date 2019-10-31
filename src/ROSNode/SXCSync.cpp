@@ -43,6 +43,7 @@ SXCSync::SXCSync(const std::string& name)
   mAutoGainTopLimit(DEFAULT_AUTO_GAIN_TOP_LIMIT),
   mTotalBandwidth(DEFAULT_TOTAL_BANDWIDTH),
   mBandwidthMargin(DEFAULT_BANDWIDTH_MARGIN),
+  mSensorHeight(3008), mSensorWidth(4112), mImageHeight(mSensorHeight), mImageWidth(mSensorWidth), mHardwareDownsampling(1), 
   mSingleImageSize(DEFAULT_SINGLE_IMAGE_SIZE), mMinTransferTimeSingleImage( single_image_transfer_time_ms(mTotalBandwidth, mSingleImageSize) ),
   mFlagWriteImage(0),
   mLoopRate(DEFAULT_LOOP_RATE), mFrameIntervalUM( int(1000000.0 / DEFAULT_LOOP_RATE) ),
@@ -137,6 +138,7 @@ Res_t SXCSync::parse_launch_parameters(void)
 	ROSLAUNCH_GET_PARAM((*mpROSNode), "pAutoGainTopLimit", mAutoGainTopLimit, DEFAULT_AUTO_GAIN_TOP_LIMIT);
 	ROSLAUNCH_GET_PARAM((*mpROSNode), "pTotalBandwidth", mTotalBandwidth, DEFAULT_TOTAL_BANDWIDTH);
 	ROSLAUNCH_GET_PARAM((*mpROSNode), "pBandwidthMargin", mBandwidthMargin, DEFAULT_BANDWIDTH_MARGIN);
+	ROSLAUNCH_GET_PARAM((*mpROSNode), "pHardwareDownsampling", mHardwareDownsampling, DEFAULT_HARDWARE_DOWNSAMPLING);
 	ROSLAUNCH_GET_PARAM((*mpROSNode), "pSingleImageSize", mSingleImageSize, DEFAULT_SINGLE_IMAGE_SIZE);
 	ROSLAUNCH_GET_PARAM((*mpROSNode), "pLoopRate", mLoopRate, DEFAULT_LOOP_RATE);
     mFrameIntervalUM = int( 1000000.0 / mLoopRate );
@@ -180,6 +182,22 @@ Res_t SXCSync::parse_launch_parameters(void)
     mXiCameraSN[CAM_1_IDX] = pXICameraSN_1;
 
     mLastStatus = LAST_STA_PARSE_PARAM;
+
+    if ( 1 == mHardwareDownsampling )
+    {
+        mImageHeight = mSensorHeight;
+        mImageWidth  = mSensorWidth;
+    }
+    else if ( 2 == mHardwareDownsampling )
+    {
+        mImageHeight = mSensorHeight / 2;
+        mImageWidth  = mSensorWidth  / 2;
+    }
+    else
+    {
+        ROS_ERROR("Hardware downsampling selectoin could only be 1 or 2. Get %d.", mHardwareDownsampling);
+        return RES_ERROR;
+    }
 
     return RES_OK;
 }
@@ -252,6 +270,12 @@ Res_t SXCSync::prepare(void)
         // Stereo camera object.
         mStereoXiCamera = new sxc::StereoXiCamera(mXiCameraSN[CAM_0_IDX], mXiCameraSN[CAM_1_IDX]);
 
+        // Downsampling.
+        if ( 2 == mHardwareDownsampling )
+        {
+            mStereoXiCamera->enable_downsampling();
+        }
+
         // Trigger selection.
         if ( 1 == mExternalTrigger )
         {
@@ -272,7 +296,7 @@ Res_t SXCSync::prepare(void)
                 if ( 0 == mTransferFormat.compare( "raw" ) )
                 {
                     // mMbAEAG = new sxc::MaskedMeanBrightness(mCustomAEAG_Mask);
-                    mMbAEAG = new sxc::DownSampledMeanBrightness(4112, 3008, 100, 100);
+                    mMbAEAG = new sxc::DownSampledMeanBrightness(mImageWidth, mImageHeight, 100, 100);
                     ROS_WARN("Use RAW transfer format and custom AEAG.");
                 }
                 else
@@ -306,7 +330,7 @@ Res_t SXCSync::prepare(void)
         // Image parameter evaluator.
         if ( 0 == mTransferFormat.compare( "raw" ) )
         {
-            mIPE = new sxc::DownSampledMeanBrightness(4112, 3008, 100, 100);
+            mIPE = new sxc::DownSampledMeanBrightness(mImageWidth, mImageHeight, 100, 100);
             mStereoXiCamera->set_image_parameter_evaluator(mIPE);
         }
         else

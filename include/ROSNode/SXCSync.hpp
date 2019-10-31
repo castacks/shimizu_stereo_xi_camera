@@ -112,10 +112,11 @@ public:
     static constexpr double DEFAULT_AUTO_GAIN_EXPOSURE_PRIORITY     = 0.9;
     static constexpr double DEFAULT_AUTO_GAIN_EXPOSURE_TARGET_LEVEL = 40.0;
     static constexpr int    DEFAULT_AUTO_EXPOSURE_TOP_LIMIT         = 200000;  // Microsecond.
-    static constexpr int    DEFAULT_AUTO_GAIN_TOP_LIMIT             = 12;   // dB.
-    static constexpr int    DEFAULT_TOTAL_BANDWIDTH                 = 2400;  // MBits/s.
-    static constexpr int    DEFAULT_BANDWIDTH_MARGIN                = 10;    // Percentage.
-    static constexpr double DEFAULT_SINGLE_IMAGE_SIZE               = 12.37; // MBytes.
+    static constexpr int    DEFAULT_AUTO_GAIN_TOP_LIMIT             = 12;      // dB.
+    static constexpr int    DEFAULT_TOTAL_BANDWIDTH                 = 2400;    // MBits/s.
+    static constexpr int    DEFAULT_BANDWIDTH_MARGIN                = 10;      // Percentage.
+    static constexpr int    DEFAULT_HARDWARE_DOWNSAMPLING           = 1;       // 1 - Full size, 2 - 1/4 size.
+    static constexpr double DEFAULT_SINGLE_IMAGE_SIZE               = 12.37;   // MBytes.
     static constexpr double DEFAULT_LOOP_RATE                       = 3.0;
     static constexpr int    DEFAULT_NEXT_IMAGE_TIMEOUT_MS           = 1000;
     static constexpr double DEFAULT_CUSTOM_AEAG_PRIORITY            = 0.9;
@@ -216,6 +217,11 @@ private:
 	int    mAutoGainTopLimit;
 	int    mTotalBandwidth;  // MBits/s.
 	int    mBandwidthMargin; // Percentage.
+    int    mSensorHeight;    // The original height of the sensor in pixels.
+    int    mSensorWidth;     // The original width of the sensor in pixels.
+    int    mImageHeight;     // The actual image height.
+    int    mImageWidth;      // The actual image width.
+    int    mHardwareDownsampling; // 1 - no downsample, 2 - 1/4 imagesize.
     double mSingleImageSize; // MBytes.
     int    mMinTransferTimeSingleImage; // us.
 	int    mFlagWriteImage;
