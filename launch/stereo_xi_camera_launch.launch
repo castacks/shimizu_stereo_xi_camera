@@ -1,5 +1,6 @@
 <launch>
     <!-- launch-prefix="xterm -e gdb \-\-args" -->
+    <!-- launch-prefix="valgrind" -->
     <node name="xic_stereo" pkg="ros_stereo_xi_camera" type="ros_stereo_xi_camera_node" output="screen" >
         <param name="pXICameraSN_0" type="str" value="CUCAU1903001" />
         <param name="pXICameraSN_1" type="str" value="CUCAU1903000" />
@@ -9,7 +10,7 @@
 
         <param name="pAutoGainExposurePriority" type="double" value="1.0" />
         <param name="pAutoGainExposureTargetLevel" type="double" value="10" />
-        <param name="pAutoExposureTopLimit" type="int" value="50000" />
+        <param name="pAutoExposureTopLimit" type="int" value="5000" />
         <param name="pAutoGainTopLimit" type="int" value="1" />
 
         <!-- Bandwidth and framrate. -->
@@ -24,6 +25,7 @@
         <!-- <param name="pSingleImageSize" type="double" value="3.82" /> -->
 
         <param name="pLoopRate" type="double" value="15" />
+
         <!-- <param name="pTransferFormat" type="str" value="color" /> -->
         <!-- <param name="pTransferFormat" type="str" value="mono" /> -->
         <param name="pTransferFormat" type="str" value="raw" />
@@ -33,12 +35,12 @@
 
         <param name="pExternalTimestampReset" type="int" value="1" />
 
-        <param name="pSelfAdjust" type="int" value="1" />
+        <param name="pSelfAdjust" type="int" value="0" />
 
         <param name="pCustomAEAGEnabled" type="int" value="1" />
         <param name="pCustomAEAGPriority" type="double" value="0.8" />
-        <param name="pCustomAEAGExposureTopLimit" type="double" value="50000" />
-        <param name="pCustomAEAGGainTopLimit" type="double" value="26" />
+        <param name="pCustomAEAGExposureTopLimit" type="double" value="5000" />
+        <param name="pCustomAEAGGainTopLimit" type="double" value="24" />
         <param name="pCustomAEAGBrightnessLevel" type="int" value="30" />
 
         <param name="pCustomAEAG_EP" type="double" value="0.5" />
