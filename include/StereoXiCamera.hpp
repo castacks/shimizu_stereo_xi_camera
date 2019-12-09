@@ -153,6 +153,9 @@ public:
     void put_sensor_filter_array(int idx, std::string &strFilterArray);
 
     // Getters and setters.
+    void enable_downsampling(void);
+    void disable_downsampling(void);
+
     void enable_fixed_exposure_gain(void);
     void disable_fixed_exposure_gain(void);
 
@@ -285,6 +288,9 @@ protected:
     xiAPIplusCameraOcv mCams[N_XI_C];
 
     cv::Mat mGrayMatBuffer[N_XI_C];
+
+    int mXi_DownsamplingType; // 1 - binning, 2 - skipping. Only 2 has effect.
+    int mXi_Downsampling;     // 1 - Fullsize, 2 - 2x2. Only 2 has effect.
 
     bool mFixedXiExposureGain;
     xf  mXi_AutoGainExposurePriority;

@@ -50,8 +50,12 @@ void DownSampledMeanBrightness::fill_indices(int nx, int ny, int blockSamplesX, 
     blockSamplesX = blockSamplesX > maxBlocksX ? maxBlocksX : blockSamplesX;
     blockSamplesY = blockSamplesY > maxBlocksY ? maxBlocksY : blockSamplesY;
 
-    const int strideX = ( nx - 2 ) / ( blockSamplesX - 1 );
-    const int strideY = ( ny - 2 ) / ( blockSamplesY - 1 );
+    // const int strideX = ( nx - 2 ) / ( blockSamplesX - 1 );
+    // const int strideY = ( ny - 2 ) / ( blockSamplesY - 1 );
+    const int strideX = nx / blockSamplesX;
+    const int strideY = ny / blockSamplesY;
+    const int topX    = strideX * blockSamplesX;
+    const int topY    = strideY * blockSamplesY;
 
     // Allocate memory.
     destroy();
@@ -67,9 +71,9 @@ void DownSampledMeanBrightness::fill_indices(int nx, int ny, int blockSamplesX, 
 
     int idx = 0;
 
-    for ( int i = 0; i < ny; i += strideY )
+    for ( int i = 0; i < topY; i += strideY )
     {
-        for ( int j = 0; j < nx; j += strideX )
+        for ( int j = 0; j < topX; j += strideX )
         {
             // BGGR pattern.
             mX[idx] = j;
