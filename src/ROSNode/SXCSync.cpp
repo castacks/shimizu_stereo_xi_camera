@@ -279,7 +279,10 @@ Res_t SXCSync::prepare(void)
         // Stereo camera object.
         mStereoXiCamera = new sxc::StereoXiCamera(mXiCameraSN[CAM_0_IDX], mXiCameraSN[CAM_1_IDX]);
         
-        if ( 1 == mRawBalance ) mStereoXiCamera->initialize_raw_balance_matrices(mWB_B, mWB_R);
+        if ( 1 == mRawBalance ) {
+		// std::cout << "RawBalance\n";
+		mStereoXiCamera->initialize_raw_balance_matrices(mWB_B, mWB_R);
+	}
 
         // Downsampling.
         if ( 2 == mHardwareDownsampling )

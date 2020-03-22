@@ -331,7 +331,8 @@ void StereoXiCamera::apply_custom_AEAG(cv::Mat &img0, cv::Mat &img1, CameraParam
     }
 
     int currentExposureUS[2] = { camP0.exposure, camP1.exposure };
-    xf  currentGainDB[2]     = { camP0.gain, camP1.gain };
+    // xf  currentGainDB[2]     = { camP0.gain, camP1.gain };
+    xf  currentGainDB[2]     = { mXi_Gain, mXi_Gain };
 
     xf currentExposure[2] = {0.0, 0.0};
     xf currentGain[2]     = {0.0, 0.0};
@@ -402,6 +403,7 @@ void StereoXiCamera::apply_custom_AEAG(cv::Mat &img0, cv::Mat &img1, CameraParam
     }
 
     avgGain = GainToDB(avgGain);
+    mXi_Gain = avgGain;
 
     // std::cout << "avgGain = " << avgGain << std::endl;
 
@@ -783,7 +785,8 @@ int StereoXiCamera::get_images(cv::Mat &img0, cv::Mat &img1, CameraParams_t &cam
         return -1;
     }
 
-    if ( mRawBalance ) {
+    if ( mRawBalance && false == mIsSelfAdjusting ) {
+	// std::cout << "RawBalance \n";
         raw_balance(img0);
         raw_balance(img1);
     }
@@ -816,7 +819,7 @@ int StereoXiCamera::get_images(cv::Mat &img0, cv::Mat &img1, CameraParams_t &cam
 
 void StereoXiCamera::raw_balance(cv::Mat &img) {
     img.convertTo( mRawBalanceBuffer, CV_32FC1 );
-    mRawBalanceBuffer.mul( mRawBalanceBR );
+    mRawBalanceBuffer = mRawBalanceBuffer.mul( mRawBalanceBR );
     mRawBalanceBuffer.convertTo( img, CV_8UC1 );
 }
 
