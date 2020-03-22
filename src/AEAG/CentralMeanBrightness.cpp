@@ -20,8 +20,7 @@ CentralMeanBrightness::CentralMeanBrightness(
     xf fR, xf fG, xf fB)
 : MeanBrightness(),
   CR(0.299*fR), CG(0.587/2*fG), CB(0.114*fB),
-  mBSX(0), mBSY(0),
-  mX(NULL), mY(NULL), mC(NULL), mN(0)
+  mBSX(0), mBSY(0), mN(0)
 {
     fill_indices(width, height, fX, fY, blockSamplesX, blockSamplesY);
 }
