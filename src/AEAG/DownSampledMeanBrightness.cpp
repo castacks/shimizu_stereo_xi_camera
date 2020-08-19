@@ -19,9 +19,11 @@ using namespace sxc;
 // https://docs.opencv.org/3.4.0/de/d25/imgproc_color_conversions.html
 // CG is further divided by 2.
 
-DownSampledMeanBrightness::DownSampledMeanBrightness(int nx, int ny, int blockSamplesX, int blockSamplesY)
+DownSampledMeanBrightness::DownSampledMeanBrightness(
+    int nx, int ny, int blockSamplesX, int blockSamplesY, 
+    xf fR, xf fG, xf fB)
 : MeanBrightness(),
-  CR(0.299), CG(0.587/2), CB(0.114),
+  CR(0.299*fR), CG(0.587/2*fG), CB(0.114*fB),
   mBSX(0), mBSY(0),
   mX(NULL), mY(NULL), mC(NULL), mN(0)
 {
@@ -117,7 +119,8 @@ xf DownSampledMeanBrightness::get_mean_brightness(cv::InputArray _img)
 
     for ( int i = 0; i < mN; ++i )
     {
-        meanBrightness += img.at<uint8_t>( mY[i], mX[i] ) * mC[i];
+        // Since mC is floating point type, the result of the expression will be promoted to floating point.
+        meanBrightness += img.at<uint8_t>( mY[i], mX[i] ) * mC[i]; 
     }
 
     return meanBrightness / ( mN/4 );

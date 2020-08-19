@@ -58,6 +58,7 @@ SXCSync::SXCSync(const std::string& name)
   mCustomAEAGExposureTopLimit(DEFAULT_CUSTOM_AEAG_EXPOSURE_TOP_LIMIT),
   mCustomAEAGGainTopLimit(DEFAULT_CUSTOM_AEAG_GAIN_TOP_LIMIT),
   mCustomAEAGBrightnessLevel(DEFAULT_CUSTOM_AEAG_BRIGHTNESS_LEVEL),
+  mCustomAEAG_FR(DEFAULT_CUSTOM_AEAG_FR), mCustomAEAG_FG(DEFAULT_CUSTOM_AEAG_FG), mCustomAEAG_FB(DEFAULT_CUSTOM_AEAG_FB),
   mCustomAEAG_Mask(""),
   mFixedWB(DEFAULT_FIXED_WB), mWB_R(DEFAULT_WB_R), mWB_G(DEFAULT_WB_G), mWB_B(DEFAULT_WB_B),
   mForceXiAutoWhiteBalance(DEFAULT_FORCE_XI_AUTO_WHITE_BALANCE),
@@ -163,6 +164,9 @@ Res_t SXCSync::parse_launch_parameters(void)
     ROSLAUNCH_GET_PARAM((*mpROSNode), "pCustomAEAG_CT", mCustomAEAG_CT, DEFAULT_CUSTOM_AEAG_CT);
     ROSLAUNCH_GET_PARAM((*mpROSNode), "pCustomAEAG_DeltaExpMax", mCustomAEAG_DEM, DEFAULT_CUSTOM_AEAG_DEM);
     ROSLAUNCH_GET_PARAM((*mpROSNode), "pCustomAEAG_Mask", mCustomAEAG_Mask, "");
+    ROSLAUNCH_GET_PARAM((*mpROSNode), "pCustomAEAG_FR", mCustomAEAG_FR, DEFAULT_CUSTOM_AEAG_FR);
+    ROSLAUNCH_GET_PARAM((*mpROSNode), "pCustomAEAG_FG", mCustomAEAG_FG, DEFAULT_CUSTOM_AEAG_FG);
+    ROSLAUNCH_GET_PARAM((*mpROSNode), "pCustomAEAG_FB", mCustomAEAG_FB, DEFAULT_CUSTOM_AEAG_FB);
     ROSLAUNCH_GET_PARAM((*mpROSNode), "pFixedWB", mFixedWB, DEFAULT_FIXED_WB);
     ROSLAUNCH_GET_PARAM((*mpROSNode), "pWB_R", mWB_R, DEFAULT_WB_R);
     ROSLAUNCH_GET_PARAM((*mpROSNode), "pWB_G", mWB_G, DEFAULT_WB_G);
@@ -296,7 +300,9 @@ Res_t SXCSync::prepare(void)
                 if ( 0 == mTransferFormat.compare( "raw" ) )
                 {
                     // mMbAEAG = new sxc::MaskedMeanBrightness(mCustomAEAG_Mask);
-                    mMbAEAG = new sxc::DownSampledMeanBrightness(mImageWidth, mImageHeight, 100, 100);
+                    mMbAEAG = new sxc::DownSampledMeanBrightness(
+                        mImageWidth, mImageHeight, 100, 100, 
+                        mCustomAEAG_FR, mCustomAEAG_FG, mCustomAEAG_FB);
                     ROS_WARN("Use RAW transfer format and custom AEAG.");
                 }
                 else

@@ -11,7 +11,9 @@ namespace sxc
 class DownSampledMeanBrightness : public MeanBrightness
 {
 public:
-    DownSampledMeanBrightness(int nx, int ny, int blockSamplesX, int blockSamplesY);
+    DownSampledMeanBrightness(
+        int nx, int ny, int blockSamplesX, int blockSamplesY, 
+        xf fR=1.0, xf fG=1.0, xf fB=1.0);
     virtual ~DownSampledMeanBrightness();
 
 private:

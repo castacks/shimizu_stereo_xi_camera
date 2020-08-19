@@ -54,6 +54,11 @@
         <param name="pCustomAEAG_DeltaExpMax" type="double" value="1000000" />
         <!-- <param name="pCustomAEAG_Mask" type="str" value="/home/yyhu/ROS/catkin_ws/src/ros_stereo_xi_camera/script/index.dat" /> -->
 
+        <!-- The following paramters are for evaluating brightness on the RAW Bayer pattern. -->
+        <param name="pCustomAEAG_FR" type="double" value="1.35" />
+        <param name="pCustomAEAG_FG" type="double" value="1.00" />
+        <param name="pCustomAEAG_FB" type="double" value="1.39" />
+
         <param name="pFixedWB" type="int" value="0" />
         <param name="pWB_R" type="double" value="1.325575" />
         <param name="pWB_G" type="double" value="0.996636" />

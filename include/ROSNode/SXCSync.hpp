@@ -131,6 +131,9 @@ public:
     static constexpr double DEFAULT_CUSTOM_AEAG_GI                  = 0.0;
     static constexpr int    DEFAULT_CUSTOM_AEAG_CT                  = 10000; // Mirosecond.
     static constexpr double DEFAULT_CUSTOM_AEAG_DEM                 = 50000; // Mirosecond, delta exposure max.
+    static constexpr double DEFAULT_CUSTOM_AEAG_FR                  = 1.35;  // Get from preious AWB.
+    static constexpr double DEFAULT_CUSTOM_AEAG_FG                  = 1.00;  // Get from preious AWB.
+    static constexpr double DEFAULT_CUSTOM_AEAG_FB                  = 1.39;  // Get from preious AWB.
     static constexpr int    DEFAULT_FIXED_WB                        = 1;
     static constexpr double DEFAULT_WB_R                            = 1.325575;
     static constexpr double DEFAULT_WB_G                            = 1.0;
@@ -252,6 +255,9 @@ private:
     double mCustomAEAG_GI;
     double mCustomAEAG_CT;
     double mCustomAEAG_DEM; // Delta exposure max.
+    double mCustomAEAG_FR;  // Factors used for brightness metering on Bayer pattern.
+    double mCustomAEAG_FG;
+    double mCustomAEAG_FB;
     std::string mCustomAEAG_Mask;
 
     int    mFixedWB;
