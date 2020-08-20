@@ -300,8 +300,11 @@ Res_t SXCSync::prepare(void)
                 if ( 0 == mTransferFormat.compare( "raw" ) )
                 {
                     // mMbAEAG = new sxc::MaskedMeanBrightness(mCustomAEAG_Mask);
-                    mMbAEAG = new sxc::DownSampledMeanBrightness(
-                        mImageWidth, mImageHeight, 100, 100, 
+                    // mMbAEAG = new sxc::DownSampledMeanBrightness(
+                    //     mImageWidth, mImageHeight, 100, 100, 
+                    //     mCustomAEAG_FR, mCustomAEAG_FG, mCustomAEAG_FB);
+                    mMbAEAG = new sxc::CentralMeanBrightness(
+                        mImageWidth, mImageHeight, 0.5, 0.5, 100, 100, 
                         mCustomAEAG_FR, mCustomAEAG_FG, mCustomAEAG_FB);
                     ROS_WARN("Use RAW transfer format and custom AEAG.");
                 }

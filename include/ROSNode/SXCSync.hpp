@@ -17,6 +17,7 @@
 #include "AEAG/MeanBrightness.hpp"
 // #include "AEAG/MaskedMeanBrightness.hpp"
 #include "AEAG/DownSampledMeanBrightness.hpp"
+#include "AEAG/CentralMeanBrightness.hpp"
 #include "StereoXiCamera.hpp"
 
 #include "ROSNode/SyncROSNode.hpp"
