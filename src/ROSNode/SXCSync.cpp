@@ -46,7 +46,9 @@ SXCSync::SXCSync(const std::string& name)
   mSensorHeight(3008), mSensorWidth(4112), mImageHeight(mSensorHeight), mImageWidth(mSensorWidth), mHardwareDownsampling(1), 
   mSingleImageSize(DEFAULT_SINGLE_IMAGE_SIZE), mMinTransferTimeSingleImage( single_image_transfer_time_ms(mTotalBandwidth, mSingleImageSize) ),
   mFlagWriteImage(0),
-  mLoopRate(DEFAULT_LOOP_RATE), mFrameIntervalUM( int(1000000.0 / DEFAULT_LOOP_RATE) ),
+  mLoopRate(DEFAULT_LOOP_RATE), 
+  mFrameIntervalUM( int(1000000.0 / DEFAULT_LOOP_RATE) ),
+  mPubOnFrames(DEFAULT_PUB_ON_FRAMES), mCountForPub(0),
   mTransferFormat(DEFAULT_TRANSFER_FORMAT), mTF(TRANS_FORMAT_COLOR),
   mEncoding("bgr8"),
   mExternalTrigger(0),
@@ -143,6 +145,7 @@ Res_t SXCSync::parse_launch_parameters(void)
 	ROSLAUNCH_GET_PARAM((*mpROSNode), "pSingleImageSize", mSingleImageSize, DEFAULT_SINGLE_IMAGE_SIZE);
 	ROSLAUNCH_GET_PARAM((*mpROSNode), "pLoopRate", mLoopRate, DEFAULT_LOOP_RATE);
     mFrameIntervalUM = int( 1000000.0 / mLoopRate );
+    ROSLAUNCH_GET_PARAM((*mpROSNode), "pPubOnFrames", mPubOnFrames, DEFAULT_PUB_ON_FRAMES);
 	ROSLAUNCH_GET_PARAM((*mpROSNode), "pTransferFormat", mTransferFormat, DEFAULT_TRANSFER_FORMAT);
 	ROSLAUNCH_GET_PARAM((*mpROSNode), "pFlagWriteImage", mFlagWriteImage, 0);
 	ROSLAUNCH_GET_PARAM((*mpROSNode), "pOutDir", mOutDir, "./");
@@ -398,8 +401,8 @@ Res_t SXCSync::prepare(void)
             mCvVIOImagesDownsampled = new Mat[2];
             mCP = new sxc::StereoXiCamera::CameraParams_t[2];
 
-            mJpegParams.push_back( CV_IMWRITE_JPEG_QUALITY );
-            mJpegParams.push_back( 100 );
+            mImwriteParams.push_back( CV_IMWRITE_JPEG_QUALITY );
+            mImwriteParams.push_back( 100 );
 
             mNImages = 0;
 
@@ -509,7 +512,9 @@ Res_t SXCSync::synchronize(ProcessType_t& pt)
             ROS_ERROR("Get images failed");
         }
         else
-        {  
+        {
+            step_count_for_pub();
+
             ros::Time imageTS;
 
             // Convert the image into ROS image message.
@@ -527,11 +532,11 @@ Res_t SXCSync::synchronize(ProcessType_t& pt)
                 if ( 1 == mFlagWriteImage )
                 {
                     // std::string yamlFilename = ss.str() + ".yaml";
-                    std::string imgFilename = ss.str() + ".jpg";
+                    std::string imgFilename = ss.str() + ".png";
 
                     // FileStorage cfFS(yamlFilename, FileStorage::WRITE);
                     // cfFS << "frame" << nImages << "image_id" << loopIdx << "raw_data" << cvImages[loopIdx];
-                    imwrite(imgFilename, mCvImages[loopIdx], mJpegParams);
+                    imwrite(imgFilename, mCvImages[loopIdx], mImwriteParams);
                 }
                 
                 if ( true == mVerbose )
@@ -598,46 +603,50 @@ Res_t SXCSync::synchronize(ProcessType_t& pt)
             // the images making a stereo pair to have exactly the same timestamps.
             mMsgVIOImage[1]->header.stamp = mMsgVIOImage[0]->header.stamp;
 
-            LOOP_CAMERAS_BEGIN
-                PROFILER_IN("ImagePublishing");
-                mPublishersImage[loopIdx].publish(mMsgImage[loopIdx]);
-                mPublishersVIO[loopIdx].publish(mMsgVIOImage[loopIdx]);
-                PROFILER_OUT("ImagePublishing");
+            if ( should_publish() ) {
+                LOOP_CAMERAS_BEGIN
+                    PROFILER_IN("ImagePublishing");
+                    mPublishersImage[loopIdx].publish(mMsgImage[loopIdx]);
+                    mPublishersVIO[loopIdx].publish(mMsgVIOImage[loopIdx]);
+                    PROFILER_OUT("ImagePublishing");
 
-                if ( true == mVerbose )
-                {
-                    ROS_INFO("%s", "Message published.");
-                }
-            LOOP_CAMERAS_END
+                    if ( true == mVerbose )
+                    {
+                        ROS_INFO("%s", "Message published.");
+                    }
+                LOOP_CAMERAS_END
+            }
 
             mStereoXiCamera->put_mean_brightness(mb);
 
-            testMsgSS << "{" << std::endl
-                      << "\t\"seq\": " << mNImages << "," << std::endl
-                      << "\t\"cams\": [" << std::endl
-                      << "\t\t{ \"idx\": 0," << std::endl
-                      << "\t\t\"tsSec\": " << mCP[CAM_0_IDX].tsSec << "," << std::endl
-                      << "\t\t\"tsUSec\": " << mCP[CAM_0_IDX].tsUSec << "," << std::endl
-                      << "\t\t\"exp\": " << mCP[CAM_0_IDX].exposure / 1000.0 << "," << std::endl
-                      << "\t\t\"gain\": " << mCP[CAM_0_IDX].gain << "," << std::endl
-                      << "\t\t\"mb\": " << mb[CAM_0_IDX] << "," << std::endl
-                      << "\t\t\"wbKr\": " << mCP[CAM_0_IDX].AWB_kr << "," << std::endl
-                      << "\t\t\"wbKg\": " << mCP[CAM_0_IDX].AWB_kg << "," << std::endl
-                      << "\t\t\"wbKb\": " << mCP[CAM_0_IDX].AWB_kb << "" << std::endl
-                      << "\t}," << std::endl
-                      << "\t\t{ \"idx\": 1," << std::endl
-                      << "\t\t\"tsSec\": " << mCP[CAM_1_IDX].tsSec << "," << std::endl
-                      << "\t\t\"tsUSec\": " << mCP[CAM_1_IDX].tsUSec << "," << std::endl
-                      << "\t\t\"exp\": " << mCP[CAM_1_IDX].exposure / 1000.0 << "," << std::endl
-                      << "\t\t\"gain\": " << mCP[CAM_1_IDX].gain << "," << std::endl
-                      << "\t\t\"mb\": " << mb[CAM_1_IDX] << "," << std::endl
-                      << "\t\t\"wbKr\": " << mCP[CAM_1_IDX].AWB_kr << "," << std::endl
-                      << "\t\t\"wbKg\": " << mCP[CAM_1_IDX].AWB_kg << "," << std::endl
-                      << "\t\t\"wbKb\": " << mCP[CAM_1_IDX].AWB_kb << "" << std::endl
-                      << "\t} ]" << std::endl
-                      << "}" << std::endl;
-            testMsg.data = testMsgSS.str();
-            mTestMsgPublisher.publish(testMsg);
+            if ( should_publish() ) {
+                testMsgSS << "{" << std::endl
+                        << "\t\"seq\": " << mNImages << "," << std::endl
+                        << "\t\"cams\": [" << std::endl
+                        << "\t\t{ \"idx\": 0," << std::endl
+                        << "\t\t\"tsSec\": " << mCP[CAM_0_IDX].tsSec << "," << std::endl
+                        << "\t\t\"tsUSec\": " << mCP[CAM_0_IDX].tsUSec << "," << std::endl
+                        << "\t\t\"exp\": " << mCP[CAM_0_IDX].exposure / 1000.0 << "," << std::endl
+                        << "\t\t\"gain\": " << mCP[CAM_0_IDX].gain << "," << std::endl
+                        << "\t\t\"mb\": " << mb[CAM_0_IDX] << "," << std::endl
+                        << "\t\t\"wbKr\": " << mCP[CAM_0_IDX].AWB_kr << "," << std::endl
+                        << "\t\t\"wbKg\": " << mCP[CAM_0_IDX].AWB_kg << "," << std::endl
+                        << "\t\t\"wbKb\": " << mCP[CAM_0_IDX].AWB_kb << "" << std::endl
+                        << "\t}," << std::endl
+                        << "\t\t{ \"idx\": 1," << std::endl
+                        << "\t\t\"tsSec\": " << mCP[CAM_1_IDX].tsSec << "," << std::endl
+                        << "\t\t\"tsUSec\": " << mCP[CAM_1_IDX].tsUSec << "," << std::endl
+                        << "\t\t\"exp\": " << mCP[CAM_1_IDX].exposure / 1000.0 << "," << std::endl
+                        << "\t\t\"gain\": " << mCP[CAM_1_IDX].gain << "," << std::endl
+                        << "\t\t\"mb\": " << mb[CAM_1_IDX] << "," << std::endl
+                        << "\t\t\"wbKr\": " << mCP[CAM_1_IDX].AWB_kr << "," << std::endl
+                        << "\t\t\"wbKg\": " << mCP[CAM_1_IDX].AWB_kg << "," << std::endl
+                        << "\t\t\"wbKb\": " << mCP[CAM_1_IDX].AWB_kb << "" << std::endl
+                        << "\t} ]" << std::endl
+                        << "}" << std::endl;
+                testMsg.data = testMsgSS.str();
+                mTestMsgPublisher.publish(testMsg);
+            }
         }
 
         mRosTimeStamp = ros::Time::now();
@@ -659,6 +668,7 @@ Res_t SXCSync::synchronize(ProcessType_t& pt)
         mROSLoopRate->sleep();
         PROFILER_OUT("ROSSleep");
 
+        reset_count_for_pub_if_published();
         mNImages++;
     }
     catch ( boost::exception &ex )

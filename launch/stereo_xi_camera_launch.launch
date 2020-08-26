@@ -25,6 +25,7 @@
         <!-- <param name="pSingleImageSize" type="double" value="3.82" /> -->
 
         <param name="pLoopRate" type="double" value="15" />
+        <param name="pPubOnFrames" type="int" value="1" />
 
         <!-- <param name="pTransferFormat" type="str" value="color" /> -->
         <!-- <param name="pTransferFormat" type="str" value="mono" /> -->

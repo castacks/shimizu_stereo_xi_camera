@@ -85,6 +85,12 @@ public:
     void set_out_dir(const std::string& outDir);
     const std::string& get_out_dir(void);
 
+    void set_pub_on_frames(int s) {
+        assert(s >= 0);
+        mPubOnFrames = s;
+    }
+    int get_pub_on_frames(void) { return mPubOnFrames; }
+
     // ROS services.
 public:
     bool srv_change_status(
@@ -109,6 +115,13 @@ private:
         sxc::StereoXiCamera::CameraParams_t* cpArray,
         int* mbArray );
 
+    void step_count_for_pub() { mCountForPub++; }
+    void reset_count_for_pub() { mCountForPub = 0; }
+    bool should_publish() { return mCountForPub >= mPubOnFrames; }
+    void reset_count_for_pub_if_published() {
+        if ( should_publish() ) reset_count_for_pub();
+    }
+
 public:
     static constexpr double DEFAULT_AUTO_GAIN_EXPOSURE_PRIORITY     = 0.9;
     static constexpr double DEFAULT_AUTO_GAIN_EXPOSURE_TARGET_LEVEL = 40.0;
@@ -119,6 +132,7 @@ public:
     static constexpr int    DEFAULT_HARDWARE_DOWNSAMPLING           = 1;       // 1 - Full size, 2 - 1/4 size.
     static constexpr double DEFAULT_SINGLE_IMAGE_SIZE               = 12.37;   // MBytes.
     static constexpr double DEFAULT_LOOP_RATE                       = 3.0;
+    static constexpr int    DEFAULT_PUB_ON_FRAMES                   = 1;
     static constexpr int    DEFAULT_NEXT_IMAGE_TIMEOUT_MS           = 1000;
     static constexpr double DEFAULT_CUSTOM_AEAG_PRIORITY            = 0.9;
     static constexpr double DEFAULT_CUSTOM_AEAG_EXPOSURE_TOP_LIMIT  = 200000.0; // Mirosecond.
@@ -203,7 +217,7 @@ protected:
     sxc::StereoXiCamera::CameraParams_t* mCP; // Camera parameters.
     ros::Time mRosTimeStamp; // ROS time stamp for the header of published ROS image messages.
 
-    std::vector<int> mJpegParams;
+    std::vector<int> mImwriteParams;
 
     int mNImages;
 
@@ -231,6 +245,13 @@ private:
 	int    mFlagWriteImage;
 	double mLoopRate;
     int    mFrameIntervalUM; // Microsecond.
+    int    mPubOnFrames; // This is used to control the frame rate of the message publishing.
+
+    // This is the accumulating variable for mPubOnFrames. When mCountForPub is 
+    // larger than or equal to mPubOnFrames then messages are published and 
+    // mCountForPub will be cleared in the end of synchronization.
+    int    mCountForPub;
+
     std::string mTransferFormat;
     TransFormat_t mTF;
 
