@@ -147,7 +147,7 @@ include_directories(
 # >>>
 # Search the ./src folder for .cpp files.
 # FILE(GLOB_RECURSE SRC_LIST main.cpp xiApiPlusOcv.cpp StereoXiCamera.cpp)
-FILE(GLOB_RECURSE SRC_LIST *.cpp)
+FILE(GLOB_RECURSE SRC_LIST src/*.cpp)
 
 IF (SRC_LIST)
 	FOREACH (SFILE ${SRC_LIST})
@@ -232,11 +232,21 @@ target_link_libraries(${PROJECT_NAME}_node
 ## Testing ##
 #############
 
-## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_stereo_xi_camera.cpp)
-# if(TARGET ${PROJECT_NAME}-test)
-#   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
-# endif()
+# Add gtest based cpp test target and link libraries
+catkin_add_gtest(${PROJECT_NAME}-test 
+  test/TestStereoXICamera.cpp 
+  src/AEAG/CentralMeanBrightness.cpp 
+  src/AEAG/MeanBrightness.cpp 
+  src/AEAG/ExposurePriorAEAG.cpp
+  src/AEAG/AEAG.cpp)
+if(TARGET ${PROJECT_NAME}-test)
+  target_link_libraries(${PROJECT_NAME}-test
+    ${catkin_LIBRARIES}
+    ${LIB_XIMEA}
+    ${LIB_BOOST_EXCEPTION}
+    Threads::Threads
+    ${OpenCV_LIBS})
+endif()
 
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)

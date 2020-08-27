@@ -29,6 +29,8 @@ public:
         xf fR=1.0, xf fG=1.0, xf fB=1.0);
     virtual ~CentralMeanBrightness();
 
+    void write_indices_as_image(const std::string &fn);
+
 private:
     void fill_indices(int W, int H, xf fX, xf fY, int blockSamplesX, int blockSamplesY);
 
@@ -47,6 +49,8 @@ protected:
     std::unique_ptr<int []> mY;  // Y indices.
     std::unique_ptr<xf []>  mC;  // Coefficients.
     int  mN;  // Number of indices.
+    int  mImgH; // Height of the original image.
+    int  mImgW; // Width of the original image.
 };
 
 } // namespace sxc

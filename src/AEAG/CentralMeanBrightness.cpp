@@ -6,6 +6,8 @@
 #include <vector>
 #include <cmath>
 
+#include <opencv2/opencv.hpp>
+
 #include "AEAG/CentralMeanBrightness.hpp"
 
 using namespace sxc;
@@ -20,7 +22,8 @@ CentralMeanBrightness::CentralMeanBrightness(
     xf fR, xf fG, xf fB)
 : MeanBrightness(),
   CR(0.299*fR), CG(0.587/2*fG), CB(0.114*fB),
-  mBSX(0), mBSY(0), mN(0)
+  mBSX(0), mBSY(0), mN(0),
+  mImgH(0), mImgW(0)
 {
     fill_indices(width, height, fX, fY, blockSamplesX, blockSamplesY);
 }
@@ -28,6 +31,36 @@ CentralMeanBrightness::CentralMeanBrightness(
 CentralMeanBrightness::~CentralMeanBrightness()
 {
     mN = 0;
+}
+
+void CentralMeanBrightness::write_indices_as_image(const std::string &fn) {
+    if ( 0 == mN ) {
+        std::cout << "Indices are not filled. \n";
+        return;
+    }
+
+    assert( 0 == mN % 4 );    
+
+    // Create an empty image.
+    cv::Mat img = cv::Mat( mImgH, mImgW, CV_8UC3 );
+    img.setTo( cv::Scalar(255, 255, 255) );
+
+    const cv::Vec3b B( 255,   0,   0 );
+    const cv::Vec3b G(   0, 255,   0 );
+    const cv::Vec3b R(   0,   0, 255 );
+
+    // Loop over all the indices.
+    for ( int i = 0; i < mN; i += 4 ) {
+        img.at<cv::Vec3b>( mY[i    ], mX[i    ] ) = B;
+        img.at<cv::Vec3b>( mY[i + 1], mX[i + 1] ) = G;
+        img.at<cv::Vec3b>( mY[i + 2], mX[i + 2] ) = G;
+        img.at<cv::Vec3b>( mY[i + 3], mX[i + 3] ) = R;
+    }
+
+    // Write the image.
+    cv::imwrite(fn, img);
+
+    std::cout << "Indices are writen to " << fn << "\n";
 }
 
 void CentralMeanBrightness::fill_indices(
@@ -95,6 +128,9 @@ void CentralMeanBrightness::fill_indices(
             idx++;
         }
     }
+
+    mImgH = H;
+    mImgW = W;
 }
 
 xf CentralMeanBrightness::get_mean_brightness(cv::InputArray _img)
