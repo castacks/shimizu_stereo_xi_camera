@@ -405,8 +405,8 @@ Res_t SXCSync::prepare(void)
             mCvVIOImagesDownsampled = new Mat[2];
             mCP = new sxc::StereoXiCamera::CameraParams_t[2];
 
-            mImwriteParams.push_back( CV_IMWRITE_JPEG_QUALITY );
-            mImwriteParams.push_back( 100 );
+            mImwriteParams.push_back( CV_IMWRITE_PNG_COMPRESSION );
+            mImwriteParams.push_back( 7 );
 
             mNImages = 0;
 
