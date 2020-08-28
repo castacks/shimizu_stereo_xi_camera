@@ -152,6 +152,8 @@ public:
 
     void put_sensor_filter_array(int idx, std::string &strFilterArray);
 
+    void initialize_raw_balance_matrices(xf cb, xf cr);
+
     // Getters and setters.
     void enable_downsampling(void);
     void disable_downsampling(void);
@@ -240,6 +242,8 @@ protected:
      */
     int get_images_mt(cv::Mat &img0, cv::Mat &img1, CameraParams_t &cp0, CameraParams_t &cp1, int n0=1, int n1=1);
 
+    void raw_balance(cv::Mat &img);
+
     void put_single_camera_params(xiAPIplusCameraOcv &cam, CameraParams_t &cp);
 
     int EXPOSURE_MILLISEC(int val);
@@ -289,6 +293,9 @@ protected:
 
     cv::Mat mGrayMatBuffer[N_XI_C];
 
+    int mHeight;
+    int mWidth;
+
     int mXi_DownsamplingType; // 1 - binning, 2 - skipping. Only 2 has effect.
     int mXi_Downsampling;     // 1 - Fullsize, 2 - 2x2. Only 2 has effect.
 
@@ -322,6 +329,10 @@ protected:
     int  mCAEAG_TargetBrightnessLevel8Bit;
     bool mCAEAG_IsEnabled;
     int  mMeanBrightness[2];
+
+    bool    mRawBalance;
+    cv::Mat mRawBalanceBR;
+    cv::Mat mRawBalanceBuffer;
 
     bool mForceXiAutoWhiteBalance;
 

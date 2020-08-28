@@ -19,7 +19,7 @@
         
         <!-- Original size. -->
         <param name="pHardwareDownsampling" type="int" value="1" />
-        <param name="pSingleImageSize" type="double" value="12.37" />
+        <param name="pSingleImageSize"      type="double" value="12.37" />
         <!-- 1/4 size. -->
         <!-- <param name="pHardwareDownsampling" type="int" value="2" /> -->
         <!-- <param name="pSingleImageSize" type="double" value="3.82" /> -->
@@ -64,9 +64,10 @@
         <param name="pWB_R" type="double" value="1.325575" />
         <param name="pWB_G" type="double" value="0.996636" />
         <param name="pWB_B" type="double" value="2.783976" />
+        <param name="pRawBalance" type="int" value="0" />
 
         <param name="pDSHeight" type="int" value="468" />
-        <param name="pDSWidth" type="int" value="640" />
+        <param name="pDSWidth"  type="int" value="640" />
 
         <param name="pSilent" type="int" value="1" />
 

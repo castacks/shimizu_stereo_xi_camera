@@ -63,6 +63,7 @@ SXCSync::SXCSync(const std::string& name)
   mCustomAEAG_FR(DEFAULT_CUSTOM_AEAG_FR), mCustomAEAG_FG(DEFAULT_CUSTOM_AEAG_FG), mCustomAEAG_FB(DEFAULT_CUSTOM_AEAG_FB),
   mCustomAEAG_Mask(""),
   mFixedWB(DEFAULT_FIXED_WB), mWB_R(DEFAULT_WB_R), mWB_G(DEFAULT_WB_G), mWB_B(DEFAULT_WB_B),
+  mRawBalance(0),
   mForceXiAutoWhiteBalance(DEFAULT_FORCE_XI_AUTO_WHITE_BALANCE),
   mVerbose(DEFAULT_VERBOSE), mSilent(0),
   mDSHeight(240), mDSWidth(320)
@@ -174,6 +175,7 @@ Res_t SXCSync::parse_launch_parameters(void)
     ROSLAUNCH_GET_PARAM((*mpROSNode), "pWB_R", mWB_R, DEFAULT_WB_R);
     ROSLAUNCH_GET_PARAM((*mpROSNode), "pWB_G", mWB_G, DEFAULT_WB_G);
     ROSLAUNCH_GET_PARAM((*mpROSNode), "pWB_B", mWB_B, DEFAULT_WB_B);
+    ROSLAUNCH_GET_PARAM((*mpROSNode), "pRawBalance", mRawBalance, 0);
 	ROSLAUNCH_GET_PARAM((*mpROSNode), "pXICameraSN_0", pXICameraSN_0, mXiCameraSN[CAM_0_IDX]);
 	ROSLAUNCH_GET_PARAM((*mpROSNode), "pXICameraSN_1", pXICameraSN_1, mXiCameraSN[CAM_1_IDX]);
 
@@ -276,6 +278,8 @@ Res_t SXCSync::prepare(void)
     {
         // Stereo camera object.
         mStereoXiCamera = new sxc::StereoXiCamera(mXiCameraSN[CAM_0_IDX], mXiCameraSN[CAM_1_IDX]);
+        
+        if ( 1 == mRawBalance ) mStereoXiCamera->initialize_raw_balance_matrices(mWB_B, mWB_R);
 
         // Downsampling.
         if ( 2 == mHardwareDownsampling )

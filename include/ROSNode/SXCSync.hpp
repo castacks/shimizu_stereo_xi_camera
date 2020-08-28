@@ -286,6 +286,7 @@ private:
     double mWB_R;
     double mWB_G;
     double mWB_B;
+    int    mRawBalance;
 
     int    mForceXiAutoWhiteBalance;
 

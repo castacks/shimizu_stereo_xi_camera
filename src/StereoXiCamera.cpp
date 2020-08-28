@@ -20,6 +20,7 @@ StereoXiCamera::StereoXiCamera(std::string &camSN0, std::string &camSN1)
   BANDWIDTH_MARGIN_MAX(50), BANDWIDTH_MARGIN_MIN(0), BANDWIDTH_MARGIN_DEFAULT(10),
   TRIGGER_SOFTWARE(1), EXPOSURE_MILLISEC_BASE(1000), CAM_IDX_0(0), CAM_IDX_1(1),
   XI_DEFAULT_TOTAL_BANDWIDTH(2400), XI_DEFAULT_BANDWIDTH_MARGIN(10),
+  mHeight(3008), mWidth(4112),
   mXi_DownsamplingType(XI_SKIPPING), mXi_Downsampling(XI_DWN_1x1), 
   mFixedXiExposureGain(false),
   mXi_AutoGainExposurePriority(AUTO_GAIN_EXPOSURE_PRIORITY_DEFAULT),
@@ -33,6 +34,7 @@ StereoXiCamera::StereoXiCamera(std::string &camSN0, std::string &camSN1)
   mSelfAdjustNumTrialLoops((mSelfAdjustNumOmittedFrames+mSelfAdjustNumFrames)*2), mIsSelfAdjusting(false),
   mXi_Exposure(100), mXi_Gain(0),  
   mCAEAG(NULL), mCAEAG_TargetBrightnessLevel(10), mCAEAG_TargetBrightnessLevel8Bit(0), mCAEAG_IsEnabled(false),
+  mRawBalance(false),
   mForceXiAutoWhiteBalance(false),
   mFixedWB(true), mWB_R(1.3), mWB_G(1.0), mWB_B(2.7),
   mIPE(NULL),
@@ -781,6 +783,11 @@ int StereoXiCamera::get_images(cv::Mat &img0, cv::Mat &img1, CameraParams_t &cam
         return -1;
     }
 
+    if ( mRawBalance ) {
+        raw_balance(img0);
+        raw_balance(img1);
+    }
+
     try
     {
         put_single_camera_params( mCams[CAM_IDX_0], camP0 );
@@ -805,6 +812,12 @@ int StereoXiCamera::get_images(cv::Mat &img0, cv::Mat &img1, CameraParams_t &cam
     }
 
     return 0;
+}
+
+void StereoXiCamera::raw_balance(cv::Mat &img) {
+    img.convertTo( mRawBalanceBuffer, CV_32FC1 );
+    mRawBalanceBuffer.mul( mRawBalanceBR );
+    mRawBalanceBuffer.convertTo( img, CV_8UC1 );
 }
 
 void StereoXiCamera::put_single_camera_params(xiAPIplusCameraOcv &cam, CameraParams_t &cp)
@@ -923,6 +936,26 @@ void StereoXiCamera::put_sensor_filter_array(int idx, std::string &strFilterArra
             break;
         }
     }
+}
+
+void StereoXiCamera::initialize_raw_balance_matrices(xf cb, xf cr) {
+    mRawBalanceBR = cv::Mat::ones( mHeight, mWidth, CV_32FC1 );
+
+    for ( int i = 0; i < mHeight; i += 2 ) {
+        for ( int j = 0; j < mWidth; j += 2) {
+            mRawBalanceBR.at<float>( i, j ) = cb;
+        }
+    }
+
+    for ( int i = 1; i < mHeight; i += 2 ) {
+        for ( int j = 1; j < mWidth; j += 2) {
+            mRawBalanceBR.at<float>( i, j ) = cr;
+        }
+    }
+
+    mRawBalanceBuffer = cv::Mat::zeros( mHeight, mWidth, CV_32FC1 );
+
+    mRawBalance = true;
 }
 
 void StereoXiCamera::prepare_before_opening(void)
