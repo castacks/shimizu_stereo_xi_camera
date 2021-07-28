@@ -69,6 +69,7 @@
 #define CAMERA_EXCEPTION_DESCRIPTION_BUFFER_SIZE (1024)
 #define EXCEPTION_CAMERA_API(camEx) \
     {\
+        camEx.PrintError();\
         char camEx##_buffer[CAMERA_EXCEPTION_DESCRIPTION_BUFFER_SIZE];\
         std::stringstream camEx##_ss;\
         \

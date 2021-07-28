@@ -428,7 +428,7 @@ void StereoXiCamera::apply_custom_AEAG(cv::Mat &img0, cv::Mat &img1, CameraParam
         }
         catch ( xiAPIplus_Exception& exp )
         {
-            std::cout << "*** AEAG *** " 
+            std::cout << "*** Camera API exception during AEAG *** " 
                       << "avgExcposure = " << avgExposure << ", "
                       << "avgGain = " << avgGain << ". " << std::endl;
             throw exp;
@@ -635,6 +635,7 @@ thd_get_single_image(void* arg)
         }
         else
         {
+            exp.PrintError();
             std::cout << ">>> " << a->name 
                       << ": Exception: Ximea API throws exception with error number "
                       << exp.GetErrorNumber() 
