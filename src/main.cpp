@@ -15,7 +15,9 @@
  *
  */
 
+#include <chrono>
 #include <iostream>
+#include <thread>
 
 // ========= Includes for ROS and OpenCV. ===================
 
@@ -82,7 +84,8 @@ int main(int argc, char* argv[])
 	// Stop.
 	nodeRes = sxcSync.stop(); CHECK_RES(nodeRes);
 	
-	cvWaitKey(500);
+	// cvWaitKey(500); // OpenCV 4.5 has trouble with this.
+	std::this_thread::sleep_for(std::chrono::milliseconds(500));
 
 	// Destroy.
 	nodeRes = sxcSync.destroy(); CHECK_RES(nodeRes);

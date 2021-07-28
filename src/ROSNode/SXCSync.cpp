@@ -408,8 +408,8 @@ Res_t SXCSync::prepare(void)
             mCvVIOImagesDownsampled = new Mat[2];
             mCP = new sxc::StereoXiCamera::CameraParams_t[2];
 
-            mImwriteParams.push_back( CV_IMWRITE_PNG_COMPRESSION );
-            mImwriteParams.push_back( 7 );
+            // mImwriteParams.push_back( CV_IMWRITE_PNG_COMPRESSION );
+            // mImwriteParams.push_back( 7 );
 
             mNImages = 0;
 
@@ -543,7 +543,8 @@ Res_t SXCSync::synchronize(ProcessType_t& pt)
 
                     // FileStorage cfFS(yamlFilename, FileStorage::WRITE);
                     // cfFS << "frame" << nImages << "image_id" << loopIdx << "raw_data" << cvImages[loopIdx];
-                    imwrite(imgFilename, mCvImages[loopIdx], mImwriteParams);
+                    // imwrite(imgFilename, mCvImages[loopIdx], mImwriteParams); // OpenCV 4.5 makes CV_IMWRITE_PNG_COMPRESSION obsolete.
+                    imwrite(imgFilename, mCvImages[loopIdx] );
                 }
                 
                 if ( true == mVerbose )

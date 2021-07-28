@@ -1,8 +1,10 @@
 
 #include <pthread.h>
 
+#include <chrono>
 #include <iostream>
 #include <sstream>
+#include <thread>
 
 #include "Profiler/Profiler.hpp"
 
@@ -497,7 +499,8 @@ void StereoXiCamera::start_acquisition(int waitMS)
     }
 
     // Wait for a short period of time.
-    cvWaitKey(waitMS);
+    // cvWaitKey(waitMS); // OpenCV 4.5 has trouble with this.
+    std::this_thread::sleep_for(std::chrono::milliseconds(waitMS));
 }
 
 void StereoXiCamera::software_trigger(bool both)
@@ -874,7 +877,8 @@ void StereoXiCamera::stop_acquisition(int waitMS)
         EXCEPTION_CAMERA_API(exp);
     }
 
-    cvWaitKey(waitMS);
+    // cvWaitKey(waitMS); // OpenCV 4.5 has trouble with this.
+    std::this_thread::sleep_for(std::chrono::milliseconds(waitMS));
 }
 
 void StereoXiCamera::close()

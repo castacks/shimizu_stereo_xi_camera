@@ -177,6 +177,8 @@ FIND_LIBRARY( LIB_XIMEA NAMES m3api )
 FIND_LIBRARY( LIB_BOOST_EXCEPTION NAMES boost_exception )
 find_package( OpenCV REQUIRED )
 
+message(STATUS "OpenCV_INCLUDE_DIRS = ${OpenCV_INCLUDE_DIRS}")
+
 # Specify libraries to link a library or executable target against
 # target_link_libraries(${PROJECT_NAME}_node
 #   ${catkin_LIBRARIES}
