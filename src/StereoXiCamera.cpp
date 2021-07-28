@@ -1057,7 +1057,7 @@ void StereoXiCamera::setup_camera_common(xiAPIplusCameraOcv& cam)
     else
     {
         cam.SetExposureTime(mXi_AutoExposureTopLimit);
-        cam.SetGain(0);
+        cam.SetGain(mXi_AutoGainTopLimit);
         cam.DisableAutoExposureAutoGain();
     }
 
