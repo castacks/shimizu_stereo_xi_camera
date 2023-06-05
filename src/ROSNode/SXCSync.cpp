@@ -52,6 +52,7 @@ SXCSync::SXCSync(const std::string& name)
   mTransferFormat(DEFAULT_TRANSFER_FORMAT), mTF(TRANS_FORMAT_COLOR),
   mEncoding("bgr8"),
   mExternalTrigger(0),
+  mOutputExposure(0),
   mNextImageTimeout_ms(DEFAULT_NEXT_IMAGE_TIMEOUT_MS),
   mExternalTimestampReset(0), 
   mSelfAdjust(1),
@@ -151,6 +152,7 @@ Res_t SXCSync::parse_launch_parameters(void)
 	ROSLAUNCH_GET_PARAM((*mpROSNode), "pFlagWriteImage", mFlagWriteImage, 0);
 	ROSLAUNCH_GET_PARAM((*mpROSNode), "pOutDir", mOutDir, "./");
 	ROSLAUNCH_GET_PARAM((*mpROSNode), "pExternalTrigger", mExternalTrigger, 0);
+	ROSLAUNCH_GET_PARAM((*mpROSNode), "pOutputExposure", mOutputExposure, 0);
 	ROSLAUNCH_GET_PARAM((*mpROSNode), "pNextImageTimeout_ms", mNextImageTimeout_ms, DEFAULT_NEXT_IMAGE_TIMEOUT_MS);
 	ROSLAUNCH_GET_PARAM((*mpROSNode), "pExternalTimestampReset", mExternalTimestampReset, 0);    
 	ROSLAUNCH_GET_PARAM((*mpROSNode), "pSelfAdjust", mSelfAdjust, 1)
@@ -294,6 +296,11 @@ Res_t SXCSync::prepare(void)
         if ( 1 == mExternalTrigger )
         {
             mStereoXiCamera->enable_external_trigger(mNextImageTimeout_ms);
+        }
+
+        if ( 1 == mOutputExposure )
+        {
+            mStereoXiCamera->enable_output_exposure();
         }
 
         // Timestamp reset configuration.

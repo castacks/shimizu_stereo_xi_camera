@@ -190,6 +190,8 @@ public:
     void enable_external_trigger(int nextImageTimeout_ms);
     void disable_external_trigger(void);
     bool is_external_triger(void);
+    void enable_output_exposure(void);
+    void disable_output_exposure(void);
     int  get_next_image_timeout(void);
 
     void enable_external_timestamp_reset(void);
@@ -228,6 +230,7 @@ protected:
     void set_transfer_format_single_camera(xiAPIplusCameraOcv& cam, TransferFormat_t tf);
     void setup_camera_common(xiAPIplusCameraOcv& cam);
     void set_stereo_external_trigger(void);
+    void set_output_exposure(void);
     void set_stereo_master_trigger(void);
     void set_stereo_software_trigger(void);
     void set_external_timestamp_reset(void);
@@ -312,6 +315,7 @@ protected:
     TransferFormat_t mTransferFormat;
 
     bool mIsExternalTriggered;
+    bool mIsOutputExposure;           // Set true to output the exposure signal. Cannot be used with the software trigger.
     int mXi_NextImageTimeout_ms;      // Millisecond.
 
     bool mIsExternalTimeStampReset;
