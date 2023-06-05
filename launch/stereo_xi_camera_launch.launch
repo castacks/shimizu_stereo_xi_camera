@@ -32,6 +32,7 @@
         <param name="pTransferFormat" type="str" value="raw" />
 
         <param name="pExternalTrigger" type="int" value="1" />
+        <param name="pOutputExposure" type="int" value="0" />
         <param name="pNextImageTimeout_ms" type="int" value="1200" />
 
         <param name="pExternalTimestampReset" type="int" value="1" />

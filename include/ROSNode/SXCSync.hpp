@@ -258,6 +258,7 @@ private:
     std::string mEncoding;
 
 	int    mExternalTrigger;
+    int    mOutputExposure;
 	int    mNextImageTimeout_ms;
 
     int    mExternalTimestampReset;
